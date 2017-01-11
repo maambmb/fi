@@ -66,6 +66,12 @@ public class Vector2i {
 		return this.transform( v, (_x,z) -> z );
 	}
 	
+	public Vector2i set( Vector3i v ) {
+		this.x = v.x;
+		this.z = v.z;
+		return this;
+	}
+	
 	public Vector2i setX( int x ) {
 		this.x = x;
 		return this;

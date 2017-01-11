@@ -15,6 +15,8 @@ public class World {
 	private Map<Zone,Set<Vector3i>> zoneMap;
 	private Map<Vector3i,Chunk> chunkMap;
 	private Map<Vector2i,Set<Vector3i>> chunkColumns;
+	
+	private Set<Vector2i> dirtyColumns;
 
 	public World() {
 
@@ -26,53 +28,62 @@ public class World {
 			this.zoneMap.put( z, new HashSet<Vector3i>() );
 	}
 	
-	// ensure a chunk is available prior to writing to it
-	private void tryCreateChunk( Vector3i chunkVec ) {
-		if( ! this.chunkMap.containsKey( chunkVec ) ) {
-			// ensure a chunk column is available
-			Vector2i colVec = new Vector2i( chunkVec.x, chunkVec.z );
+	public void setBlock( Vector3i v, Zone z, Block b) {
+		Vector3i chunkVec =  v.clone().divide( Config.CHUNK_DIM );
+		Vector3i blockVec = v.clone().modulo( Config.CHUNK_DIM );
+		Vector2i colVec = new Vector2i().set( chunkVec );
+		
+		if( !this.chunkColumns.containsKey( chunkVec ) ) {
+			if( b == null)
+				return;
 			if( ! this.chunkColumns.containsKey( colVec ) )
 				this.chunkColumns.put( colVec, new TreeSet<Vector3i>( (l,r) -> l.y - r.y ) );
 			this.chunkColumns.get( colVec ).add( chunkVec );
 			this.chunkMap.put( chunkVec, new Chunk() );
 		}
-	}
-	
-	public void addBlock( Vector3i v, Zone z, Block b) {
-		// split the vector into chunk and block coordinates
-		Vector3i chunkVec =  v.clone().divide( Config.CHUNK_DIM );
-		Vector3i blockVec = v.clone().modulo( Config.CHUNK_DIM );
-		this.tryCreateChunk( chunkVec );
 		
 		// assign the chunk to the zone ( 1 -> many mapping)
 		this.zoneMap.get( z ).add( chunkVec );
 		Chunk c = this.chunkMap.get( chunkVec );
-		c.addBlock( blockVec, b);
-
+		c.setBlock( blockVec, b);
 	}
-
-	public void removeBlock( Vector3i v ) {
-		Vector3i chunkVec =  v.clone().divide( Config.CHUNK_DIM );
-		Vector3i blockVec = v.clone().modulo( Config.CHUNK_DIM );
-
-		// only bother proceeding if the chunk exists
-		if( this.chunkMap.containsKey( chunkVec ) ) {
-			Chunk c = this.chunkMap.get( chunkVec );
-			c.clearBlock( blockVec );
-		}
-	}	
 
 	// re-calculate the global light available at the top of each chunk 
 	public void regenerateCumulativeOcclusionMaps( Vector2i col ) {
 		Chunk prevChunk = null;
-		// loop through each chunk in the column (from highest -> lowest )
+		// loop through each chunk in the column ( y = 0, y = 1, etc...)
 		for( Vector3i chunkVec : this.chunkColumns.get( col ) ) {
 			Chunk c = this.chunkMap.get( chunkVec );
-			// first blank the cumulative occlusion map, then fold in the previous chunk's cumulative and non-cumulative occlusion maps
-			c.cumulativeOcclusionMap.reset();
-			if( prevChunk != null )
-				c.cumulativeOcclusionMap.fold( prevChunk.occlusionMap ).fold( prevChunk.cumulativeOcclusionMap );
+			c.setupCumulativeOcclusionMap( prevChunk );
 			prevChunk = c;
+		}
+	} 
+	
+	public void propagateChunkStates() {
+
+		// find all columns that have been modified
+		for( Vector3i chunkVec : this.chunkMap.keySet() ) {
+			if( this.chunkMap.get( chunkVec ).state == Chunk.State.DIRTY ) {
+				this.dirtyColumns.add( new Vector2i().set( chunkVec ) );
+			}
+		}
+		
+		// regenerate the cum-occlusion maps for all chunks in the modified columns
+		for( Vector2i colVec : this.dirtyColumns )
+			this.regenerateCumulativeOcclusionMaps( colVec );
+
+		this.dirtyColumns.clear();
+
+		// now scan through the entire chunk map, setting neighbours of dirty chunks as "indirectly dirty"
+		for( Vector3i chunkVec : this.chunkMap.keySet() ) {
+			if( this.chunkMap.get( chunkVec ).state == Chunk.State.DIRTY ) {
+				for( Vector3i.Normal normal : Vector3i.Normal.NORMALS ) {
+					Vector3i offset = chunkVec.clone().add( normal.vector );
+					Chunk c = this.chunkMap.get( offset );
+					if( c != null && c.state == Chunk.State.CLEAN )
+						c.state = Chunk.State.INDIRECTLY_DIRTY;
+				}
+			}
 		}
 	}
 	
