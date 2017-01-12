@@ -103,6 +103,8 @@ public class Chunk {
 		}
 	}
 	
+    // loop through every block using an iterator fn 
+    // that takes: ( block coords, block, is block occluded ) as input params
 	public void iterateBlocks( Lambda.ActionTernary<Vector3i,Block,Boolean> fn ) {
         Vector2i workingVector2i = new Vector2i();
 		for( Vector3i v : this.blockMap.keySet() )  {
