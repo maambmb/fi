@@ -2,6 +2,7 @@ package util;
 
 public class Vector3i {
 
+    // unit vectors for normal vectors for all 6 sides of a cube
 	public enum Normal {
 		
 		FRONT( new Vector3i(0,0,-1) ),
@@ -11,8 +12,10 @@ public class Vector3i {
 		TOP( new Vector3i(0,-1,0) ),
 		BOTTOM( new Vector3i(0,1,0) );
 		
+        // enumeration of all 6 normals
 		public static Normal[] NORMALS = { Normal.FRONT, Normal.BACK, Normal.LEFT, Normal.RIGHT, Normal.TOP, Normal.BOTTOM };
-		public Vector3i vector;
+
+		public Vector3i vector; // the underlying unit vector
 
 		private Normal( Vector3i v ) {
 			this.vector = v;
@@ -33,6 +36,10 @@ public class Vector3i {
 		this.z = z;
 		this.hashCoder = new HashCoder();
 	}
+
+    public Vector3i( Vector3i v ) {
+        this( v.x, v.y, v.z );
+    }
 	
 	public Vector3i() {
 		this( 0, 0, 0);
@@ -42,6 +49,7 @@ public class Vector3i {
 		return new Vector3i( this.x, this.y, this.z );
 	}
 	
+    // transform the vector by operating on each element using a unary function self.x = f(self.x)
 	public Vector3i transform( Lambda.FuncUnary<Integer,Integer> unaryFn ) {
 		this.x = unaryFn.run( this.x );
 		this.y = unaryFn.run( this.y );
@@ -49,6 +57,8 @@ public class Vector3i {
 		return this;
 	}
 
+    // transform the vector by operating on each element using a unary function self.x = f(self.x,other.x)
+    // where other is the other vector provided in the 1st argument
 	public Vector3i transform( Vector3i v, Lambda.FuncBinary<Integer,Integer,Integer> binaryFn ) {
 		this.x = binaryFn.run( this.x, v.x );
 		this.y = binaryFn.run( this.y, v.y );

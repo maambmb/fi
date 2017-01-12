@@ -6,8 +6,8 @@ import java.util.Queue;
 public class Pool<T extends Pool.Poolable> {
 
 	public interface Poolable {
-		void destroy();
-		void init();
+		void destroy(); // clean up any resources and also become reclaimed by the pool
+		void init();    // set up any required resources
 	}
 	
 	private Queue<T> freeQueue;
@@ -22,18 +22,23 @@ public class Pool<T extends Pool.Poolable> {
 		this.maxSize = Integer.MAX_VALUE;
 	}
 	
+    // override the infinite max capacity to something more finite
+    // will throw if this is breached
 	public Pool( Lambda.FuncNullary<T> generator, int maxSize ) {
 		this( generator );
 		this.maxSize = maxSize;
 	}
 	
 	public T fresh() {
+        // if the queue is empty we must generate a fresh object
+        // ensuring we add 1 to the capacity tally
 		if( this.freeQueue.isEmpty() ) {
 			if( this.current == this.maxSize )
+                // too many have been produced...
 				throw new RuntimeException( "Pool has reached capacity" );
+            this.current += 1;
 			this.freeQueue.add( this.generator.run() );
 		}
-		this.current += 1;
 		T fresh = this.freeQueue.remove();
 		fresh.init();
 		return fresh;
@@ -41,7 +46,6 @@ public class Pool<T extends Pool.Poolable> {
 	
 	public void reclaim( T toReclaim ) {
 		this.freeQueue.add( toReclaim );
-		this.current -= 1;
 	}
 	
 }

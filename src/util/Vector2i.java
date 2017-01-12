@@ -2,6 +2,7 @@ package util;
 
 public class Vector2i {
 
+    // unit vectors for normal vectors for all 4 sides of a square
 	public enum Normal {
 		
 		FRONT( new Vector2i(0,-1) ),
@@ -9,8 +10,10 @@ public class Vector2i {
 		LEFT( new Vector2i(-1,0) ),
 		RIGHT( new Vector2i(1,0) );
 		
+        // enumeration of all normals
 		public static Normal[] NORMALS = { Normal.FRONT, Normal.BACK, Normal.LEFT, Normal.RIGHT };
-		public Vector2i vector;
+
+		public Vector2i vector; // the underlying unit vector
 
 		private Normal( Vector2i v ) {
 			this.vector = v;
@@ -34,16 +37,27 @@ public class Vector2i {
 		this( 0, 0);
 	}
 
+    public Vector2i( Vector2i v ) {
+        this( v.x, v.z );
+    }
+
+    public Vector2i( Vector3i v ) {
+        this( v.x, v.z );
+    }
+
 	public Vector2i clone() {
 		return new Vector2i( this.x, this.z );
 	}
 	
+    // transform the vector by operating on each element using a unary function self.x = f(self.x)
 	public Vector2i transform( Lambda.FuncUnary<Integer,Integer> unaryFn ) {
 		this.x = unaryFn.run( this.x );
 		this.z = unaryFn.run( this.z );
 		return this;
 	}
 
+    // transform the vector by operating on each element using a unary function self.x = f(self.x,other.x)
+    // where other is the other vector provided in the 1st argument
 	public Vector2i transform( Vector2i v, Lambda.FuncBinary<Integer,Integer,Integer> binaryFn ) {
 		this.x = binaryFn.run( this.x, v.x );
 		this.z = binaryFn.run( this.z, v.z );

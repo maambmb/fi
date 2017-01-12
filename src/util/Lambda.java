@@ -13,6 +13,10 @@ public class Lambda {
 	public interface ActionBinary<T1,T2> {
 		void run( T1 arg1, T2 arg2 );
 	}
+
+	public interface ActionTernary<T1,T2,T3> {
+		void run( T1 arg1, T2 arg2, T3 arg3 );
+	}
 	
 	public interface FuncNullary<T> {
 		T run();

@@ -28,10 +28,12 @@ public class Tuple {
 		
 	}
 	
+    // use type inference to make these declarations slightly less verbose
 	public static <T1,T2> Binary<T1,T2> create( T1 arg1, T2 arg2 ) {
 		return new Binary<T1, T2>( arg1, arg2 );
 	}
 
+    // use type inference to make these declarations slightly less verbose
 	public static <T1,T2,T3> Ternary<T1,T2,T3> create( T1 arg1, T2 arg2, T3 arg3 ) {
 		return new Ternary<T1, T2, T3>( arg1, arg2, arg3 );
 	}
