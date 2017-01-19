@@ -11,9 +11,6 @@ public class Vector3i {
 		RIGHT( new Vector3i(1,0,0) ),
 		TOP( new Vector3i(0,-1,0) ),
 		BOTTOM( new Vector3i(0,1,0) );
-		
-        // enumeration of all 6 normals
-		public static Normal[] NORMALS = { Normal.FRONT, Normal.BACK, Normal.LEFT, Normal.RIGHT, Normal.TOP, Normal.BOTTOM };
 
 		public Vector3i vector; // the underlying unit vector
 
@@ -31,11 +28,20 @@ public class Vector3i {
 	private HashCoder hashCoder;
 		
 	public Vector3i( int x, int y, int z ) {
+		this.hashCoder = new HashCoder();
 		this.x = x;
 		this.y = y;
 		this.z = z;
-		this.hashCoder = new HashCoder();
 	}
+
+    public Vector3i( int packed ) {
+		this.hashCoder = new HashCoder();
+        this.x = 0xFF & packed;
+        packed >>= 8;
+        this.y = 0xFF & packed;
+        packed >>= 8;
+        this.z = 0xFF & packed;
+    }
 
     public Vector3i( Vector3i v ) {
         this( v.x, v.y, v.z );
@@ -44,6 +50,14 @@ public class Vector3i {
 	public Vector3i() {
 		this( 0, 0, 0);
 	}
+
+    public Vector3i explode( Vector2i v, Vector3i.Normal n ) {
+        int projIx = 0;
+        for( int i = 0; i < 3; i += 1 )
+            if( n.vector.get(i) == 0 )
+                v.set( i, v.get( projIx ++ ) );
+        return this;
+    }
 
 	public Vector3i clone() {
 		return new Vector3i( this.x, this.y, this.z );
@@ -93,6 +107,28 @@ public class Vector3i {
 	public Vector3i modulo( int mod ) {
 		return this.transform( x -> x % mod );
 	}
+
+    public int get( int ix) {
+        if( ix == 0 )
+            return this.x;
+        if( ix == 1 )
+            return this.y;
+        if( ix == 2 )
+            return this.z;
+        throw new IndexOutOfBoundsException();
+    }
+
+    public Vector3i set( int ix, int val ) {
+        if( ix == 0 )
+            this.x = val;
+        else if( ix == 1 )
+            this.y = val;
+        else if( ix == 2 )
+            this.z = val;
+        else
+            throw new IndexOutOfBoundsException();
+        return this;
+    }
 
 	@Override
 	public int hashCode() {

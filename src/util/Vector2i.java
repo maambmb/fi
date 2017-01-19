@@ -10,9 +10,6 @@ public class Vector2i {
 		LEFT( new Vector2i(-1,0) ),
 		RIGHT( new Vector2i(1,0) );
 		
-        // enumeration of all normals
-		public static Normal[] NORMALS = { Normal.FRONT, Normal.BACK, Normal.LEFT, Normal.RIGHT };
-
 		public Vector2i vector; // the underlying unit vector
 
 		private Normal( Vector2i v ) {
@@ -85,7 +82,7 @@ public class Vector2i {
 		this.z = v.z;
 		return this;
 	}
-	
+
 	public Vector2i setX( int x ) {
 		this.x = x;
 		return this;
@@ -124,5 +121,30 @@ public class Vector2i {
 		return x == other.x && z == other.z;
 	}
 	
+    public int get( int ix ) {
+        if( ix == 0 )
+            return this.x;
+        if( ix == 1 )
+            return this.z;
+        throw new IndexOutOfBoundsException();
+    }
+
+    public Vector2i set( int ix, int val ) {
+        if( ix == 0 )
+            this.x = val;
+        else if( ix == 1 )
+            this.z = val;
+        else
+            throw new IndexOutOfBoundsException();
+        return this;
+    }
+
+    public Vector2i project( Vector3i v, Vector3i.Normal n ) {
+        int projIx = 0;
+        for( int i = 0; i < 3; i += 1 )
+            if( n.vector.get(i) == 0 )
+                v.set( projIx ++ , this.get( i ) );
+        return this;
+    }
 	
 }
