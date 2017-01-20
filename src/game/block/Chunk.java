@@ -1,102 +1,77 @@
 package game.block;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import game.Config;
 
+import util.Lambda;
+import util.Pool;
+import util.Pool.Poolable;
 import util.Vector3i;
-import util.Vector2i;
 
-public class Chunk {
+// a container object that holds a fixed-size cube of terrain
+// terrain is rendered in "chunks" as opposed to single cubes
+public class Chunk implements Poolable {
 
-    // convert a bounded 3D vector into an integer
-    private static int packCoords( Vector3i v ) {
-        int x = v.x * Config.CHUNK_DIM * Config.CHUNK_DIM;
-        int y = v.y * Config.CHUNK_DIM;
-        return x + y + v.z;
-    }
+    public static Pool<Chunk> POOL = new Pool<Chunk>( Chunk::new );
 
-    // convert a bounded 2D vector into an integer
-    private static int packCoords( Vector2i v ) {
+    // number of blocks in a chunk face
+    private static final int DIM_SQ = Config.CHUNK_DIM * Config.CHUNK_DIM;
+    // number of blocks in a chunk
+    private static final int DIM_CB = DIM_SQ * Config.CHUNK_DIM;
+
+    // convert a bounded position vector into an ix to index into our block array
+    private static int pack( Vector3i v ) {
+        int y = v.y * DIM_SQ;
         int x = v.x * Config.CHUNK_DIM;
-        return x + v.z;
+        return y + x + v.z;
     }
 
-    // convert a bounded 2D vector and a 3D normal (cube face) into an integer
-    private static int packFaceCoords( Vector3i.Normal n, Vector2i v ) {
-        int ndim = n.ordinal() * Config.CHUNK_DIM * Config.CHUNK_DIM;
-        return ndim + packCoords( v );
+    // convert an ix back into a position vector
+    private static Vector3i unpack( int p ) {
+        int rem = p % DIM_SQ;
+        int y = p / DIM_SQ;
+        int x = rem / Config.CHUNK_DIM;
+        int z = rem % Config.CHUNK_DIM;
+        return new Vector3i( x,y,z );
     }
 
-    private static Vector3i unpackCoords( Vector3i v, int p ) {
-        int sq = Config.CHUNK_DIM * Config.CHUNK_DIM;
-        int rem = p % sq;
-        v.x = p / sq;
-        v.y = rem / Config.CHUNK_DIM;
-        v.x = rem % Config.CHUNK_DIM;
-        return v;
-    }
-
-    // core block data of the chunk
+    // the raw block data
     private Block[] blockData;
 
-    // illumination values of faces of adjacent chunks
-    private Illumination[] faceIlluminationData;
+    private Chunk() {
 
-    // occlusion map (looking up) for just this chunk
-    private boolean[] chunkOcclusionMap;
+        // initialize an array to hold every single block
+        this.blockData = new Block[ DIM_CB ];
 
-    // occlusion map (looking up) for this chunk and all chunks above it
-    private boolean[] occlusionMap;
-
-    private Set<Vector3i> lightingBuffer;
-
-    public Chunk() {
-
-        // compute array lengths
-        int squareLen = Config.CHUNK_DIM * Config.CHUNK_DIM;
-        int faceLen = squareLen * Vector3i.Normal.values().length;
-
-        this.lightingBuffer = new HashSet<Vector3i>();
-
-        // instance and fill chunk data arrays
-        this.blockData = new Block[ squareLen * Config.CHUNK_DIM ];
-        this.faceIlluminationData = new Illumination[ faceLen ];
-        this.chunkOcclusionMap = new boolean[ squareLen ];
-        this.occlusionMap = new boolean[ squareLen ];
-
-        for( int i = 0; i < this.blockData.length; i += 1 )
+        // initialize each block as an empty/air block
+        for( int i = 0; i < DIM_CB; i += 1 )
             this.blockData[i] = new Block();
-        for( int i = 0; i < this.faceIlluminationData.length; i += 1 )
-            this.faceIlluminationData[i] = new Illumination();
-        for( int i = 0; i < this.occlusionMap.length; i += 1 ) {
-            this.occlusionMap[i] = false;
-            this.chunkOcclusionMap[i] = false;
+    }
+
+    // retrieve a block from the chunk
+    public Block getBlock( Vector3i v ) {
+        return this.blockData[ pack( v ) ];
+    }
+
+    // given an iterator fn, run it on every single block
+    public void iterateBlocks( Lambda.ActionBinary<Vector3i,Block> fn ) {
+        for( int i = 0; i < DIM_CB; i += 1 ) {
+            Vector3i v = unpack( i );
+            fn.run( v, this.blockData[i] );
         }
     }
 
-    // get a block from the chunk
-    public Block getBlock( Vector3i v ) {
-        return this.blockData[ packCoords( v ) ];
+    @Override
+    public void init() {
+        for( int i = 0; i < DIM_CB; i += 1 ) {
+            Block b = this.blockData[ i ];
+            b.blockType = BlockType.AIR;
+            b.illumination.reset();
+        }
     }
 
-    // get illumination values of block on chunk face
-    public Illumination getExitIllumination( Vector3i.Normal n, Vector2i v ) {
-        return this.faceIlluminationData[ packFaceCoords( n, v ) ];
+    @Override
+    public void destroy() {
+        POOL.reclaim( this );
     }
 
-    // get illumination values of block on adjacent chunk face
-    public Illumination getBorderIllumination( Vector3i.Normal n, Vector2i v ) {
-        Vector3i expl = n.vector.clone()
-            // map (-1,1) -> (0,CHUNK_DIM-1) for the non zero index (i.e. take us to a face)
-            .transform( x -> Math.max( x * ( Config.CHUNK_DIM - 1 ), 0 ) )
-            // explode the 2D vector into the remaining zero indices
-            .explode( v, n );
-        return this.blockData[ packCoords( expl ) ].illumination;
-    }
-
-    public void propagateLighting() {
-        this.lightingBuffer.clear();
-    }
 }

@@ -1,6 +1,9 @@
 package util;
 
+// type defs for anonymous functions
 public class Lambda {
+
+    // actions are return type void
 
 	public interface ActionNullary {
 		void run();
@@ -17,6 +20,8 @@ public class Lambda {
 	public interface ActionTernary<T1,T2,T3> {
 		void run( T1 arg1, T2 arg2, T3 arg3 );
 	}
+
+    // funcs have some non-void return type
 	
 	public interface FuncNullary<T> {
 		T run();

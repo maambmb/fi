@@ -1,11 +1,11 @@
 package game.block;
 
-public enum Material {
+public enum BlockClass {
 
     SOLID( true, true ),        
     LIQUID( false, true ),
-    CROSS( false, false ),
     TRANSPARENT( true, false ),
+    CROSS( true, false ),
     ETHER( false, false );
 
     // can objects collide with this material
@@ -14,7 +14,7 @@ public enum Material {
     // does light propagate through this material
     public boolean opaque;
 
-    private Material( boolean solid, boolean opaque ) {
+    private BlockClass( boolean solid, boolean opaque ) {
         this.solid = solid;
         this.opaque = opaque;
     }

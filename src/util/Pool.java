@@ -3,6 +3,7 @@ package util;
 import java.util.LinkedList;
 import java.util.Queue;
 
+// an object pool to manage and re-use objects instead of relying on the GC
 public class Pool<T extends Pool.Poolable> {
 
 	public interface Poolable {
@@ -29,6 +30,7 @@ public class Pool<T extends Pool.Poolable> {
 		this.maxSize = maxSize;
 	}
 	
+    // either generate a brand new object, or recycle an already reclaimed object 
 	public T fresh() {
         // if the queue is empty we must generate a fresh object
         // ensuring we add 1 to the capacity tally
@@ -44,6 +46,7 @@ public class Pool<T extends Pool.Poolable> {
 		return fresh;
 	}
 	
+    // add an object back into a pool of re-usables
 	public void reclaim( T toReclaim ) {
 		this.freeQueue.add( toReclaim );
 	}

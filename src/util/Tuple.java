@@ -1,7 +1,9 @@
 package util;
 
+// type defs and utility functions for anonymous tuples
 public class Tuple {
 
+    // 2-tuple
 	public static class Binary<T1,T2> {
 	
 		public T1 arg1;
@@ -14,6 +16,7 @@ public class Tuple {
 		
 	}
 
+    // 3-tuple
 	public static class Ternary<T1,T2,T3> {
 	
 		public T1 arg1;
