@@ -18,8 +18,8 @@ public class Entity implements Pool.Poolable {
 	
 	private Entity() {
 		this.componentMap = new HashMap<Component.Type,Component>();
-		this.toUpdate = new ArrayList<Component.ToUpdate>();
-		this.toDraw = new ArrayList<Component.ToDraw>();
+		this.toUpdate     = new ArrayList<Component.ToUpdate>();
+		this.toDraw       = new ArrayList<Component.ToDraw>();
 	}
 	
 	protected void registerComponent( Component.Type type, Component component ) {
