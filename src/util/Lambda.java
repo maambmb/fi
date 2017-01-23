@@ -28,11 +28,11 @@ public class Lambda {
 	}
 	
 	public interface FuncUnary<T1,T2> {
-		T1 run( T2 arg );
+		T2 run( T1 arg );
 	}
 	
 	public interface FuncBinary<T1,T2,T3> {
-		T1 run( T2 arg1, T3 arg2 );
+		T3 run( T1 arg1, T2 arg2 );
 	}
 	
 }

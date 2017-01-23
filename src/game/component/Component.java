@@ -1,21 +1,11 @@
 package game.component;
 
-import util.Pool;
+import game.Entity;
 
-public interface Component extends Pool.Poolable {
+public interface Component {
 	
-	public interface ToUpdate {
-		void update( long deltaMs );
-	}
+	void destroy();
 	
-	public interface ToDraw {
-		void drawStart();
-		void draw();
-		void drawEnd();
-	}
-
-	public enum Type {
-		Position3D
-	}
+	void setup( Entity e );
 	
 }

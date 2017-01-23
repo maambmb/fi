@@ -5,7 +5,6 @@ public enum BlockClass {
     SOLID( true, true ),        
     LIQUID( false, true ),
     TRANSPARENT( true, false ),
-    CROSS( true, false ),
     ETHER( false, false );
 
     // can objects collide with this material

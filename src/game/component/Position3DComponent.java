@@ -1,31 +1,26 @@
 package game.component;
 
-import util.Pool;
+import game.Entity;
+import game.Listener;
+import game.message.UpdateMessage;
 
-public final class Position3DComponent implements Component, Component.ToUpdate {
+public final class Position3DComponent implements Component {
 	
-	public static Pool<Position3DComponent> POOL = new Pool<Position3DComponent>( Position3DComponent::new );
+	private int updateIx;
 	
-	private Position3DComponent() {
-
+	public Position3DComponent() { 
+	}
+	
+	public void update( UpdateMessage msg ) {
+		// do something to this
 	}
 
-	@Override
-	public void init() {
-		
-	}
-
-	@Override
 	public void destroy() {
-		POOL.reclaim(this);
+		Listener.GLOBAL_LISTENER.removeListener( this.updateIx );
 	}
 
-	@Override
-	public void update(long deltaMs) {
-		
+	public void setup( Entity e ) {
+		this.updateIx = Listener.GLOBAL_LISTENER.addListener( UpdateMessage.class, this::update );
 	}
 
-
-
-	
 }

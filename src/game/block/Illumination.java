@@ -49,6 +49,14 @@ public class Illumination {
         this.lightData.addByte( base + 1, v.y );
         this.lightData.addByte( base + 2, v.z );
     }
+    
+    public Vector3i get( LightSource src ) {
+        int base = src.ordinal() * 3;
+        int r = this.lightData.getByte( base );
+        int g = this.lightData.getByte( base + 1);
+        int b = this.lightData.getByte( base + 2);
+        return new Vector3i( r,g,b );
+    }
 
     // short hand for turning on direct global lighting
     public void addGlobal() {

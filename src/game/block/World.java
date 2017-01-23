@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import game.Config;
-
+import game.gfx.ModelBuilder;
 import util.Vector3i;
 
 // holds the chunks that comprise of the visible (and beyond) game world
@@ -22,18 +22,25 @@ class World {
     // not because the chunks are dirty, but because we expect their lighting to overflow onto nearby
     // dirty chunks that themselves need recalcs ( should border all dirty chunks )
     private Set<Vector3i> requisiteChunks;
+    // utility object to build chunks into single VAO backed models
+    private ModelBuilder modelBuilder; 
+    // a buffer to store the sums of illuminations from multiple different blocks
+    // for the purposes of averaging for smooth lighting
+    private Vector3i[] lightBlender;
 
     public World() {
+    	this.modelBuilder    = new ModelBuilder();
         this.chunkMap        = new HashMap<Vector3i,Chunk>();
         this.dirtyChunks     = new HashSet<Vector3i>();
         this.requisiteChunks = new HashSet<Vector3i>();
+        this.lightBlender    = new Vector3i[ LightSource.values().length ];
     }
 
     // get chunks for a given set of chunk coords (i.e. (0,0,0) and (0,0,1) return different chunks)
     // create a fresh chunk if it doesn't exist
     private Chunk getChunk( Vector3i mapCoords ) {
         if( !this.chunkMap.containsKey( mapCoords ) )
-            this.chunkMap.put( mapCoords, Chunk.POOL.fresh() );
+            this.chunkMap.put( mapCoords, new Chunk() );
         return this.chunkMap.get( mapCoords );
     }
 
@@ -89,7 +96,9 @@ class World {
                 b.illumination.set( b.blockType.illumination );
                 // if a block has global lighting, set the block directly above it to have global illumination
                 if( b.globalLighting ) {
-                    Vector3i abovePos = mapCoords.multiply( Config.CHUNK_DIM ).add( v ).add( Vector3i.CubeNormal.TOP.vector );
+                    Vector3i abovePos = mapCoords
+                    	.multiply( Config.CHUNK_DIM )
+                    	.add( v.add( Vector3i.CubeNormal.TOP.vector ) );
                     this.getBlock( abovePos ).illumination.addGlobal();
                 }
             });
@@ -136,14 +145,96 @@ class World {
         }
 
     }
-
+    
     private void refreshModels() {
-        for( Vector3i mapCoords: this.chunkMap.keySet() ) {
+    	
+    	// rebuild only the models of dirty chunks
+        for( Vector3i mapCoords: this.dirtyChunks ) {
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> {
+            	// iterate through each chunk in absolute coordinate terms
                 Vector3i absCoords = mapCoords.multiply( Config.CHUNK_DIM ).add( v );
+                // examine each face/quad of each block
                 for( Vector3i.CubeNormal normal : Vector3i.CubeNormal.values() ) {
+                	// if the block is ethereal, then there is nothing to render so skip
+                	if( b.blockType.blockClass == BlockClass.ETHER )
+                		continue;
+                	// if the block touching the current face is opaque, then it is hidden and we should ignore
                     if( this.getBlock( absCoords.add( normal.vector ) ).blockType.blockClass.opaque )
                         continue;
+                    // each face is a quad comprising of 4 vertices
+                    for( int i = 0; i < 4; i += 1 ) {
+
+                    	// to separate vertex coords from block coords, we must add unit vectors that are
+                    	// orthogonal to the face's normal depending on which vertex we are looking at
+                    	// use a 2 bit bit field to exhaust all 4 combinations
+                    	boolean vertexUseFirstOrtho  = ( i & 0x01 ) > 0;
+                    	boolean vertexUseSecondOrtho = ( i & 0x02 ) > 0;
+
+                    	// calculate the position of the vertex and transform to a floating point vector
+						this.modelBuilder.positionVertexBuffer = absCoords.add( normal.vector.max(0) )
+                    		.add( vertexUseFirstOrtho ? normal.firstOrtho.vector : Vector3i.ZERO )
+                    		.add( vertexUseSecondOrtho ? normal.secondOrtho.vector : Vector3i.ZERO )
+                    		.toVector3f();
+
+						// keep a tally of the level of shadow that should be applied to the vertex (0-3)
+						// by checking the opacity of nearby shadower blocks
+                    	int shadowCount = 0;
+                    	
+                    	// for smooth lighting, need to add the different illuminations
+                    	// from the block itself and its (up to 3) planar neighbors
+                    	// start by adding the block's illu values in
+                    	for( LightSource src : LightSource.values() )
+                    		this.lightBlender[ src.ordinal() ] = b.illumination.get( src );
+                    	
+                    	// keep track of the number of contributions to the light blending
+                    	// for use in averaging later
+                    	int blendCount = 1;
+                    	for( int j = 1; j < 4; j += 1 ) {
+
+                    		// get the position of a planar neighbor but offset by the cube face's normal
+                    		// i.e. if the normal was TOP, this would be the block above the planar neighbor
+                    		Vector3i planarNeighborPos = absCoords
+								.add( normal.firstOrtho.vector.multiply( vertexUseFirstOrtho ? 1 : -1 ) )
+								.add( normal.secondOrtho.vector.multiply( vertexUseSecondOrtho ? 1 : -1 ) )
+								.add( normal.vector );
+                    		Block planarNeighbor = this.getBlock( planarNeighborPos );
+
+                    		// if the block is opaque then the vertex should have its shadow value increased by 1
+                    		if( planarNeighbor.blockType.blockClass.opaque )
+                    			shadowCount += 1;
+                    		// otherwise, the planar neighbor is visible and we should add its illumination
+                    		// contribution to the light blender and increase the blend count by one
+                    		else {
+								for( LightSource src : LightSource.values() ) {
+									Vector3i curr = this.lightBlender[ src.ordinal() ];
+									this.lightBlender[ src.ordinal() ] = curr.add( planarNeighbor.illumination.get( src ) );
+									blendCount += 1;
+								}
+                    		}
+                    	}
+                    	
+                    	// add non lighting extra data: normal, shadow count, block type and block class
+                    	this.modelBuilder.extraDataVertexBuffer.addByte( 0, normal.ordinal() );
+                    	this.modelBuilder.extraDataVertexBuffer.addByte( 1, shadowCount );
+                    	this.modelBuilder.extraDataVertexBuffer.addWord( 2, b.blockType.ordinal() );
+                    	this.modelBuilder.extraDataVertexBuffer.addByte( 4, b.blockType.blockClass.ordinal() );
+                    	
+                    	// now add in all light values into the extra data
+                    	for( LightSource ls : LightSource.values() ) {
+                    		int base = Config.VBO_NONPOS_NONLIGHT_BYTES + ls.ordinal() * 3;
+                    		// make sure we average the blended light
+                    		Vector3i lightVals = this.lightBlender[ ls.ordinal() ].divide( blendCount );
+                    		this.modelBuilder.extraDataVertexBuffer.addByte( base, lightVals.x );
+                    		this.modelBuilder.extraDataVertexBuffer.addByte( base + 1, lightVals.y );
+                    		this.modelBuilder.extraDataVertexBuffer.addByte( base + 2, lightVals.z );
+                    	}
+                    	
+                    	// save the vertex
+                    	this.modelBuilder.addVertex();
+                    }
+
+                    // save the quad
+                    this.modelBuilder.addQuad();
                 }
             });
         }
@@ -152,6 +243,8 @@ class World {
     public void refresh() {
         this.refreshLighting();
         this.refreshModels();
+        this.dirtyChunks.clear();
+        this.requisiteChunks.clear();
     }
 
 }

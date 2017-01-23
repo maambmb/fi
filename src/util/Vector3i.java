@@ -2,7 +2,7 @@ package util;
 
 // an immutable 3D integer vector class
 public class Vector3i {
-
+	
     // the normals to all 6 faces of a cube
     public enum CubeNormal {
         
@@ -13,20 +13,41 @@ public class Vector3i {
         TOP( new Vector3i(0,-1,0) ),
         BOTTOM( new Vector3i(0,1,0) );
 
+    	// the underlying normal unit vector
         public Vector3i vector; 
+        // the two (POSITIVE) orthogonal normals 
+        public CubeNormal firstOrtho;
+        public CubeNormal secondOrtho;
 
+        // initialize the firstOrtho and secondOrtho fields - can't be done in the constructor
+        // as the enum isn't fully defined at that point
+        public static void init() {
+        	for( CubeNormal n : CubeNormal.values() ) {
+        		if( n == FRONT || n == BACK ) {
+        			n.firstOrtho = RIGHT;
+        			n.secondOrtho = BOTTOM;
+        		} else if( n == LEFT || n == RIGHT ) {
+        			n.firstOrtho = BACK;
+        			n.firstOrtho = BOTTOM;
+        		} else {
+        			n.firstOrtho = RIGHT;
+        			n.secondOrtho = BACK;
+        		}
+        	}
+        }
+        
         private CubeNormal( Vector3i v ) {
             this.vector = v;
         }
     }
     
     // zero sized vector
-    public static final Vector3i ZERO = new Vector3i(0,0,0);
+    public static final Vector3i ZERO = new Vector3i();
 
     // the 3 elements of the vector
-    public final int x;
-    public final int y;
-    public final int z;
+    public int x;
+    public int y;
+    public int z;
 
     // a hashcoder utility object for equality calcs
     private HashCoder hashCoder;
@@ -37,6 +58,10 @@ public class Vector3i {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+    
+    public Vector3i() {
+    	this(0,0,0);
     }
 
     // specify the elements via a packed integer. Similar to how a hexcode specifies r,g,b values
@@ -56,7 +81,7 @@ public class Vector3i {
         int z = unaryFn.run( this.z );
         return new Vector3i( x,y,z );
     }
-
+    
     // transform each element of the vector by some binary x,y -> z fn, where the y values come from the other vector arg
     public Vector3i transform( Vector3i v, Lambda.FuncBinary<Integer,Integer,Integer> binaryFn ) {
         int x = binaryFn.run( this.x, v.x );
@@ -104,7 +129,19 @@ public class Vector3i {
     public int min() {
         return Math.min( Math.min( this.x, this.y ), this.z );
     }
-
+    
+    public Vector3i max( int max ) {
+    	return this.transform( x -> Math.max( x, max ) );
+    }
+    
+    public Vector3i min( int min ) {
+    	return this.transform( x -> Math.min( x,  min ) );
+    }
+    
+    public Vector3f toVector3f() {
+    	return new Vector3f( (float) this.x, (float) this.y, (float) this.z );
+    }
+    
     @Override
     public int hashCode() {
         this.hashCoder.reset();

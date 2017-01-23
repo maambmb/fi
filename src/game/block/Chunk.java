@@ -3,15 +3,11 @@ package game.block;
 import game.Config;
 
 import util.Lambda;
-import util.Pool;
-import util.Pool.Poolable;
 import util.Vector3i;
 
 // a container object that holds a fixed-size cube of terrain
 // terrain is rendered in "chunks" as opposed to single cubes
-public class Chunk implements Poolable {
-
-    public static Pool<Chunk> POOL = new Pool<Chunk>( Chunk::new );
+public class Chunk {
 
     // number of blocks in a chunk face
     private static final int DIM_SQ = Config.CHUNK_DIM * Config.CHUNK_DIM;
@@ -37,7 +33,7 @@ public class Chunk implements Poolable {
     // the raw block data
     private Block[] blockData;
 
-    private Chunk() {
+    public Chunk() {
 
         // initialize an array to hold every single block
         this.blockData = new Block[ DIM_CB ];
@@ -60,18 +56,12 @@ public class Chunk implements Poolable {
         }
     }
 
-    @Override
-    public void init() {
+    public void reset() {
         for( int i = 0; i < DIM_CB; i += 1 ) {
             Block b = this.blockData[ i ];
             b.blockType = BlockType.AIR;
             b.illumination.reset();
         }
-    }
-
-    @Override
-    public void destroy() {
-        POOL.reclaim( this );
     }
 
 }
