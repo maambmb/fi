@@ -15,14 +15,14 @@ public class Client {
         this.listenerIds = new ArrayList<Integer>();
     }
 
-	public <T> void addListener( Class<T> cls, Lambda.ActionUnary<T> listener ) {
-		int newId =  this.listener.addListener( cls, listener );
+    public <T> void addListener( Class<T> cls, Lambda.ActionUnary<T> listener ) {
+        int newId =  this.listener.addListener( cls, listener );
         this.listenerIds.add( newId );
-	}
-	
-	public void removeListeners() {
+    }
+
+    public void removeListeners() {
         for( int id : this.listenerIds )
             this.listener.removeListener( id );
-		
-	}
+
+    }
 }

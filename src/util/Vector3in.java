@@ -2,10 +2,10 @@ package util;
 
 // an immutable 3D integer vector class
 public class Vector3in {
-    
+
     // the normals to all 6 faces of a cube
     public enum CubeNormal {
-        
+
         FRONT( new Vector3in(0,0,-1) ),
         BACK( new Vector3in(0,0,1) ),
         LEFT( new Vector3in(-1,0,1) ),
@@ -35,12 +35,12 @@ public class Vector3in {
                 }
             }
         }
-        
+
         private CubeNormal( Vector3in v ) {
             this.vector = v;
         }
     }
-    
+
     public static final Vector3in ZERO = new Vector3in();
     public static final Vector3in MAX_BYTES = new Vector3in( 0xFFFFFF );
 
@@ -51,7 +51,7 @@ public class Vector3in {
 
     // a hashcoder utility object for equality calcs
     private HashCoder hashCoder;
-        
+
     // most straightforward to create a vector (specify the 3 elements)
     public Vector3in( int x, int y, int z ) {
         this.hashCoder = new HashCoder();
@@ -59,7 +59,7 @@ public class Vector3in {
         this.y = y;
         this.z = z;
     }
-    
+
     public Vector3in() {
         this(0,0,0);
     }
@@ -87,17 +87,17 @@ public class Vector3in {
     public Vector3in negate() {
         return new Vector3in( - this.x, - this.y, - this.z );
     }
-    
+
     // divide each element by a scalar val
     public Vector3in divide( int dsor ) {
         return new Vector3in( this.x / dsor, this.y / dsor, this.z / dsor );
     }
-    
+
     // multiply each element by a scalar val
     public Vector3in multiply( int mult ) {
         return new Vector3in( this.x * mult, this.y * mult, this.z * mult );
     }
-    
+
     // modulo each element by a scalar val
     public Vector3in modulo( int mod ) {
         return new Vector3in( this.x % mod, this.y % mod, this.z % mod );
@@ -112,27 +112,27 @@ public class Vector3in {
     public int min() {
         return Math.min( Math.min( this.x, this.y ), this.z );
     }
-    
+
     public Vector3in max( int max ) {
         return new Vector3in( Math.max( this.x, max ), Math.max( this.y, max ), Math.max( this.z, max ) );
     }
-    
+
     public Vector3in min( int min ) {
         return new Vector3in( Math.min( this.x, min ), Math.min( this.y, min ), Math.min( this.z, min ) );
     }
-    
+
     public Vector3in max( Vector3in v ) {
         return new Vector3in( Math.max( this.x, v.x ), Math.max( this.y, v.y ), Math.max( this.z, v.z ) );
     }
-    
+
     public Vector3in min( Vector3in v ) {
         return new Vector3in( Math.min( this.x, v.x ), Math.min( this.y, v.y ), Math.min( this.z, v.z ) );
     }
-    
+
     public Vector3fl toVector3fl() {
         return new Vector3fl( (float) this.x, (float) this.y, (float) this.z );
     }
-    
+
     @Override
     public int hashCode() {
         this.hashCoder.reset();
@@ -149,6 +149,6 @@ public class Vector3in {
         Vector3in other = (Vector3in) obj;
         return x == other.x && y == other.y && z == other.z;
     }
-    
-    
+
+
 }

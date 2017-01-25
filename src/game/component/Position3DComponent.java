@@ -9,7 +9,7 @@ import util.MatrixUtils;
 import util.Vector3fl;
 
 public class Position3DComponent implements Component {
-    
+
     public static class ModifyMessage {
 
         public Vector3fl position;
@@ -49,7 +49,7 @@ public class Position3DComponent implements Component {
         this.matrixBuffer = new Matrix4f();
         this.scale        = 1f;
     }
-    
+
     private void update( Game.UpdateMessage msg ) { }
 
     private void modifyPosition( ModifyMessage msg ) {

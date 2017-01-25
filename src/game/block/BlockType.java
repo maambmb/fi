@@ -35,5 +35,5 @@ public enum BlockType {
         this.lightSource = src;
         this.illumination = illumination;
     }
-    
+
 }

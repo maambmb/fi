@@ -5,7 +5,7 @@ import org.lwjgl.util.vector.Vector4f;
 
 // an immutable 3D float vector class
 public class Vector3fl {
-    
+
     public static final Vector3fl ZERO = new Vector3fl();
 
     // the 3 elements of the vector
@@ -31,7 +31,7 @@ public class Vector3fl {
         this.y = v.y;
         this.z = v.z;
     }
-    
+
     public Vector3fl() {
         this(0,0,0);
     }
@@ -55,17 +55,17 @@ public class Vector3fl {
     public Vector3fl negate() {
         return new Vector3fl( - this.x, - this.y, - this.z );
     }
-    
+
     // divide each element by a scalar val
     public Vector3fl divide( float dsor ) {
         return new Vector3fl( this.x / dsor, this.y / dsor, this.z / dsor );
     }
-    
+
     // multiply each element by a scalar val
     public Vector3fl multiply( float mult ) {
         return new Vector3fl( this.x * mult, this.y * mult, this.z * mult );
     }
-    
+
     // modulo each element by a scalar val
     public Vector3fl modulo( float mod ) {
         return new Vector3fl( this.x % mod, this.y % mod, this.z % mod );
@@ -80,23 +80,23 @@ public class Vector3fl {
     public float min() {
         return Math.min( Math.min( this.x, this.y ), this.z );
     }
-    
+
     public Vector3fl max( float max ) {
         return new Vector3fl( Math.max( this.x, max ), Math.max( this.y, max ), Math.max( this.z, max ) );
     }
-    
+
     public Vector3fl min( float min ) {
         return new Vector3fl( Math.min( this.x, min ), Math.min( this.y, min ), Math.min( this.z, min ) );
     }
-    
+
     public Vector3fl max( Vector3fl v ) {
         return new Vector3fl( Math.max( this.x, v.x ), Math.max( this.y, v.y ), Math.max( this.z, v.z ) );
     }
-    
+
     public Vector3fl min( Vector3fl v ) {
         return new Vector3fl( Math.min( this.x, v.x ), Math.min( this.y, v.y ), Math.min( this.z, v.z ) );
     }
-    
+
     public Vector3f toVector3f() {
         return new Vector3f( this.x, this.y, this.z );
     }
@@ -104,6 +104,6 @@ public class Vector3fl {
     public Vector4f toVector4f() {
         return new Vector4f( this.x, this.y, this.z, 0 );
     }
-    
-    
+
+
 }

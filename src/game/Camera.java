@@ -22,7 +22,7 @@ public class Camera extends Entity {
         super();
         this.matrixBuffer = new Matrix4f();
         this.globalListenerClient.addListener( BlockShader.BlockShaderPrepareMessage.class,
-                (msg) -> this.shaderPrepare( BlockShader.SHADER ) );
+            (msg) -> this.shaderPrepare( BlockShader.SHADER ) );
     }
 
     private void loadProjectionMatrix( Shader s ) {
@@ -41,13 +41,13 @@ public class Camera extends Entity {
         this.matrixBuffer.m33 = 0;
         s.loadProjectionMatrix( this.matrixBuffer );
     }
-	
-	private void loadViewMatrix( Shader s ) {
-		Matrix4f.setIdentity(this.matrixBuffer);
+
+    private void loadViewMatrix( Shader s ) {
+        Matrix4f.setIdentity(this.matrixBuffer);
         MatrixUtils.rotateMatrix( this.matrixBuffer, this.posCmpt.rotation );
         Matrix4f.translate( this.posCmpt.position.negate().toVector3f(), this.matrixBuffer, this.matrixBuffer );
         s.loadViewMatrix( this.matrixBuffer );
-	}
+    }
 
     @Override
     public void addComponents() {

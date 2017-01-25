@@ -7,7 +7,7 @@ public class MatrixUtils {
     public final static Vector3f X_ROTATOR = new Vector3f( 1, 0, 0 );
     public final static Vector3f Y_ROTATOR = new Vector3f( 0, 1, 0 );
     public final static Vector3f Z_ROTATOR = new Vector3f( 0, 0, 1 );
-    
+
     public static void translateMatrix( Matrix4f m, Vector3fl translation ) {
         Matrix4f.translate( translation.toVector3f(), m, m);
     }

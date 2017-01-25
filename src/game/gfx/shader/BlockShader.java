@@ -32,7 +32,7 @@ public class BlockShader extends Shader {
     private BlockShader() {
         super( "glsl/block/vertex.glsl", "glsl/block/fragment.glsl" );
     }
-    
+
     @Override
     protected void setupUniformVariables() {
         for( UniformVariable uv : UVS )
@@ -40,7 +40,7 @@ public class BlockShader extends Shader {
         for( LightSource ls : LightSource.values() )
             this.createUniformVariable( ls.uniformVariable );
     }
-    
+
     @Override
     protected void setupVAOAttributes() {
         for( AttributeVariable av : AVS ) 

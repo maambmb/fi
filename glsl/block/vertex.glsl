@@ -29,7 +29,7 @@ void main(void) {
 
     gl_Position  = uv_projection_matrix * uv_view_matrix * uv_model_tsc_matrix * uv_model_rot_matrix * vec4(position,1.0);
     out_normal   = vec3( av_normal & 0xFF, ( av_normal >> 8 ) & 0xFF, ( av_normal >> 16 ) & 0xFF );
-    out_shaodw   = av_shadow
+    out_shaodw   = av_shadow;
     out_lighting = uv_lighting_ambient;
 
     lighting_global_angle_factor = 0.5f + max( dot( normalize( uv_lighting_global_position ), out_normal ), 0f ) / 2f;

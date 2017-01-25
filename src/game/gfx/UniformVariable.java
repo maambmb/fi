@@ -16,5 +16,5 @@ public enum UniformVariable {
     private UniformVariable( String name ) {
         this.name = name;
     }
-    
+
 }

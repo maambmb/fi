@@ -14,11 +14,11 @@ public class Game {
         public UpdateMessage( long deltaMs ) {
             this.deltaMs = deltaMs;
         }
-        
+
     }
 
-	public void run() {
-        
+    public void run() {
+
         Vector3in.CubeNormal.init();
         Listener.init();
         BlockShader.init();
@@ -27,12 +27,12 @@ public class Game {
         Camera.init();
         Environment.init();
 
-		while( true ) {
-			Listener.GLOBAL_LISTENER.listen( new UpdateMessage( 0 ) );
-			//do the shader draws
-			Listener.GLOBAL_LISTENER.listen( new BlockShader.BlockShaderPrepareMessage() );
-			Listener.GLOBAL_LISTENER.listen( new BlockShader.BlockShaderRenderMessage() );
-		}
-	}
-	
+        while( true ) {
+            Listener.GLOBAL_LISTENER.listen( new UpdateMessage( 0 ) );
+            //do the shader draws
+            Listener.GLOBAL_LISTENER.listen( new BlockShader.BlockShaderPrepareMessage() );
+            Listener.GLOBAL_LISTENER.listen( new BlockShader.BlockShaderRenderMessage() );
+        }
+    }
+
 }
