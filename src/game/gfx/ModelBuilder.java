@@ -3,8 +3,6 @@ package game.gfx;
 import java.util.ArrayList;
 import java.util.List;
 
-import game.Config;
-import util.Packer;
 import util.Vector3f;
 
 public class ModelBuilder {
@@ -16,38 +14,44 @@ public class ModelBuilder {
 	// the index VBO buffer
 	private List<Integer> indices;
 	// the extra (non-position) data buffer (contains all extra data in the form: eda0,edb0,edc0,eda1,edb1,edc1 etc.
-	private List<Integer> extraData;
+	private List<Integer> attributeData;
 	// the position data buffer
-	private List<Float> position;
+	private List<Float> positions;
 	// a buffer used to ferry one type of extra data into vram
-	private List<Integer> singleExtraData;
+	private List<Integer> slicedAttributeData;
 	// count of the number of vertices
 	private int index;
 	
 	// buffer the position and extra data of a single vertex
-	public Packer extraDataVertexBuffer;
-	public Vector3f positionVertexBuffer;
+	private int[] attributeDataBuffer;
+	public Vector3f positionBuffer;
     
     public ModelBuilder() {
     	// the extra data buffer must contain room for all non-pos bytes
-    	this.extraDataVertexBuffer = new Packer( Config.VBO_NONPOS_BYTES );
-    	this.positionVertexBuffer = new Vector3f();
-    	this.extraData = new ArrayList<Integer>();
-    	this.position = new ArrayList<Float>();
+    	this.attributeDataBuffer = new int[ AttributeVariable.values().length ];
+    	this.positionBuffer = new Vector3f();
+
+    	this.attributeData = new ArrayList<Integer>();
+    	this.positions = new ArrayList<Float>();
+
     	this.indices = new ArrayList<Integer>();
-    	this.singleExtraData = new ArrayList<Integer>();
+    	this.slicedAttributeData = new ArrayList<Integer>();
     	this.index = 0;
+    }
+    
+    public void addAttributeData( AttributeVariable iv, int val ) {
+    	this.attributeDataBuffer[ iv.ordinal() ] = val;
     }
     
     // commit a single vertex to the builder by adding the position and extra data to the buffers
     public void addVertex() {
-    	this.position.add( this.positionVertexBuffer.x );
-    	this.position.add( this.positionVertexBuffer.y );
-    	this.position.add( this.positionVertexBuffer.z );
-    	for( int i : this.extraDataVertexBuffer.packed )
-    		this.extraData.add( i );
-    	// wipe the extra data buffer in anticipation of the next vertex
-    	this.extraDataVertexBuffer.reset();
+    	this.positions.add( this.positionBuffer.x );
+    	this.positions.add( this.positionBuffer.y );
+    	this.positions.add( this.positionBuffer.z );
+    	for( int i = 0; i < this.attributeDataBuffer.length; i += 1) {
+    		this.attributeData.add( this.attributeDataBuffer[i] );
+    		this.attributeDataBuffer[i] = 0;
+    	}
     }
 
     // commit a quad to the builder (run after 4 vertices have been committed )
@@ -58,35 +62,23 @@ public class ModelBuilder {
     	this.index += 4;
     }
     
-    // wipe the state of the builder
-    private void reset() {
-    	this.extraDataVertexBuffer.reset();
-    	this.extraData.clear();
-    	this.position.clear();
-    	this.indices.clear();
-    	this.singleExtraData.clear();
-    	this.index = 0;
-    }
-    
     // create a model from the builder by ferrying the data into VRAM using OpenGL
     public Model commit() {
     	
     	Model model = new Model( this.index );
     	model.addIndexData( this.indices );
-    	model.addPositionData( this.position );
-    	
-    	for( int i = 0; i < Config.VBO_NONPOS_INTS; i += 1 ) {
-			// for each type of extra data, skip along the entire extra data buffer, pulling out relevant values
-    		// and putting them into a buffer before ferrying to VRAM
-    		for( int n = 0; n < this.index; i += 1 )
-    			this.singleExtraData.add( this.extraData.get( Config.VBO_NONPOS_INTS * n + i) );
-    		model.addExtraData( i, this.singleExtraData );
-    		// clear the buffer in anticipation of the next bit of extra data
-			this.singleExtraData.clear();
+    	model.addPositionData( this.positions );
+    	for( AttributeVariable iv : AttributeVariable.values() ) {
+    		for( int i = 0; i < this.index; i += 1 )
+    			this.slicedAttributeData.add( this.attributeData.get( iv.ordinal() + AttributeVariable.values().length * i) );
+    		model.addAttributeData( iv, this.slicedAttributeData );
+    		this.slicedAttributeData.clear();
     	}
+    	
+    	this.indices.clear();
+    	this.positions.clear();
+    	this.attributeData.clear();
 
-    	// wipe the builder in anticipation of the next model
-    	this.reset();
     	return model;
     }
 

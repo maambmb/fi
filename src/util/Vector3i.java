@@ -43,6 +43,7 @@ public class Vector3i {
     
     // zero sized vector
     public static final Vector3i ZERO = new Vector3i();
+    public static final Vector3i MAX_BYTES = new Vector3i( 0xFFFFFF );
 
     // the 3 elements of the vector
     public int x;
@@ -65,13 +66,22 @@ public class Vector3i {
     }
 
     // specify the elements via a packed integer. Similar to how a hexcode specifies r,g,b values
-    public Vector3i( int packed ) {
+    public Vector3i( int packedBytes ) {
         this.hashCoder = new HashCoder();
-        this.x = 0xFF & packed;
-        packed >>= 8;
-        this.y = 0xFF & packed;
-        packed >>= 8;
-        this.z = 0xFF & packed;
+        this.x = 0xFF & packedBytes;
+        packedBytes >>= 8;
+        this.y = 0xFF & packedBytes;
+        packedBytes >>= 8;
+        this.z = 0xFF & packedBytes;
+    }
+    
+    public int packBytes() {
+    	int result = 0;
+    	result |= this.z;
+    	result <<= 8;
+    	result |= this.y;
+    	result <<= 8;
+    	return result | this.x;
     }
 
     // transform each element of the vector by some unary x -> y fn (returns a new vector)
@@ -136,6 +146,14 @@ public class Vector3i {
     
     public Vector3i min( int min ) {
     	return this.transform( x -> Math.min( x,  min ) );
+    }
+    
+    public Vector3i max( Vector3i v ) {
+    	return this.transform( v, (x,y) -> Math.max(x, y) );
+    }
+    
+    public Vector3i min( Vector3i v ) {
+    	return this.transform( v, (x,y) -> Math.min(x, y) );
     }
     
     public Vector3f toVector3f() {

@@ -6,24 +6,20 @@ import util.Vector3i;
 public enum BlockType {
 
     AIR( 
-        null,
         BlockClass.ETHER,
-        new Illumination()
+        LightSource.CONSTANT,
+        Vector3i.ZERO
     ),
     GRAVEL( 
-        new Vector3i( 1,0,0 ), 
         BlockClass.SOLID,
-        new Illumination()
+        LightSource.CONSTANT,
+        Vector3i.ZERO
     ),
     GLOWSTONE(
-        new Vector3i( 2,0,0 ), 
         BlockClass.SOLID,
-        new Illumination( LightSource.CONSTANT_SHORT, new Vector3i( 0xFFFFFF ) )
+        LightSource.CONSTANT,
+        new Vector3i(255,255,255)
     );
-
-    // 2D coordinates of texture on the texture atlas
-    public Vector3i texCoords;
-
     // the "class" of a block. Block classes have different behaviour with respect to:
     // 1) can they let light through
     // 2) can they can be stood on
@@ -31,11 +27,12 @@ public enum BlockType {
     public BlockClass blockClass;
 
     // describes the material's light emissions
-    public Illumination illumination;
+    public LightSource lightSource;
+    public Vector3i illumination;
 
-    private BlockType( Vector3i texCoords, BlockClass material, Illumination illumination ) {
-        this.texCoords = texCoords;
+    private BlockType( BlockClass material, LightSource src, Vector3i illumination ) {
         this.blockClass = material;
+        this.lightSource = src;
         this.illumination = illumination;
     }
     

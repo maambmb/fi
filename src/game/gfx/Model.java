@@ -59,7 +59,7 @@ public class Model {
 		this.vboIds.add( vboId );
 	}
 	
-	public void addExtraData( int position, Collection<Integer> intData ) {
+	public void addAttributeData( AttributeVariable iv, Collection<Integer> intData ) {
 		this.bind();
 
 		IntBuffer buf = BufferUtils.createIntBuffer( this.vertexCount );
@@ -70,7 +70,7 @@ public class Model {
 		int vboId = GL15.glGenBuffers();
 		GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
 		GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
-		GL20.glVertexAttribPointer( position + 1, 1, GL11.GL_INT, false, 0, 0);
+		GL20.glVertexAttribPointer( iv.ordinal() + 1, 1, GL11.GL_INT, false, 0, 0);
 		this.vboIds.add( vboId );
 	}
 
@@ -86,7 +86,7 @@ public class Model {
 		this.bind();
 
 		GL20.glEnableVertexAttribArray( 0 );
-		for( int i = 0; i < Config.VBO_NONPOS_BYTES; i += 1 )
+		for( int i = 0; i < Config.BLOCK_VBO_NONPOS_BYTES; i += 1 )
 			GL20.glEnableVertexAttribArray( i + 1 );
 
 		GL11.glDrawElements( GL11.GL_TRIANGLES, this.vertexCount, GL11.GL_UNSIGNED_INT, 0 );

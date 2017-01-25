@@ -60,7 +60,7 @@ public class Chunk {
         for( int i = 0; i < DIM_CB; i += 1 ) {
             Block b = this.blockData[ i ];
             b.blockType = BlockType.AIR;
-            b.illumination.reset();
+            b.resetIllumination();
         }
     }
 

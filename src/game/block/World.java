@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import game.Config;
+import game.gfx.AttributeVariable;
 import game.gfx.ModelBuilder;
 import util.Vector3i;
 
@@ -93,13 +94,13 @@ class World {
         // natural illumination
         for( Vector3i mapCoords : this.dirtyChunks ) {
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> { 
-                b.illumination.set( b.blockType.illumination );
+            	b.resetIllumination();
                 // if a block has global lighting, set the block directly above it to have global illumination
                 if( b.globalLighting ) {
                     Vector3i abovePos = mapCoords
                     	.multiply( Config.CHUNK_DIM )
                     	.add( v.add( Vector3i.CubeNormal.TOP.vector ) );
-                    this.getBlock( abovePos ).illumination.addGlobal();
+                    this.getBlock( abovePos ).addGlobalIllumination();
                 }
             });
         }
@@ -114,7 +115,7 @@ class World {
 
             // add only the naturally illuminating blocks into the buffer
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> {
-                if( b.illumination.isLight() )
+                if( b.isLit() )
                     propagated.add( mapCoords.multiply( Config.CHUNK_DIM ).add( v ) );
             });
 
@@ -128,7 +129,7 @@ class World {
                         Vector3i offsetPos = pos.add( normal.vector );
                         Block other = this.getBlock( offsetPos );
                         if( !other.blockType.blockClass.opaque ) {
-                            other.illumination.propagate( b.illumination );
+                        	other.propagate( b );
                             // if we do propagate make sure we add the propagated block to the buffer
                             toPropagate.add( offsetPos );
                         }
@@ -171,7 +172,7 @@ class World {
                     	boolean vertexUseSecondOrtho = ( i & 0x02 ) > 0;
 
                     	// calculate the position of the vertex and transform to a floating point vector
-						this.modelBuilder.positionVertexBuffer = absCoords.add( normal.vector.max(0) )
+						this.modelBuilder.positionBuffer = absCoords.add( normal.vector.max(0) )
                     		.add( vertexUseFirstOrtho ? normal.firstOrtho.vector : Vector3i.ZERO )
                     		.add( vertexUseSecondOrtho ? normal.secondOrtho.vector : Vector3i.ZERO )
                     		.toVector3f();
@@ -184,7 +185,7 @@ class World {
                     	// from the block itself and its (up to 3) planar neighbors
                     	// start by adding the block's illu values in
                     	for( LightSource src : LightSource.values() )
-                    		this.lightBlender[ src.ordinal() ] = b.illumination.get( src );
+                    		this.lightBlender[ src.ordinal() ] = b.getIllumination( src );
                     	
                     	// keep track of the number of contributions to the light blending
                     	// for use in averaging later
@@ -207,26 +208,21 @@ class World {
                     		else {
 								for( LightSource src : LightSource.values() ) {
 									Vector3i curr = this.lightBlender[ src.ordinal() ];
-									this.lightBlender[ src.ordinal() ] = curr.add( planarNeighbor.illumination.get( src ) );
+									this.lightBlender[ src.ordinal() ] = curr.add( planarNeighbor.getIllumination( src ) );
 									blendCount += 1;
 								}
                     		}
                     	}
                     	
-                    	// add non lighting extra data: normal, shadow count, block type and block class
-                    	this.modelBuilder.extraDataVertexBuffer.addByte( 0, normal.ordinal() );
-                    	this.modelBuilder.extraDataVertexBuffer.addByte( 1, shadowCount );
-                    	this.modelBuilder.extraDataVertexBuffer.addWord( 2, b.blockType.ordinal() );
-                    	this.modelBuilder.extraDataVertexBuffer.addByte( 4, b.blockType.blockClass.ordinal() );
+                    	this.modelBuilder.addAttributeData( AttributeVariable.NORMAL, normal.ordinal() );
+                    	this.modelBuilder.addAttributeData( AttributeVariable.SHADOW, shadowCount );
+                    	this.modelBuilder.addAttributeData( AttributeVariable.BLOCK_TYPE, b.blockType.ordinal() );
                     	
                     	// now add in all light values into the extra data
                     	for( LightSource ls : LightSource.values() ) {
-                    		int base = Config.VBO_NONPOS_NONLIGHT_BYTES + ls.ordinal() * 3;
                     		// make sure we average the blended light
                     		Vector3i lightVals = this.lightBlender[ ls.ordinal() ].divide( blendCount );
-                    		this.modelBuilder.extraDataVertexBuffer.addByte( base, lightVals.x );
-                    		this.modelBuilder.extraDataVertexBuffer.addByte( base + 1, lightVals.y );
-                    		this.modelBuilder.extraDataVertexBuffer.addByte( base + 2, lightVals.z );
+                    		this.modelBuilder.addAttributeData( ls.attributeVariable, lightVals.packBytes() );
                     	}
                     	
                     	// save the vertex

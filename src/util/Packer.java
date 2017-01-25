@@ -42,7 +42,7 @@ public class Packer {
     }
 
     // add n consecutive bytes starting at an arbitrary position
-    private void addN( int pos, int n, int val ) {
+    public void addN( int pos, int n, int val ) {
         for( int i = 0; i < n; i += 1 ) {
             this.addByte( pos + i, val & BYTE_MASK );
             val >>= 8;
@@ -70,7 +70,7 @@ public class Packer {
     } 
 
     // get n conseuctive bytes
-    private int getN( int pos, int n ) {
+    public int getN( int pos, int n ) {
         int result = 0;
         int shifts = 0;
         // loop n times, each time increasing the amount we bit shift by increments of 8
