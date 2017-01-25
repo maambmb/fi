@@ -26,19 +26,19 @@ public class Camera extends Entity {
     }
 
     private void loadProjectionMatrix( Shader s ) {
-		Matrix4f.setIdentity(this.matrixBuffer);
+        Matrix4f.setIdentity(this.matrixBuffer);
 
-		float aspectRatio    = Config.GAME_WIDTH / (float)Config.GAME_HEIGHT;
-		float yScale         = (float) (aspectRatio / Math.tan( Math.toRadians( Config.FIELD_OF_VIEW )));
-		float xScale         = yScale / aspectRatio;
-		float frustrumLength = Config.FAR_PLANE - Config.NEAR_PLANE;
+        float aspectRatio    = Config.GAME_WIDTH / (float)Config.GAME_HEIGHT;
+        float yScale         = (float) (aspectRatio / Math.tan( Math.toRadians( Config.FIELD_OF_VIEW )));
+        float xScale         = yScale / aspectRatio;
+        float frustrumLength = Config.FAR_PLANE - Config.NEAR_PLANE;
 
-		this.matrixBuffer.m00 = xScale;
-		this.matrixBuffer.m11 = yScale;
-		this.matrixBuffer.m22 = - (Config.FAR_PLANE + Config.NEAR_PLANE) / frustrumLength;
-		this.matrixBuffer.m23 = -1;
-		this.matrixBuffer.m32 = -2 * Config.NEAR_PLANE * Config.FAR_PLANE / frustrumLength;
-		this.matrixBuffer.m33 = 0;
+        this.matrixBuffer.m00 = xScale;
+        this.matrixBuffer.m11 = yScale;
+        this.matrixBuffer.m22 = - (Config.FAR_PLANE + Config.NEAR_PLANE) / frustrumLength;
+        this.matrixBuffer.m23 = -1;
+        this.matrixBuffer.m32 = -2 * Config.NEAR_PLANE * Config.FAR_PLANE / frustrumLength;
+        this.matrixBuffer.m33 = 0;
         s.loadProjectionMatrix( this.matrixBuffer );
     }
 	
