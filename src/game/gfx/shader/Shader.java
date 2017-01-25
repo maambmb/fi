@@ -1,26 +1,28 @@
 package game.gfx.shader;
 
 import java.nio.FloatBuffer;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Matrix4f;
 
+import game.gfx.AttributeVariable;
+import game.gfx.UniformVariable;
 import util.FileUtils;
-import util.Vector3f;
-import util.Vector3i;
+import util.Vector3fl;
+import util.Vector3in;
 
-public class Shader {
+public abstract class Shader {
 
 	protected int programId;
 	private int vertexId;
 	private int fragmentId;
 	private final FloatBuffer matrixFloatBuffer;
 	
-	private int viewMatrixId;
-	private int projectionMatrixId;
-	private int modelMatrixId;
+    private Map<UniformVariable,Integer> uniformLookup;
 	
 	public Shader() {
 		this.programId = GL20.glCreateProgram();
@@ -28,6 +30,7 @@ public class Shader {
 	}
 	
 	public void setup( String vertex, String fragment ) {
+        this.uniformLookup = new HashMap<UniformVariable,Integer>();
 		// create a vertex and fragment shader
 		this.vertexId = GL20.glCreateShader( GL20.GL_VERTEX_SHADER );
 		this.fragmentId = GL20.glCreateShader( GL20.GL_FRAGMENT_SHADER );
@@ -42,6 +45,7 @@ public class Shader {
 		if( GL20.glGetShaderi( this.fragmentId, GL20.GL_COMPILE_STATUS ) == GL11.GL_FALSE )
         	throw new RuntimeException( String.format( "shader: '%s' couldn't be compiled", fragment ) );
 		// attach and link the shaders to the shader program
+		GL20.glBindAttribLocation( this.programId, 0, "av_position" );
 		setupVAOAttributes();
 		GL20.glAttachShader( this.programId, this.vertexId );
 		GL20.glAttachShader( this.programId, this.fragmentId );
@@ -50,25 +54,27 @@ public class Shader {
 		// bind to the program and set up the uniform variables
 		this.use();
 		setupUniformVariables();
+
 	}
 	
 	// allocate a new uniform variable for the shader program
-	protected int createUniformVariable( String var ) {
-		return GL20.glGetUniformLocation( this.programId, var );
+	protected void createUniformVariable( UniformVariable uv ) {
+		int uvId = GL20.glGetUniformLocation( this.programId, uv.name );
+        this.uniformLookup.put( uv, uvId );
 	}
 
 	// setup a new attribute list variable for the shader program at specified position
-	protected void createAttributeListVariable( int position, String var ) {
-		GL20.glBindAttribLocation( this.programId, position, var );
+	protected void createAttributeVariable( AttributeVariable av ) {
+		GL20.glBindAttribLocation( this.programId, av.ordinal() + 1, av.name );
 	}
 
 	// load a 3d float vector into a uniform variable position
-	protected void loadVector3f( int pos, Vector3f v ) {
+	protected void loadVector3f( int pos, Vector3fl v ) {
 		GL20.glUniform3f( pos, v.x, v.y, v.z);
 	}
 
 	// load a 3d int vector into a uniform variable position
-	protected void loadVector3i( int pos, Vector3i v ) {
+	protected void loadVector3i( int pos, Vector3in v ) {
 		GL20.glUniform3i( pos, v.x, v.y, v.z);
 	}
 	
@@ -90,31 +96,39 @@ public class Shader {
 	}
 	
 	// setup all VAO variables
-	protected void setupVAOAttributes() {
-		this.createAttributeListVariable( 0, "ao_position" );
-	}
+	protected abstract void setupVAOAttributes();
 
 	// setup all uniform variables
-	protected void setupUniformVariables() {
-		this.viewMatrixId = this.createUniformVariable( "uv_view_mat" );
-		this.projectionMatrixId = this.createUniformVariable( "uv_proj_mat" );
-		this.modelMatrixId = this.createUniformVariable( "uv_mod_mat" );
-	}
+	protected abstract void setupUniformVariables();
 	
-	// load the view matrix
 	public void loadViewMatrix( Matrix4f mat ) {
-		this.loadMatrix4f( this.viewMatrixId, mat );
+        int uvId = this.uniformLookup.get( UniformVariable.VIEW_MATRIX );
+		this.loadMatrix4f( uvId, mat );
 	}
 	
-	// load the projection matrix
 	public void loadProjectionMatrix( Matrix4f mat ) {
-		this.loadMatrix4f( this.projectionMatrixId, mat );
+        int uvId = this.uniformLookup.get( UniformVariable.PROJECTION_MATRIX );
+		this.loadMatrix4f( uvId, mat );
 	}
 	
-	// load the model matrix
-	public void loadModelMatrix( Matrix4f mat ) {
-		this.loadMatrix4f( this.modelMatrixId, mat );
+	public void loadModelRotateMatrix( Matrix4f mat ) {
+        int uvId = this.uniformLookup.get( UniformVariable.MODEL_ROTATE_MATRIX );
+		this.loadMatrix4f( uvId, mat );
 	}
-	
+
+	public void loadModelTranslateScaleMatrix( Matrix4f mat ) {
+        int uvId = this.uniformLookup.get( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX );
+		this.loadMatrix4f( uvId, mat );
+	}
+
+    public void loadLightingConstant( Vector3in v ) {
+        int uvId = this.uniformLookup.get( UniformVariable.LIGHTING_CONSTANT );
+        this.loadVector3i( uvId, v );
+    }
+
+    public void loadLightingGlobal( Vector3in v ) {
+        int uvId = this.uniformLookup.get( UniformVariable.LIGHTING_GLOBAL );
+        this.loadVector3i( uvId, v );
+    }
 	
 }

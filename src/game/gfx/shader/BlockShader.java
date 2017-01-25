@@ -1,45 +1,44 @@
 package game.gfx.shader;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.lwjgl.opengl.GL20;
-
-import game.Config;
 import game.block.LightSource;
-import util.Vector3i;
+import game.gfx.AttributeVariable;
+import game.gfx.UniformVariable;
 
 public class BlockShader extends Shader {
 
-	// map from light source to uniform variable position
-	protected Map<LightSource,Integer> lightModulatorMap;
+    public static BlockShader SHADER;
+    public static void init() {
+        SHADER = new BlockShader();
+    }
+
+    public class BlockShaderPrepareMessage { }
+    public class BlockShaderRenderMessage { }
+
+    private final String VERTEX_PATH   = "";
+    private final String FRAGMENT_PATH = "";
 	
-	public BlockShader() {
+	private BlockShader() {
 		super();
-		this.setup( "", "" );
-		this.lightModulatorMap = new HashMap<LightSource,Integer>();
+		this.setup( VERTEX_PATH, FRAGMENT_PATH );
 	}
 	
+    @Override
 	protected void setupUniformVariables() {
-		super.setupUniformVariables();
-		// loop through all light sources and create a uniform variable for each light source's modulator
-		for( LightSource ls : LightSource.values() ) {
-			String name = String.format( "uv_light_%s", ls.name().toLowerCase() );
-			this.lightModulatorMap.put( ls, this.createUniformVariable( name ) );
-		}
+        this.createUniformVariable( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX );
+        this.createUniformVariable( UniformVariable.MODEL_ROTATE_MATRIX );
+        this.createUniformVariable( UniformVariable.VIEW_MATRIX );
+        this.createUniformVariable( UniformVariable.PROJECTION_MATRIX );
+		for( LightSource ls : LightSource.values() )
+            this.createUniformVariable( ls.uniformVariable );
 	}
 	
-	public void setLightModulator( LightSource src, Vector3i v ) {
-		// set a modulator for a light source
-		int pos = this.lightModulatorMap.get( src );
-		this.loadVector3i( pos, v );
-	}
-	
+    @Override
 	protected void setupVAOAttributes() {
-		super.setupVAOAttributes();
-		// loop through all extra data ints, and set them up as attribute list variables
-		for( int i = 0; i < Config.BLOCK_VBO_NONPOS_INTS; i += 1 )
-			GL20.glBindAttribLocation( this.programId, i + 1, String.format( "ao_extra_%i", i ) );
+        this.createAttributeVariable( AttributeVariable.NORMAL );
+        this.createAttributeVariable( AttributeVariable.SHADOW );
+        this.createAttributeVariable( AttributeVariable.BLOCK_TYPE );
+		for( LightSource ls : LightSource.values() )
+            this.createAttributeVariable( ls.attributeVariable );
 	}
 
 

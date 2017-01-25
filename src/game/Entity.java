@@ -1,51 +1,44 @@
 package game;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import game.component.Component;
+import game.listener.Client;
+import game.listener.Listener;
 
 public abstract class Entity {
 	  
 	// message listener for components specific to just this entity
 	public Listener listener;
+    public Client globalListenerClient;
 	// *all* components registered to this entity
 	private List<Component> componentList;
-	// public + accessible components registered to this entity
-	private Map<Class<? extends Component>,Component> componentMap;
 	
 	protected abstract void addComponents();
 	
-	private Entity() {
-		this.listener = new Listener();
-		this.componentList = new ArrayList<Component>();
-		this.componentMap = new HashMap<Class<? extends Component>,Component>();
+	protected Entity() {
+		this.listener             = new Listener();
+        this.globalListenerClient = Listener.GLOBAL_LISTENER.mkClient();
+		this.componentList        = new ArrayList<Component>();
 
 		this.addComponents();
 		for( Component c : this.componentList )
 			c.setup( this );
+		for( Component c : this.componentList )
+            this.listener.listen( c );
 	}
 	
 	protected void addComponent( Component c ) {
 		this.componentList.add( c );
 	}
 	
-	protected <T extends Component> void addComponent( Class<T> cls, T cmpt ) {
-		this.addComponent( cmpt );
-		this.componentMap.put( cls, cmpt );
-	}
-	
-	public <T extends Component> T getComponent( Class<T> cls ) {
-		Component cmpt = this.componentMap.get( cls );
-		return cmpt == null ? null : cls.cast( cmpt );
-	}
+    public <T> void listen( T msg ) {
+        this.listener.listen( msg );
+    }
 		
 	public void destroy() {
-        // destroy all components by looping through map
-		for( Component c : this.componentList )
-			c.destroy();
+        this.globalListenerClient.removeListeners();
 	}
 	
 }

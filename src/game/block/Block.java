@@ -1,7 +1,7 @@
 package game.block;
 
 import game.Config;
-import util.Vector3i;
+import util.Vector3in;
 
 // representing a block/cube of terrain
 public class Block {
@@ -21,28 +21,28 @@ public class Block {
     
     public void resetIllumination() {
     	for( LightSource src : LightSource.values() )
-    		this.setIllumination( src, Vector3i.ZERO );
+    		this.setIllumination( src, Vector3in.ZERO );
     	this.setIllumination( blockType.lightSource, blockType.illumination );
     }
     
-    public Vector3i getIllumination( LightSource src ) {
-    	return new Vector3i( this.illumination[ src.ordinal() ] );
+    public Vector3in getIllumination( LightSource src ) {
+    	return new Vector3in( this.illumination[ src.ordinal() ] );
     }
     
-    private void setIllumination( LightSource src, Vector3i v ) {
+    private void setIllumination( LightSource src, Vector3in v ) {
     	this.illumination[ src.ordinal() ] = v.packBytes();
     }
     
     public void propagate( Block b ) {
     	for( LightSource src : LightSource.values() ) {
-			Vector3i curr = this.getIllumination( src );
-			Vector3i other = b.getIllumination( src ).add( - Config.LIGHT_DROPOFF );
+			Vector3in curr = this.getIllumination( src );
+			Vector3in other = b.getIllumination( src ).add( - Config.LIGHT_DROPOFF );
 			this.setIllumination( src, curr.max( other ) );
     	}
     }
     
     public void addGlobalIllumination() {
-    	this.setIllumination( LightSource.GLOBAL, Vector3i.MAX_BYTES );
+    	this.setIllumination( LightSource.GLOBAL, Vector3in.MAX_BYTES );
     }
     
     public boolean isLit() {

@@ -3,7 +3,7 @@ package game.gfx;
 import java.util.ArrayList;
 import java.util.List;
 
-import util.Vector3f;
+import util.Vector3fl;
 
 public class ModelBuilder {
 	
@@ -24,12 +24,12 @@ public class ModelBuilder {
 	
 	// buffer the position and extra data of a single vertex
 	private int[] attributeDataBuffer;
-	public Vector3f positionBuffer;
+	public Vector3fl positionBuffer;
     
     public ModelBuilder() {
     	// the extra data buffer must contain room for all non-pos bytes
     	this.attributeDataBuffer = new int[ AttributeVariable.values().length ];
-    	this.positionBuffer = new Vector3f();
+    	this.positionBuffer = new Vector3fl();
 
     	this.attributeData = new ArrayList<Integer>();
     	this.positions = new ArrayList<Float>();

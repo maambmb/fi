@@ -8,55 +8,56 @@ import java.util.Set;
 import game.Config;
 import game.gfx.AttributeVariable;
 import game.gfx.ModelBuilder;
-import util.Vector3i;
+
+import util.Vector3in;
 
 // holds the chunks that comprise of the visible (and beyond) game world
 // is the main interface/access for getting/setting blocks
 // allows recomputation of lighting/models upon modification in a relatively efficient batched manner
-class World {
+public class World {
 
     // (sparse) hashmap of all active chunks
-    private Map<Vector3i,Chunk> chunkMap;
+    private Map<Vector3in,Chunk> chunkMap;
     // collection of chunks that have been modified and need to have their lighting and models recalced
-    private Set<Vector3i> dirtyChunks;
+    private Set<Vector3in> dirtyChunks;
     // collection of chunks that need to recompute their lighting
     // not because the chunks are dirty, but because we expect their lighting to overflow onto nearby
     // dirty chunks that themselves need recalcs ( should border all dirty chunks )
-    private Set<Vector3i> requisiteChunks;
+    private Set<Vector3in> requisiteChunks;
     // utility object to build chunks into single VAO backed models
     private ModelBuilder modelBuilder; 
     // a buffer to store the sums of illuminations from multiple different blocks
     // for the purposes of averaging for smooth lighting
-    private Vector3i[] lightBlender;
+    private Vector3in[] lightBlender;
 
     public World() {
     	this.modelBuilder    = new ModelBuilder();
-        this.chunkMap        = new HashMap<Vector3i,Chunk>();
-        this.dirtyChunks     = new HashSet<Vector3i>();
-        this.requisiteChunks = new HashSet<Vector3i>();
-        this.lightBlender    = new Vector3i[ LightSource.values().length ];
+        this.chunkMap        = new HashMap<Vector3in,Chunk>();
+        this.dirtyChunks     = new HashSet<Vector3in>();
+        this.requisiteChunks = new HashSet<Vector3in>();
+        this.lightBlender    = new Vector3in[ LightSource.values().length ];
     }
 
     // get chunks for a given set of chunk coords (i.e. (0,0,0) and (0,0,1) return different chunks)
     // create a fresh chunk if it doesn't exist
-    private Chunk getChunk( Vector3i mapCoords ) {
+    private Chunk getChunk( Vector3in mapCoords ) {
         if( !this.chunkMap.containsKey( mapCoords ) )
-            this.chunkMap.put( mapCoords, new Chunk() );
+            this.chunkMap.put( mapCoords, new Chunk( mapCoords.multiply( Config.CHUNK_DIM ) ) );
         return this.chunkMap.get( mapCoords );
     }
 
     // get a block directly from the world
-    public Block getBlock( Vector3i absCoords ) {
+    public Block getBlock( Vector3in absCoords ) {
         // transform the coords by dividing by chunk dims to get chunk coordinates
-        Vector3i mapCoords = absCoords.divide( Config.CHUNK_DIM );
+        Vector3in mapCoords = absCoords.divide( Config.CHUNK_DIM );
         Chunk chunk = this.getChunk( mapCoords );
         // doing the modulo returns the block coords for the returned chunk
         return chunk.getBlock( absCoords.modulo( Config.CHUNK_DIM ) );
     }
 
-    public void setBlock( Vector3i absCoords, BlockType bt, boolean globalLighting ) {
+    public void setBlock( Vector3in absCoords, BlockType bt, boolean globalLighting ) {
         // calculate the chunk coordinates by dividing through by chunk dims
-        Vector3i mapCoords = absCoords.divide( Config.CHUNK_DIM );
+        Vector3in mapCoords = absCoords.divide( Config.CHUNK_DIM );
         // by changing a chunk, we potentially have modified the light values of all 8
         // neighbouring chunks. We must set all 9 chunks to dirty. We need the further
         // 37 surrounding chunks (requisite) for the recalcs
@@ -64,7 +65,7 @@ class World {
             for( int j = -2; j <= -2; j +=1 ) {
                 for( int k = -2; k <= -2; k +=1 ) {
 
-                    Vector3i v = mapCoords.add( new Vector3i( i,j,k ) );
+                    Vector3in v = mapCoords.add( new Vector3in( i,j,k ) );
 
                     // the inner 9 chunks are dirty
                     if( v.max() <= 1 && v.min() >= -1 ) {
@@ -92,41 +93,37 @@ class World {
         // dirty chunks need to be recalculated from scratch
         // so we clear all illumination values and set them to the block type's
         // natural illumination
-        for( Vector3i mapCoords : this.dirtyChunks ) {
+        for( Vector3in mapCoords : this.dirtyChunks ) {
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> { 
             	b.resetIllumination();
                 // if a block has global lighting, set the block directly above it to have global illumination
-                if( b.globalLighting ) {
-                    Vector3i abovePos = mapCoords
-                    	.multiply( Config.CHUNK_DIM )
-                    	.add( v.add( Vector3i.CubeNormal.TOP.vector ) );
-                    this.getBlock( abovePos ).addGlobalIllumination();
-                }
+                if( b.globalLighting )
+                    this.getBlock( v.add( Vector3in.CubeNormal.TOP.vector ) ).addGlobalIllumination();
             });
         }
 
         // buffer of blocks that we need to propagate light from
-        Set<Vector3i> propagated  = new HashSet<Vector3i>();
+        Set<Vector3in> propagated  = new HashSet<Vector3in>();
         // buffer to store updates ot propagated (can't modify a collection while we iterate)
-        Set<Vector3i> toPropagate = new HashSet<Vector3i>();
+        Set<Vector3in> toPropagate = new HashSet<Vector3in>();
 
         // break the propagation up into chunk-sized bites so the buffers never grow super large
-        for( Vector3i mapCoords : this.requisiteChunks ) {
+        for( Vector3in mapCoords : this.requisiteChunks ) {
 
             // add only the naturally illuminating blocks into the buffer
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> {
                 if( b.isLit() )
-                    propagated.add( mapCoords.multiply( Config.CHUNK_DIM ).add( v ) );
+                    propagated.add( v );
             });
 
             // iterate the number of times light is allowed to jump
             for( int n = 0; n < Config.LIGHT_JUMPS; n += 1 ) {
                 // for each of the 6 cube normals, propagate light outward
                 // but only if the other block isn't opaque - otherwise the light is blocked
-                for( Vector3i pos : propagated ) {
+                for( Vector3in pos : propagated ) {
                     Block b = this.getBlock( pos );
-                    for( Vector3i.CubeNormal normal : Vector3i.CubeNormal.values() ) {
-                        Vector3i offsetPos = pos.add( normal.vector );
+                    for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
+                        Vector3in offsetPos = pos.add( normal.vector );
                         Block other = this.getBlock( offsetPos );
                         if( !other.blockType.blockClass.opaque ) {
                         	other.propagate( b );
@@ -150,17 +147,16 @@ class World {
     private void refreshModels() {
     	
     	// rebuild only the models of dirty chunks
-        for( Vector3i mapCoords: this.dirtyChunks ) {
-            this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> {
-            	// iterate through each chunk in absolute coordinate terms
-                Vector3i absCoords = mapCoords.multiply( Config.CHUNK_DIM ).add( v );
+        for( Vector3in mapCoords: this.dirtyChunks ) {
+            Chunk chunk = this.chunkMap.get( mapCoords );
+            chunk.iterateBlocks( (v,b) -> {
                 // examine each face/quad of each block
-                for( Vector3i.CubeNormal normal : Vector3i.CubeNormal.values() ) {
+                for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
                 	// if the block is ethereal, then there is nothing to render so skip
                 	if( b.blockType.blockClass == BlockClass.ETHER )
                 		continue;
                 	// if the block touching the current face is opaque, then it is hidden and we should ignore
-                    if( this.getBlock( absCoords.add( normal.vector ) ).blockType.blockClass.opaque )
+                    if( this.getBlock( v.add( normal.vector ) ).blockType.blockClass.opaque )
                         continue;
                     // each face is a quad comprising of 4 vertices
                     for( int i = 0; i < 4; i += 1 ) {
@@ -172,10 +168,10 @@ class World {
                     	boolean vertexUseSecondOrtho = ( i & 0x02 ) > 0;
 
                     	// calculate the position of the vertex and transform to a floating point vector
-						this.modelBuilder.positionBuffer = absCoords.add( normal.vector.max(0) )
-                    		.add( vertexUseFirstOrtho ? normal.firstOrtho.vector : Vector3i.ZERO )
-                    		.add( vertexUseSecondOrtho ? normal.secondOrtho.vector : Vector3i.ZERO )
-                    		.toVector3f();
+						this.modelBuilder.positionBuffer = v.add( normal.vector.max(0) )
+                    		.add( vertexUseFirstOrtho ? normal.firstOrtho.vector : Vector3in.ZERO )
+                    		.add( vertexUseSecondOrtho ? normal.secondOrtho.vector : Vector3in.ZERO )
+                    		.toVector3fl();
 
 						// keep a tally of the level of shadow that should be applied to the vertex (0-3)
 						// by checking the opacity of nearby shadower blocks
@@ -194,7 +190,7 @@ class World {
 
                     		// get the position of a planar neighbor but offset by the cube face's normal
                     		// i.e. if the normal was TOP, this would be the block above the planar neighbor
-                    		Vector3i planarNeighborPos = absCoords
+                    		Vector3in planarNeighborPos = v
 								.add( normal.firstOrtho.vector.multiply( vertexUseFirstOrtho ? 1 : -1 ) )
 								.add( normal.secondOrtho.vector.multiply( vertexUseSecondOrtho ? 1 : -1 ) )
 								.add( normal.vector );
@@ -207,21 +203,21 @@ class World {
                     		// contribution to the light blender and increase the blend count by one
                     		else {
 								for( LightSource src : LightSource.values() ) {
-									Vector3i curr = this.lightBlender[ src.ordinal() ];
+									Vector3in curr = this.lightBlender[ src.ordinal() ];
 									this.lightBlender[ src.ordinal() ] = curr.add( planarNeighbor.getIllumination( src ) );
 									blendCount += 1;
 								}
                     		}
                     	}
                     	
-                    	this.modelBuilder.addAttributeData( AttributeVariable.NORMAL, normal.ordinal() );
+                    	this.modelBuilder.addAttributeData( AttributeVariable.NORMAL, normal.vector.packBytes() );
                     	this.modelBuilder.addAttributeData( AttributeVariable.SHADOW, shadowCount );
                     	this.modelBuilder.addAttributeData( AttributeVariable.BLOCK_TYPE, b.blockType.ordinal() );
                     	
                     	// now add in all light values into the extra data
                     	for( LightSource ls : LightSource.values() ) {
                     		// make sure we average the blended light
-                    		Vector3i lightVals = this.lightBlender[ ls.ordinal() ].divide( blendCount );
+                    		Vector3in lightVals = this.lightBlender[ ls.ordinal() ].divide( blendCount );
                     		this.modelBuilder.addAttributeData( ls.attributeVariable, lightVals.packBytes() );
                     	}
                     	
@@ -233,6 +229,8 @@ class World {
                     this.modelBuilder.addQuad();
                 }
             });
+
+            chunk.renderCmpt.model = this.modelBuilder.commit();
         }
     }
 

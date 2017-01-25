@@ -1,4 +1,4 @@
-package game;
+package game.listener;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -55,5 +55,9 @@ public class Listener {
 		for( Set<Integer> s : this.listenerGroups.values() )
 			s.clear();
 	}
+
+    public Client mkClient() {
+        return new Client( this );
+    }
 	
 }

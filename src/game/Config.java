@@ -14,4 +14,11 @@ public class Config {
     public static final int BLOCK_VBO_NONPOS_NONLIGHT_BYTES = 10;
     // the number of ints required to store the non-pos bytes
     public static final int BLOCK_VBO_NONPOS_INTS = (int)Math.ceil( BLOCK_VBO_NONPOS_BYTES / 4 );
+
+    public static float FAR_PLANE     = 1000f;
+    public static float NEAR_PLANE    = 0.1f;
+    public static float FIELD_OF_VIEW = 110;
+    public static int GAME_WIDTH      = 800;
+    public static int GAME_HEIGHT     = 600;
+
 }
