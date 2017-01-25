@@ -36,7 +36,7 @@ public class World {
     private Vector3in[] lightBlender;
 
     public World() {
-    	this.modelBuilder    = new ModelBuilder();
+        this.modelBuilder    = new ModelBuilder();
         this.chunkMap        = new HashMap<Vector3in,Chunk>();
         this.dirtyChunks     = new HashSet<Vector3in>();
         this.requisiteChunks = new HashSet<Vector3in>();
@@ -100,7 +100,7 @@ public class World {
         // natural illumination
         for( Vector3in mapCoords : this.dirtyChunks ) {
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> { 
-            	b.resetIllumination();
+                b.resetIllumination();
                 // if a block has global lighting, set the block directly above it to have global illumination
                 if( b.globalLighting )
                     this.getBlock( v.add( Vector3in.CubeNormal.TOP.vector ) ).addGlobalIllumination();
@@ -131,7 +131,7 @@ public class World {
                         Vector3in offsetPos = pos.add( normal.vector );
                         Block other = this.getBlock( offsetPos );
                         if( !other.blockType.blockClass.opaque ) {
-                        	other.propagate( b );
+                            other.propagate( b );
                             // if we do propagate make sure we add the propagated block to the buffer
                             toPropagate.add( offsetPos );
                         }
@@ -148,86 +148,86 @@ public class World {
         }
 
     }
-    
+
     private void refreshModels() {
-    	
-    	// rebuild only the models of dirty chunks
+
+        // rebuild only the models of dirty chunks
         for( Vector3in mapCoords: this.dirtyChunks ) {
             Chunk chunk = this.chunkMap.get( mapCoords );
             chunk.iterateBlocks( (v,b) -> {
                 // examine each face/quad of each block
                 for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
-                	// if the block is ethereal, then there is nothing to render so skip
-                	if( b.blockType.blockClass == BlockClass.ETHER )
-                		continue;
-                	// if the block touching the current face is opaque, then it is hidden and we should ignore
+                    // if the block is ethereal, then there is nothing to render so skip
+                    if( b.blockType.blockClass == BlockClass.ETHER )
+                        continue;
+                    // if the block touching the current face is opaque, then it is hidden and we should ignore
                     if( this.getBlock( v.add( normal.vector ) ).blockType.blockClass.opaque )
                         continue;
                     // each face is a quad comprising of 4 vertices
                     for( int i = 0; i < 4; i += 1 ) {
 
-                    	// to separate vertex coords from block coords, we must add unit vectors that are
-                    	// orthogonal to the face's normal depending on which vertex we are looking at
-                    	// use a 2 bit bit field to exhaust all 4 combinations
-                    	boolean vertexUseFirstOrtho  = ( i & 0x01 ) > 0;
-                    	boolean vertexUseSecondOrtho = ( i & 0x02 ) > 0;
+                        // to separate vertex coords from block coords, we must add unit vectors that are
+                        // orthogonal to the face's normal depending on which vertex we are looking at
+                        // use a 2 bit bit field to exhaust all 4 combinations
+                        boolean vertexUseFirstOrtho  = ( i & 0x01 ) > 0;
+                        boolean vertexUseSecondOrtho = ( i & 0x02 ) > 0;
 
-                    	// calculate the position of the vertex and transform to a floating point vector
-						this.modelBuilder.positionBuffer = v.add( normal.vector.max(0) )
-                    		.add( vertexUseFirstOrtho ? normal.firstOrtho.vector : Vector3in.ZERO )
-                    		.add( vertexUseSecondOrtho ? normal.secondOrtho.vector : Vector3in.ZERO )
-                    		.toVector3fl();
+                        // calculate the position of the vertex and transform to a floating point vector
+                        this.modelBuilder.positionBuffer = v.add( normal.vector.max(0) )
+                            .add( vertexUseFirstOrtho ? normal.firstOrtho.vector : Vector3in.ZERO )
+                            .add( vertexUseSecondOrtho ? normal.secondOrtho.vector : Vector3in.ZERO )
+                            .toVector3fl();
 
-						// keep a tally of the level of shadow that should be applied to the vertex (0-3)
-						// by checking the opacity of nearby shadower blocks
-                    	int shadowCount = 0;
-                    	
-                    	// for smooth lighting, need to add the different illuminations
-                    	// from the block itself and its (up to 3) planar neighbors
-                    	// start by adding the block's illu values in
-                    	for( LightSource src : LightSource.values() )
-                    		this.lightBlender[ src.ordinal() ] = b.getIllumination( src );
-                    	
-                    	// keep track of the number of contributions to the light blending
-                    	// for use in averaging later
-                    	int blendCount = 1;
-                    	for( int j = 1; j < 4; j += 1 ) {
+                        // keep a tally of the level of shadow that should be applied to the vertex (0-3)
+                        // by checking the opacity of nearby shadower blocks
+                        int shadowCount = 0;
 
-                    		// get the position of a planar neighbor but offset by the cube face's normal
-                    		// i.e. if the normal was TOP, this would be the block above the planar neighbor
-                    		Vector3in planarNeighborPos = v
-								.add( normal.firstOrtho.vector.multiply( vertexUseFirstOrtho ? 1 : -1 ) )
-								.add( normal.secondOrtho.vector.multiply( vertexUseSecondOrtho ? 1 : -1 ) )
-								.add( normal.vector );
-                    		Block planarNeighbor = this.getBlock( planarNeighborPos );
+                        // for smooth lighting, need to add the different illuminations
+                        // from the block itself and its (up to 3) planar neighbors
+                        // start by adding the block's illu values in
+                        for( LightSource src : LightSource.values() )
+                            this.lightBlender[ src.ordinal() ] = b.getIllumination( src );
 
-                    		// if the block is opaque then the vertex should have its shadow value increased by 1
-                    		if( planarNeighbor.blockType.blockClass.opaque )
-                    			shadowCount += 1;
-                    		// otherwise, the planar neighbor is visible and we should add its illumination
-                    		// contribution to the light blender and increase the blend count by one
-                    		else {
-								for( LightSource src : LightSource.values() ) {
-									Vector3in curr = this.lightBlender[ src.ordinal() ];
-									this.lightBlender[ src.ordinal() ] = curr.add( planarNeighbor.getIllumination( src ) );
-									blendCount += 1;
-								}
-                    		}
-                    	}
-                    	
-                    	this.modelBuilder.addAttributeData( AttributeVariable.NORMAL, normal.vector.packBytes() );
-                    	this.modelBuilder.addAttributeData( AttributeVariable.SHADOW, shadowCount );
-                    	this.modelBuilder.addAttributeData( AttributeVariable.BLOCK_TYPE, b.blockType.ordinal() );
-                    	
-                    	// now add in all light values into the extra data
-                    	for( LightSource ls : LightSource.values() ) {
-                    		// make sure we average the blended light
-                    		Vector3in lightVals = this.lightBlender[ ls.ordinal() ].divide( blendCount );
-                    		this.modelBuilder.addAttributeData( ls.attributeVariable, lightVals.packBytes() );
-                    	}
-                    	
-                    	// save the vertex
-                    	this.modelBuilder.addVertex();
+                        // keep track of the number of contributions to the light blending
+                        // for use in averaging later
+                        int blendCount = 1;
+                        for( int j = 1; j < 4; j += 1 ) {
+
+                            // get the position of a planar neighbor but offset by the cube face's normal
+                            // i.e. if the normal was TOP, this would be the block above the planar neighbor
+                            Vector3in planarNeighborPos = v
+                                .add( normal.firstOrtho.vector.multiply( vertexUseFirstOrtho ? 1 : -1 ) )
+                                .add( normal.secondOrtho.vector.multiply( vertexUseSecondOrtho ? 1 : -1 ) )
+                                .add( normal.vector );
+                            Block planarNeighbor = this.getBlock( planarNeighborPos );
+
+                            // if the block is opaque then the vertex should have its shadow value increased by 1
+                            if( planarNeighbor.blockType.blockClass.opaque )
+                                shadowCount += 1;
+                            // otherwise, the planar neighbor is visible and we should add its illumination
+                            // contribution to the light blender and increase the blend count by one
+                            else {
+                                for( LightSource src : LightSource.values() ) {
+                                    Vector3in curr = this.lightBlender[ src.ordinal() ];
+                                    this.lightBlender[ src.ordinal() ] = curr.add( planarNeighbor.getIllumination( src ) );
+                                    blendCount += 1;
+                                }
+                            }
+                        }
+
+                        this.modelBuilder.addAttributeData( AttributeVariable.NORMAL, normal.vector.packBytes() );
+                        this.modelBuilder.addAttributeData( AttributeVariable.SHADOW, shadowCount );
+                        this.modelBuilder.addAttributeData( AttributeVariable.BLOCK_TYPE, b.blockType.ordinal() );
+
+                        // now add in all light values into the extra data
+                        for( LightSource ls : LightSource.values() ) {
+                            // make sure we average the blended light
+                            Vector3in lightVals = this.lightBlender[ ls.ordinal() ].divide( blendCount );
+                            this.modelBuilder.addAttributeData( ls.attributeVariable, lightVals.packBytes() );
+                        }
+
+                        // save the vertex
+                        this.modelBuilder.addVertex();
                     }
 
                     // save the quad
