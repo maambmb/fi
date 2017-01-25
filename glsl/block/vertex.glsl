@@ -11,10 +11,11 @@ uniform mat4 uv_view_matrix;
 uniform mat4 uv_model_tsc_matrix;
 uniform mat4 uv_model_rot_matrix;
 uniform mat4 uv_projection_matrix;
+uniform vec3 uv_light_source;
+uniform vec3 uv_fog;
+uniform vec3 uv_lighting_base;
 uniform vec3 uv_lighting_global;
-uniform vec3 uv_lighting_global_position;
 uniform vec3 uv_lighting_constant;
-uniform vec3 uv_lighting_ambient;
 
 out vec3 out_lighting;
 out vec3 out_normal;

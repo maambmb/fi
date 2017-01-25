@@ -16,6 +16,11 @@ import util.Vector3in;
 // allows recomputation of lighting/models upon modification in a relatively efficient batched manner
 public class World {
 
+    public static World WORLD;
+    public static void init() {
+        WORLD = new World();
+    }
+
     // (sparse) hashmap of all active chunks
     private Map<Vector3in,Chunk> chunkMap;
     // collection of chunks that have been modified and need to have their lighting and models recalced

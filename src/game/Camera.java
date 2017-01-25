@@ -3,6 +3,8 @@ package game;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.component.Position3DComponent;
+import game.gfx.shader.BlockShader;
+import game.gfx.shader.Shader;
 
 import util.MatrixUtils;
 
@@ -13,38 +15,38 @@ public class Camera extends Entity {
         camera = new Camera();
     }
 
-    public Matrix4f projectionMatrix;
-    public Matrix4f viewMatrix;
+    public Matrix4f matrixBuffer;
     private Position3DComponent posCmpt;
 
     private Camera() {
         super();
-
-        this.viewMatrix       = new Matrix4f();
-        this.projectionMatrix = new Matrix4f();
-
-        this.setProjectionMatrix();
-        this.globalListenerClient.addListener( Game.UpdateMessage.class, this::update );
+        this.matrixBuffer = new Matrix4f();
+        this.globalListenerClient.addListener( BlockShader.BlockShaderPrepareMessage.class,
+                (msg) -> this.shaderPrepare( BlockShader.SHADER ) );
     }
 
-    private void setProjectionMatrix() {
-		float aspectRatio = Config.GAME_WIDTH / (float)Config.GAME_HEIGHT;
-		float yScale = (float) (aspectRatio / Math.tan( Math.toRadians( Config.FIELD_OF_VIEW )));
-		float xScale = yScale / aspectRatio;
-		Matrix4f.setIdentity(this.projectionMatrix);
-		float frustrumLength      = Config.FAR_PLANE - Config.NEAR_PLANE;
-		this.projectionMatrix.m00 = xScale;
-		this.projectionMatrix.m11 = yScale;
-		this.projectionMatrix.m22 = - (Config.FAR_PLANE + Config.NEAR_PLANE) / frustrumLength;
-		this.projectionMatrix.m23 = -1;
-		this.projectionMatrix.m32 = -2 * Config.NEAR_PLANE * Config.FAR_PLANE / frustrumLength;
-		this.projectionMatrix.m33 = 0;
+    private void loadProjectionMatrix( Shader s ) {
+		Matrix4f.setIdentity(this.matrixBuffer);
+
+		float aspectRatio    = Config.GAME_WIDTH / (float)Config.GAME_HEIGHT;
+		float yScale         = (float) (aspectRatio / Math.tan( Math.toRadians( Config.FIELD_OF_VIEW )));
+		float xScale         = yScale / aspectRatio;
+		float frustrumLength = Config.FAR_PLANE - Config.NEAR_PLANE;
+
+		this.matrixBuffer.m00 = xScale;
+		this.matrixBuffer.m11 = yScale;
+		this.matrixBuffer.m22 = - (Config.FAR_PLANE + Config.NEAR_PLANE) / frustrumLength;
+		this.matrixBuffer.m23 = -1;
+		this.matrixBuffer.m32 = -2 * Config.NEAR_PLANE * Config.FAR_PLANE / frustrumLength;
+		this.matrixBuffer.m33 = 0;
+        s.loadProjectionMatrix( this.matrixBuffer );
     }
 	
-	private void setViewMatrix() {
-		Matrix4f.setIdentity(this.viewMatrix);
-        MatrixUtils.rotateMatrix( this.viewMatrix, this.posCmpt.rotation );
-        Matrix4f.translate( this.posCmpt.position.negate().toVector3f(), this.viewMatrix, this.viewMatrix );
+	private void loadViewMatrix( Shader s ) {
+		Matrix4f.setIdentity(this.matrixBuffer);
+        MatrixUtils.rotateMatrix( this.matrixBuffer, this.posCmpt.rotation );
+        Matrix4f.translate( this.posCmpt.position.negate().toVector3f(), this.matrixBuffer, this.matrixBuffer );
+        s.loadViewMatrix( this.matrixBuffer );
 	}
 
     @Override
@@ -53,8 +55,9 @@ public class Camera extends Entity {
         this.addComponent( this.posCmpt );
     }
 
-    public void update( Game.UpdateMessage msg ) {
-        this.setViewMatrix(); 
-    }
+    private void shaderPrepare( Shader s ) {
+        this.loadViewMatrix( s );
+        this.loadProjectionMatrix( s );
+    } 
 
 }

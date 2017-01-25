@@ -9,7 +9,10 @@ import util.Lambda;
 
 public class Listener {
 
-	public static Listener GLOBAL_LISTENER = new Listener();
+	public static Listener GLOBAL_LISTENER;
+    public static void init() {
+        GLOBAL_LISTENER = new Listener();
+    }
 	
 	private Map<Class<?>,Set<Integer>> listenerGroups;
 	private Map<Integer,Lambda.ActionUnary<Object>> listenerMap;
