@@ -21,8 +21,8 @@ public class Listener {
 
     public Listener() {
         this.listenerGroups = new HashMap<Class<?>,Set<Integer>>();
-        this.listenerMap = new HashMap<Integer,Lambda.ActionUnary<Object>>();
-        this.reverseLookup = new HashMap<Integer,Class<?>>();
+        this.listenerMap    = new HashMap<Integer,Lambda.ActionUnary<Object>>();
+        this.reverseLookup  = new HashMap<Integer,Class<?>>();
     }
 
     public <T> int addListener( Class<T> cls, Lambda.ActionUnary<T> listener ) {
@@ -47,7 +47,9 @@ public class Listener {
         Class<?> cls = msg.getClass();
         if( !this.listenerGroups.containsKey( cls ) )
             return;
-        for( Integer ix : this.listenerGroups.get( cls ) )
+        // copy the ids to a buffer to avoid modifying the collection during an enumeration
+        Set<Integer> buffer = new HashSet<Integer>( this.listenerGroups.get( cls ) );
+        for( Integer ix : buffer )
             this.listenerMap.get( ix ).run( msg );
     }
 

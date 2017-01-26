@@ -12,4 +12,9 @@ public class ModelBlockRenderComponent extends ModelRenderComponent {
             (msg) -> this.shaderRender( BlockShader.SHADER ) );
     }
 
+    @Override
+    public void destroy() {
+        this.model.destroy();
+    }
+
 }

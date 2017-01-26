@@ -45,4 +45,8 @@ public class NoClipComponent implements Component {
         this.posCmpt.position = marchVec.add( strafeVec ).multiply( delta * this.moveSpeed );
     }
 
+    @Override
+    public void destroy() {
+    }
+
 }

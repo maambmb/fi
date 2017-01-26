@@ -9,6 +9,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Matrix4f;
 
+import game.Entity;
 import game.block.LightSource;
 import game.gfx.AttributeVariable;
 import game.gfx.UniformVariable;
@@ -17,7 +18,7 @@ import util.FileUtils;
 import util.Vector3fl;
 import util.Vector3in;
 
-public abstract class Shader {
+public abstract class Shader extends Entity {
 
     protected int programId;
     private int vertexId;
@@ -27,6 +28,7 @@ public abstract class Shader {
     private Map<UniformVariable,Integer> uniformLookup;
 
     public Shader( String vertex, String fragment ) {
+        super();
         this.programId = GL20.glCreateProgram();
         this.matrixFloatBuffer = BufferUtils.createFloatBuffer(16);
 
@@ -138,6 +140,21 @@ public abstract class Shader {
     public void loadLightSource( Vector3fl v ) {
         int uvId = this.uniformLookup.get( UniformVariable.LIGHT_SOURCE );
         this.loadVector3fl( uvId, v );
+    }
+
+    @Override
+    public void addComponents() {
+    }
+
+    @Override
+    public void destroy() {
+        super.destroy();
+        GL20.glUseProgram( 0 );
+        GL20.glDetachShader( this.programId, this.vertexId );
+        GL20.glDetachShader( this.programId, this.fragmentId );
+        GL20.glDeleteShader( this.vertexId );
+        GL20.glDeleteShader( this.fragmentId );
+        GL20.glDeleteProgram( this.programId );
     }
 
 }

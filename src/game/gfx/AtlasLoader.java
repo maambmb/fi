@@ -8,7 +8,9 @@ import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
-public class AtlasLoader {
+import game.Entity;
+
+public class AtlasLoader extends Entity {
 
     public class TextureRef {
         public int id;
@@ -41,7 +43,13 @@ public class AtlasLoader {
         return this.texMap.get( path );
     }
 
+    @Override
+    public void addComponents() {
+    }
+
+    @Override
     public void destroy() {
+        super.destroy();
         for( TextureRef tex : this.texMap.values() )
             GL11.glDeleteTextures( tex.id );
     }

@@ -89,4 +89,8 @@ public class Position3DComponent implements Component {
         e.listener.addListener( ModifyMessage.class, this::modifyPosition );
     }
 
+    @Override
+    public void destroy() {
+    }
+
 }

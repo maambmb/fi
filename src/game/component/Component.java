@@ -6,4 +6,6 @@ public interface Component {
 
     void setup( Entity e );
 
+    void destroy();
+
 }

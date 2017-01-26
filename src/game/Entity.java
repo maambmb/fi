@@ -27,6 +27,8 @@ public abstract class Entity {
             c.setup( this );
         for( Component c : this.componentList )
             this.listener.listen( c );
+
+        this.globalListenerClient.addListener( Game.DestroyMessage.class, (_m) -> this.destroy() );
     }
 
     protected void addComponent( Component c ) {
@@ -39,6 +41,8 @@ public abstract class Entity {
 
     public void destroy() {
         this.globalListenerClient.removeListeners();
+        for( Component c : this.componentList )
+            c.destroy();
     }
 
 }

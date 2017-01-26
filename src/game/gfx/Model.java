@@ -74,11 +74,14 @@ public class Model {
         this.buffers.get( av ).add( val );
     }
 
-    public void addAttributeData( AttributeVariable av, boolean val ) {
-        this.buffers.get( av ).add( val );
+    public void addAttributeData( AttributeVariable av, Vector3fl val ) {
+        List<Object> buffer = this.buffers.get( av );
+        buffer.add( val.x );
+        buffer.add( val.y );
+        buffer.add( val.z );
     }
 
-    public void addAttributeData( AttributeVariable av, Vector3fl val ) {
+    public void addAttributeData( AttributeVariable av, Vector3in val ) {
         List<Object> buffer = this.buffers.get( av );
         buffer.add( val.x );
         buffer.add( val.y );
@@ -91,11 +94,10 @@ public class Model {
         buffer.add( val.y );
     }
 
-    public void addAttributeData( AttributeVariable av, Vector3in val ) {
+    public void addAttributeData2D( AttributeVariable av, Vector3in val ) {
         List<Object> buffer = this.buffers.get( av );
         buffer.add( val.x );
         buffer.add( val.y );
-        buffer.add( val.z );
     }
 
     // commit a quad to the builder (run after 4 vertices have been committed )
