@@ -16,6 +16,7 @@ uniform vec3 uv_fog;
 uniform vec3 uv_lighting_base;
 uniform vec3 uv_lighting_global;
 uniform vec3 uv_lighting_constant;
+uniform float uv_tex_coords[ 2 * 3 ];
 
 out vec3 out_lighting;
 out vec3 out_normal;

@@ -9,7 +9,7 @@ public class BlockShader extends Shader {
     public static class BlockShaderPrepareMessage { }
     public static class BlockShaderRenderMessage { }
 
-    private static UniformVariable[] UVS = {
+    private static UniformVariable[] USED_UNIFORM_VARS = {
         UniformVariable.MODEL_ROTATE_MATRIX,
         UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX,
         UniformVariable.VIEW_MATRIX,
@@ -18,10 +18,11 @@ public class BlockShader extends Shader {
         UniformVariable.FOG_COLOR
     };
 
-    private static AttributeVariable[] AVS = {
+    public static AttributeVariable[] USED_ATTRIBUTE_VARS = {
+        AttributeVariable.POSITION,
+        AttributeVariable.TEX_COORDS,
         AttributeVariable.NORMAL,
-        AttributeVariable.SHADOW,
-        AttributeVariable.BLOCK_TYPE
+        AttributeVariable.SHADOW
     };
 
     public static BlockShader SHADER;
@@ -35,7 +36,7 @@ public class BlockShader extends Shader {
 
     @Override
     protected void setupUniformVariables() {
-        for( UniformVariable uv : UVS )
+        for( UniformVariable uv : USED_UNIFORM_VARS )
             this.createUniformVariable( uv );
         for( LightSource ls : LightSource.values() )
             this.createUniformVariable( ls.uniformVariable );
@@ -43,7 +44,7 @@ public class BlockShader extends Shader {
 
     @Override
     protected void setupVAOAttributes() {
-        for( AttributeVariable av : AVS ) 
+        for( AttributeVariable av : USED_ATTRIBUTE_VARS ) 
             this.createAttributeVariable( av );
         for( LightSource ls : LightSource.values() )
             this.createAttributeVariable( ls.attributeVariable );

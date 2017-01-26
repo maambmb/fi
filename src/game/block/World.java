@@ -9,8 +9,9 @@ import game.Config;
 import game.gfx.AtlasLoader;
 import game.gfx.AttributeVariable;
 import game.gfx.Model;
-import game.gfx.ModelBuilder;
+import game.gfx.shader.BlockShader;
 
+import util.Vector3fl;
 import util.Vector3in;
 
 // holds the chunks that comprise of the visible (and beyond) game world
@@ -31,14 +32,11 @@ public class World {
     // not because the chunks are dirty, but because we expect their lighting to overflow onto nearby
     // dirty chunks that themselves need recalcs ( should border all dirty chunks )
     private Set<Vector3in> requisiteChunks;
-    // utility object to build chunks into single VAO backed models
-    private ModelBuilder modelBuilder; 
     // a buffer to store the sums of illuminations from multiple different blocks
     // for the purposes of averaging for smooth lighting
     private Vector3in[] lightBlender;
 
     public World() {
-        this.modelBuilder    = new ModelBuilder();
         this.chunkMap        = new HashMap<Vector3in,Chunk>();
         this.dirtyChunks     = new HashSet<Vector3in>();
         this.requisiteChunks = new HashSet<Vector3in>();
@@ -155,6 +153,11 @@ public class World {
 
         // rebuild only the models of dirty chunks
         for( Vector3in mapCoords: this.dirtyChunks ) {
+
+            Model model = new Model();
+            for( AttributeVariable av : BlockShader.USED_ATTRIBUTE_VARS )
+                model.initAttributeVariable( av );
+
             Chunk chunk = this.chunkMap.get( mapCoords );
             chunk.iterateBlocks( (v,b) -> {
                 // examine each face/quad of each block
@@ -175,10 +178,11 @@ public class World {
                         boolean vertexUseSecondOrtho = ( i & 0x02 ) > 0;
 
                         // calculate the position of the vertex and transform to a floating point vector
-                        this.modelBuilder.positionBuffer = v.add( normal.vector.max(0) )
+                        Vector3fl finalPosition = v.add( normal.vector.max(0) )
                             .add( vertexUseFirstOrtho ? normal.firstOrtho.vector : Vector3in.ZERO )
                             .add( vertexUseSecondOrtho ? normal.secondOrtho.vector : Vector3in.ZERO )
                             .toVector3fl();
+                        model.addAttributeData( AttributeVariable.POSITION, finalPosition );
 
                         // keep a tally of the level of shadow that should be applied to the vertex (0-3)
                         // by checking the opacity of nearby shadower blocks
@@ -217,29 +221,31 @@ public class World {
                             }
                         }
 
-                        this.modelBuilder.addAttributeData( AttributeVariable.NORMAL, normal.vector.packBytes() );
-                        this.modelBuilder.addAttributeData( AttributeVariable.SHADOW, shadowCount );
-                        this.modelBuilder.addAttributeData( AttributeVariable.BLOCK_TYPE, b.blockType.ordinal() );
+                        Vector3fl finalTexCoords = b.blockType.texCoords
+                            .add( new Vector3in( normal.ordinal(), 0, 0 ) )
+                            .toVector3fl()
+                            .divide( Config.BLOCK_ATLAS_TEX_DIM );
+
+                        model.addAttributeData2D( AttributeVariable.TEX_COORDS, finalTexCoords );
+                        model.addAttributeData( AttributeVariable.NORMAL, normal.vector.packBytes() );
+                        model.addAttributeData( AttributeVariable.SHADOW, shadowCount );
 
                         // now add in all light values into the extra data
                         for( LightSource ls : LightSource.values() ) {
                             // make sure we average the blended light
                             Vector3in lightVals = this.lightBlender[ ls.ordinal() ].divide( blendCount );
-                            this.modelBuilder.addAttributeData( ls.attributeVariable, lightVals.packBytes() );
+                            model.addAttributeData( ls.attributeVariable, lightVals.packBytes() );
                         }
-
-                        // save the vertex
-                        this.modelBuilder.addVertex();
                     }
 
                     // save the quad
-                    this.modelBuilder.addQuad();
+                    model.addQuad();
                 }
             });
 
-            Model m   = this.modelBuilder.commit();
-            m.atlasId = AtlasLoader.LOADER.getTexture( Config.BLOCK_ATLAS );
-            chunk.renderCmpt.model = m;
+            model.commit();
+            model.atlasId = AtlasLoader.LOADER.getTexture( Config.BLOCK_ATLAS );
+            chunk.renderCmpt.model = model;
         }
     }
 

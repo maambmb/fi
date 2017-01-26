@@ -64,7 +64,7 @@ public abstract class Shader {
 
     // setup a new attribute list variable for the shader program at specified position
     protected void createAttributeVariable( AttributeVariable av ) {
-        GL20.glBindAttribLocation( this.programId, av.ordinal() + 1, av.name );
+        GL20.glBindAttribLocation( this.programId, av.ordinal(), av.name );
     }
 
     // load a 3d float vector into a uniform variable position
