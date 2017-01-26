@@ -27,12 +27,15 @@ public class World {
 
     // (sparse) hashmap of all active chunks
     private Map<Vector3in,Chunk> chunkMap;
+
     // collection of chunks that have been modified and need to have their lighting and models recalced
     private Set<Vector3in> dirtyChunks;
+
     // collection of chunks that need to recompute their lighting
     // not because the chunks are dirty, but because we expect their lighting to overflow onto nearby
     // dirty chunks that themselves need recalcs ( should border all dirty chunks )
     private Set<Vector3in> requisiteChunks;
+
     // a buffer to store the sums of illuminations from multiple different blocks
     // for the purposes of averaging for smooth lighting
     private Vector3in[] lightBlender;
@@ -54,16 +57,21 @@ public class World {
 
     // get a block directly from the world
     public Block getBlock( Vector3in absCoords ) {
+
         // transform the coords by dividing by chunk dims to get chunk coordinates
         Vector3in mapCoords = absCoords.divide( Config.CHUNK_DIM );
+
         Chunk chunk = this.getChunk( mapCoords );
+
         // doing the modulo returns the block coords for the returned chunk
         return chunk.getBlock( absCoords.modulo( Config.CHUNK_DIM ) );
     }
 
     public void setBlock( Vector3in absCoords, BlockType bt, boolean globalLighting ) {
+
         // calculate the chunk coordinates by dividing through by chunk dims
         Vector3in mapCoords = absCoords.divide( Config.CHUNK_DIM );
+
         // by changing a chunk, we potentially have modified the light values of all 8
         // neighbouring chunks. We must set all 9 chunks to dirty. We need the further
         // 37 surrounding chunks (requisite) for the recalcs
@@ -102,6 +110,7 @@ public class World {
         for( Vector3in mapCoords : this.dirtyChunks ) {
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> { 
                 b.resetIllumination();
+
                 // if a block has global lighting, set the block directly above it to have global illumination
                 if( b.globalLighting )
                     this.getBlock( v.add( Vector3in.CubeNormal.TOP.vector ) ).addGlobalIllumination();
@@ -110,6 +119,7 @@ public class World {
 
         // buffer of blocks that we need to propagate light from
         Set<Vector3in> toPropagate  = new HashSet<Vector3in>();
+
         // buffer to store updates ot propagated (can't modify a collection while we iterate)
         Set<Vector3in> propagated = new HashSet<Vector3in>();
 
@@ -124,6 +134,7 @@ public class World {
 
             // iterate the number of times light is allowed to jump
             for( int n = 0; n < Config.LIGHT_JUMPS; n += 1 ) {
+
                 // for each of the 6 cube normals, propagate light outward
                 // but only if the other block isn't opaque - otherwise the light is blocked
                 for( Vector3in pos : toPropagate ) {
@@ -133,6 +144,7 @@ public class World {
                         Block other = this.getBlock( offsetPos );
                         if( other.blockType.opacity != BlockType.Opacity.OPAQUE ) {
                             other.propagate( b );
+
                             // if we do propagate make sure we add the propagated block to the buffer
                             if( other.isLit() )
                                 propagated.add( offsetPos );
@@ -169,11 +181,14 @@ public class World {
             // loop through each block of a dirty chunk
             Chunk chunk = this.chunkMap.get( mapCoords );
             chunk.iterateBlocks( (v,b) -> {
+
                 // examine each face/quad of each block
                 for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
+
                     // if block is invisible - skip entirely
                     if( b.blockType.opacity == BlockType.Opacity.INVISIBLE )
                         continue;
+
                     // if the block touching the current face is opaque, then it is hidden and we should ignore
                     if( this.getBlock( v.add( normal.vector ) ).blockType.opacity == BlockType.Opacity.OPAQUE )
                         continue;
@@ -221,6 +236,7 @@ public class World {
                             // if the block is opaque then the vertex should have its shadow value increased by 1
                             if( planarNeighbor.blockType.opacity == BlockType.Opacity.OPAQUE )
                                 shadowCount += 1;
+
                             // otherwise, the planar neighbor is visible and we should add its illumination
                             // contribution to the light blender and increase the blend count by one
                             else {
@@ -243,8 +259,10 @@ public class World {
 
                         // add the normal by packing the vector into an int
                         model.addAttributeData( AttributeVariable.NORMAL, normal.vector.packBytes() );
+
                         // add the shadow amount (0-3) for the vertex
                         model.addAttributeData( AttributeVariable.SHADOW, shadowCount );
+
                         // add the tex coords for the specified atlas. Convert to opengl coords (i.e. between 0f - 1f )
                         // by dividing by the number of faces along one dimension of the texture atlas
                         model.addAttributeData2D( AttributeVariable.TEX_COORDS, b.blockType.texCoords

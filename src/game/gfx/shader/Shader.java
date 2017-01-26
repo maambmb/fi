@@ -121,6 +121,7 @@ public abstract class Shader extends Entity {
     }
 
     @Override
+    // destroy the shader program when this entity is destroyed
     public void destroy() {
         super.destroy();
         GL20.glUseProgram( 0 );

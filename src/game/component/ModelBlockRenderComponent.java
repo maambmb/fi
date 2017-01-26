@@ -9,7 +9,7 @@ public class ModelBlockRenderComponent extends ModelRenderComponent {
     public void setup( Entity e ) {
         super.setup( e );
         // only render when the block shader program is active
-        e.globalListenerClient.addListener( BlockShader.BlockShaderRenderMessage.class, 
+        e.globalListenerClient.addSubscriber( BlockShader.BlockShaderRenderMessage.class, 
             (msg) -> this.shaderRender( BlockShader.SHADER ) );
     }
 

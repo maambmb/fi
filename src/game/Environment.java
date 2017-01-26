@@ -29,7 +29,7 @@ public class Environment extends Entity {
 
         for( int i = 0; i < this.lighting.length; i += 1 )
             this.lighting[i] = new Vector3fl();
-        this.globalListenerClient.addListener( BlockShader.BlockShaderPrepareMessage.class, (msg) -> {
+        this.globalListenerClient.addSubscriber( BlockShader.BlockShaderPrepareMessage.class, (msg) -> {
             this.shaderPrepare( BlockShader.SHADER );
         });
     }

@@ -12,6 +12,10 @@ import game.Entity;
 
 public class AtlasLoader extends Entity {
 
+    // a class which lazilly loads in texture atlases
+    // and also handles cleanup when the entity is destroyed
+
+    // a texture handle - holds the texture id and its size
     public class TextureRef {
         public int id;
         public int size;
@@ -26,11 +30,15 @@ public class AtlasLoader extends Entity {
         LOADER = new AtlasLoader();
     }
 
+    // the internal cache which maps texture path to handle
     private Map<String,TextureRef> texMap;
+
     public AtlasLoader() {
         this.texMap = new HashMap<String,TextureRef>();
     }
 
+    // return the texture handle if it already exists
+    // otherwise load in the texture using Slick2D, create and persist the handle
     public TextureRef getTexture( String path ) {
         if( !this.texMap.containsKey( path ) ) {
             try {
@@ -48,6 +56,7 @@ public class AtlasLoader extends Entity {
     }
 
     @Override
+    // when this entity is destroyed, make sure we delete all the textures
     public void destroy() {
         super.destroy();
         for( TextureRef tex : this.texMap.values() )

@@ -9,58 +9,90 @@ import util.Lambda;
 
 public class Listener {
 
+    // An object that listens and relays messages to subscribers
+    // subscription is done on a message class basis
+    // subs are provided a unique id when they subscribe
+
     public static Listener GLOBAL_LISTENER;
     public static void init() {
         GLOBAL_LISTENER = new Listener();
     }
 
-    private Map<Class<?>,Set<Integer>> listenerGroups;
-    private Map<Integer,Lambda.ActionUnary<Object>> listenerMap;
+    // all sub ids grouped by the class of message they have subscribed to
+    private Map<Class<?>,Set<Integer>> subscriberGroups;
+
+    // the map from the sub id to the underlying listener object
+    private Map<Integer,Lambda.ActionUnary<Object>> subscriberMap;
+
+    // a reverse lookup to find the class of a sub from its ids
     private Map<Integer,Class<?>> reverseLookup;
-    private int listenerId;
+
+    // an id incrementer
+    private int subscriberId;
 
     public Listener() {
-        this.listenerGroups = new HashMap<Class<?>,Set<Integer>>();
-        this.listenerMap    = new HashMap<Integer,Lambda.ActionUnary<Object>>();
-        this.reverseLookup  = new HashMap<Integer,Class<?>>();
+        this.subscriberGroups = new HashMap<Class<?>,Set<Integer>>();
+        this.subscriberMap    = new HashMap<Integer,Lambda.ActionUnary<Object>>();
+        this.reverseLookup    = new HashMap<Integer,Class<?>>();
     }
 
-    public <T> int addListener( Class<T> cls, Lambda.ActionUnary<T> listener ) {
-        int newId = this.listenerId ++;
-        this.listenerMap.put( newId, o -> listener.run( cls.cast( o ) ) );
+    public <T> int addSubcriber( Class<T> cls, Lambda.ActionUnary<T> subscriber ) {
+        // get a unique id and increment
+        int newId = this.subscriberId ++;
+
+        // degenerify the sub via wrapping and a necessarily safe cast
+        this.subscriberMap.put( newId, o -> subscriber.run( cls.cast( o ) ) );
+
+        // add the reverse lookup entry
         this.reverseLookup.put( newId, cls );
-        if( !this.listenerGroups.containsKey( cls ))
-            this.listenerGroups.put( cls, new HashSet<Integer>() );
-        this.listenerGroups.get( cls ).add( newId );
+
+        // create the group for the class of messages if it doesn't already exist
+        // i.e. this is the first subscription for messages of a certain type
+        if( !this.subscriberGroups.containsKey( cls ))
+            this.subscriberGroups.put( cls, new HashSet<Integer>() );
+
+        // assign the sub to the group
+        this.subscriberGroups.get( cls ).add( newId );
+
+        // return the id!
         return newId;
     }
 
-    public void removeListener( int id ) {
+    public void removeSubscriber( int id ) {
+        // make sure to remove the id from the sub map,
+        // reverse lookup and the relevant sub group
         Class<?> cls = this.reverseLookup.get( id );
         this.reverseLookup.remove( id );
-        this.listenerMap.remove( id );
-        this.listenerGroups.get( cls ).remove( id );
+        this.subscriberMap.remove( id );
+        this.subscriberGroups.get( cls ).remove( id );
 
     }
 
     public <T> void listen( T msg ) {
+
+        // grab the class of the message to find the relevant group of subscribers
         Class<?> cls = msg.getClass();
-        if( !this.listenerGroups.containsKey( cls ) )
+
+        // if such a group doesn't exist then nobodys subbing and abort here :(
+        if( !this.subscriberGroups.containsKey( cls ) )
             return;
+
         // copy the ids to a buffer to avoid modifying the collection during an enumeration
-        Set<Integer> buffer = new HashSet<Integer>( this.listenerGroups.get( cls ) );
+        Set<Integer> buffer = new HashSet<Integer>( this.subscriberGroups.get( cls ) );
         for( Integer ix : buffer )
-            this.listenerMap.get( ix ).run( msg );
+            this.subscriberMap.get( ix ).run( msg );
     }
 
+    // wipe everything and reset the id incrementer
     public void reset() {
-        this.listenerMap.clear();
+        this.subscriberMap.clear();
         this.reverseLookup.clear();
-        this.listenerId = 0;
-        for( Set<Integer> s : this.listenerGroups.values() )
+        this.subscriberId = 0;
+        for( Set<Integer> s : this.subscriberGroups.values() )
             s.clear();
     }
 
+    // generate a client (manages a collection of subscribers)
     public Client mkClient() {
         return new Client( this );
     }

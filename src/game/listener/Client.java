@@ -7,22 +7,25 @@ import util.Lambda;
 
 public class Client {
 
-    private List<Integer> listenerIds;
+    // manages a collection of subscribers for a single listener
+    // chiefly is able to mass unsubscribe all managed subscribers at once
+
+    private List<Integer> subscriberIds;
     private Listener listener;
 
     public Client( Listener listener ) {
         this.listener = listener;
-        this.listenerIds = new ArrayList<Integer>();
+        this.subscriberIds = new ArrayList<Integer>();
     }
 
-    public <T> void addListener( Class<T> cls, Lambda.ActionUnary<T> listener ) {
-        int newId =  this.listener.addListener( cls, listener );
-        this.listenerIds.add( newId );
+    public <T> void addSubscriber( Class<T> cls, Lambda.ActionUnary<T> listener ) {
+        int newId =  this.listener.addSubcriber( cls, listener );
+        this.subscriberIds.add( newId );
     }
 
-    public void removeListeners() {
-        for( int id : this.listenerIds )
-            this.listener.removeListener( id );
+    public void removeSubscribers() {
+        for( int id : this.subscriberIds )
+            this.listener.removeSubscriber( id );
 
     }
 }

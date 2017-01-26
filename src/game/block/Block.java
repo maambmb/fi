@@ -8,8 +8,10 @@ public class Block {
 
     // the type of the block
     public BlockType blockType;
+
     // the lighting within/of the block
     public int[] illumination;
+
     // whether or not the block is globally lit
     public boolean globalLighting;
 

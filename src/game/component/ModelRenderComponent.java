@@ -23,7 +23,7 @@ public abstract class ModelRenderComponent implements Component {
     @Override
     public void setup( Entity e ) {
         // grab the position 3d cmpt from the entity
-        e.listener.addListener( Position3DComponent.class, x -> this.posCmpt = x );
+        e.listener.addSubcriber( Position3DComponent.class, x -> this.posCmpt = x );
     }
 
     // create a matrix which represents an entities rotation and shunt it to the shader

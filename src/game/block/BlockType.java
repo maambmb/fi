@@ -30,12 +30,15 @@ public enum BlockType {
     public enum Opacity {
         //fully opaque - does not allow light to propagate
         OPAQUE, 
+
         // partially transparent cube
         TRANSPARENT, 
+
         // partially transparent cross
         // where a cross is formed by 2 quads making a cross intersection
         // as opposed to 6 quads forming a cube
         CROSSED, 
+
         // a fully invisible block that shouldn't be rendered
         INVISIBLE
     }

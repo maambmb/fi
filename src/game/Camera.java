@@ -22,7 +22,7 @@ public class Camera extends Entity {
     private Camera() {
         super();
         this.matrixBuffer = new Matrix4f();
-        this.globalListenerClient.addListener( BlockShader.BlockShaderPrepareMessage.class,
+        this.globalListenerClient.addSubscriber( BlockShader.BlockShaderPrepareMessage.class,
             (msg) -> this.shaderPrepare( BlockShader.SHADER ) );
     }
 

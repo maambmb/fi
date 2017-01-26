@@ -19,10 +19,10 @@ public class NoClipComponent implements Component {
     @Override
     public void setup( Entity e ) {
         // this component is updating every tick
-        e.globalListenerClient.addListener( Game.UpdateMessage.class, this::update );
+        e.globalListenerClient.addSubscriber( Game.UpdateMessage.class, this::update );
         
         // this component reads and modifies the entities 3D position
-        e.listener.addListener( Position3DComponent.class, x -> this.posCmpt = x );
+        e.listener.addSubcriber( Position3DComponent.class, x -> this.posCmpt = x );
     }
 
     private void update( Game.UpdateMessage msg ) {

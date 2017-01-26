@@ -20,8 +20,8 @@ import util.Vector3in;
 
 public class Model {
 
-    private static Object MUTEX = new Object();
-
+    // convert a collection of boxed integers (cast down to objects - for reasons explained below )
+    // into an int buffer
     private static IntBuffer intBufferFromCollection( Collection<Object> coll ) {
         IntBuffer buf = BufferUtils.createIntBuffer( coll.size() );
         for( Object f : coll )
@@ -30,6 +30,7 @@ public class Model {
         return buf;
     }
 
+    // convert a collection of boxed floats (also cast down to objects) into a float buffer
     private static FloatBuffer floatBufferFromCollection( Collection<Object> coll ) {
         FloatBuffer buf = BufferUtils.createFloatBuffer( coll.size() );
         for( Object f : coll )
@@ -38,42 +39,55 @@ public class Model {
         return buf;
     }
 
-    // given four vertices of a quad, this is the order in which their indices should
-    // be specified in the index VBO
+    // given four vertices of a quad (i:0,1,2,3), this is the order in which they should
+    // be drawn - for use in the index VBO
     private static final int[] QUAD_ENUMERATION = new int[] { 2, 1, 0, 3, 2, 0 };
 
-    // count of the number of vertices
-    private int index;
+    private int vertexCount;
+
     // the index VBO buffer
     private List<Object> indices;
-    // attribute variable buffers
+
+    // attribute variable buffers. We cast down to list of objects
+    // because we want to store lists of both ints and floats in the same buffer map
+    // for convenience
     private Map<AttributeVariable,List<Object>> buffers;
-    // a list of used VBOs
+
+    // opengl id tracking
     private List<Integer> vboIds;
-    // the VAO id
     private int vaoId;
-    // the texture atlas id
+
+    // the texture atlas' opengl id
     public int atlasId;
 
     public Model() {
-        this.index   = 0;
-        this.indices = new ArrayList<Object>();
-        this.buffers = new HashMap<AttributeVariable,List<Object>>();
-        this.vboIds  = new ArrayList<Integer>(); 
+        this.indices     = new ArrayList<Object>();
+        this.buffers     = new HashMap<AttributeVariable,List<Object>>();
+        this.vboIds      = new ArrayList<Integer>();
+        this.vertexCount = 0;
     }
 
+    // prepare the model to use the specified attribute variable
+    // allocate a buffer for it in the buffer map
     public void initAttributeVariable( AttributeVariable av ) {
-            this.buffers.put( av, new ArrayList<Object>() );
+        this.buffers.put( av, new ArrayList<Object>() );
     }
 
+    // adding attribute data happens below. Type safety is pretty
+    // ropey at this point so be careful. Quite easy to mix up float and
+    // ints if not paying attention...
+
+    // add a single int to an av buffer
     public void addAttributeData( AttributeVariable av, int val ) {
         this.buffers.get( av ).add( val );
     }
 
+    // add a single float to an av buffer
     public void addAttributeData( AttributeVariable av, float val ) {
         this.buffers.get( av ).add( val );
     }
 
+    // add a vec of floats to an av buffer (stride 3)
     public void addAttributeData( AttributeVariable av, Vector3fl val ) {
         List<Object> buffer = this.buffers.get( av );
         buffer.add( val.x );
@@ -81,6 +95,7 @@ public class Model {
         buffer.add( val.z );
     }
 
+    // add a vec of ints to an av buffer (stride 3)
     public void addAttributeData( AttributeVariable av, Vector3in val ) {
         List<Object> buffer = this.buffers.get( av );
         buffer.add( val.x );
@@ -88,64 +103,84 @@ public class Model {
         buffer.add( val.z );
     }
 
+    // add a vec of floats to an av buffer (stride 2)
+    // pretend its a 2D vector (i.e. ignore the .z component )
     public void addAttributeData2D( AttributeVariable av, Vector3fl val ) {
         List<Object> buffer = this.buffers.get( av );
         buffer.add( val.x );
         buffer.add( val.y );
     }
 
+    // add a vec of ints to an av buffer (stride 2)
+    // pretend its a 2D vector (i.e. ignore the .z component )
     public void addAttributeData2D( AttributeVariable av, Vector3in val ) {
         List<Object> buffer = this.buffers.get( av );
         buffer.add( val.x );
         buffer.add( val.y );
     }
 
-    // commit a quad to the builder (run after 4 vertices have been committed )
-    // by adding their indices to the index buffer
+    // record a new quad by adding 4 to the vertex count
+    // and adding the 6 new indices to the index vbo buffer
     public void addQuad() {
         for( int offset : QUAD_ENUMERATION )
-            this.indices.add( this.index + offset );
-        this.index += 4;
+            this.indices.add( this.vertexCount + offset );
+        this.vertexCount += 4;
     }
 
     private void bind() {
         GL30.glBindVertexArray( this.vaoId );
     }
 
-    // create a model from the builder by ferrying the data into VRAM using OpenGL
     public void buildModel() {
 
-        synchronized( MUTEX ) {
-            this.bind();
-            int vboId = GL15.glGenBuffers();
-            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
-            IntBuffer ixBuf = intBufferFromCollection( this.indices );
-            GL15.glBufferData( GL15.GL_ELEMENT_ARRAY_BUFFER, ixBuf, GL15.GL_STATIC_DRAW );
-            this.vboIds.add( vboId );
-            this.indices.clear();
+        // bind to the model
+        this.bind();
 
-            for( AttributeVariable av : this.buffers.keySet() ) {
+        // create the vbo for the index data, load it into a buffer and push it
+        int vboId = GL15.glGenBuffers();
+        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
+        IntBuffer ixBuf = intBufferFromCollection( this.indices );
+        GL15.glBufferData( GL15.GL_ELEMENT_ARRAY_BUFFER, ixBuf, GL15.GL_STATIC_DRAW );
 
-                Collection<Object> buffer = this.buffers.get( av );
-                vboId = GL15.glGenBuffers();
+        // keep track of the VBO ids for cleanup later
+        this.vboIds.add( vboId );
+
+        // we can empty the index buffer now as the index data lives in VRAM
+        this.indices.clear();
+
+        for( AttributeVariable av : this.buffers.keySet() ) {
+
+            // grab the attribute variable buffer
+            // atm we don't know if it holds ints or floats
+            Collection<Object> buffer = this.buffers.get( av );
+
+            // setup a new VBO
+            vboId = GL15.glGenBuffers();
+            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+            
+            // if the av is an integer, (and we hope the data put into the buffer is also that or else RIP)
+            // create an intbuffer and push the data
+            if( av.dataType == Integer.class ) {
+                IntBuffer buf = intBufferFromCollection( buffer );
+                GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
+                GL20.glVertexAttribPointer( av.ordinal(), av.stride, GL11.GL_INT, false, 0, 0);
+            // else do the same but with a float buffer
+            } else if ( av.dataType == Float.class ) {
+                FloatBuffer buf = floatBufferFromCollection( buffer );
                 GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-                
-                if( av.dataType == Integer.class ) {
-                    IntBuffer buf = intBufferFromCollection( buffer );
-                    GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
-                    GL20.glVertexAttribPointer( av.ordinal(), av.stride, GL11.GL_INT, false, 0, 0);
-                } else if ( av.dataType == Float.class ) {
-                    FloatBuffer buf = floatBufferFromCollection( buffer );
-                    GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-                    GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
-                }
-
-                this.vboIds.add( vboId );
-                buffer.clear();
+                GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
             }
+
+            // keep track of the VBO ids for cleanup later
+            this.vboIds.add( vboId );
+
+            // we can empty the buffer as the data lives in VRAM now
+            buffer.clear();
         }
     }
 
+    // jump through and delete all VBOs
+    // before deleting the VAO itself
     public void destroy() {
         this.bind();
         for( int vboId : this.vboIds)
@@ -159,16 +194,21 @@ public class Model {
         // bind and activate the model's texture atlas
         GL13.glActiveTexture( GL13.GL_TEXTURE0 );
         GL11.glBindTexture( GL11.GL_TEXTURE_2D, this.atlasId );
+
         // bind to the model's VAO
         GL30.glBindVertexArray( this.vaoId );
+
         // enable all the attribute variables used
         for( AttributeVariable av : this.buffers.keySet() )
             GL20.glEnableVertexAttribArray( av.ordinal() );
+
         // draw the model!
-        GL11.glDrawElements( GL11.GL_TRIANGLES, this.index, GL11.GL_UNSIGNED_INT, 0 );
+        GL11.glDrawElements( GL11.GL_TRIANGLES, this.vertexCount, GL11.GL_UNSIGNED_INT, 0 );
+
         // disable all the attribute variables used
         for( AttributeVariable av : this.buffers.keySet() )
             GL20.glDisableVertexAttribArray( av.ordinal() );
+
         // unbind the VAO
         GL30.glBindVertexArray( this.vaoId );
     }

@@ -14,6 +14,7 @@ public class Chunk extends Entity {
 
     // number of blocks in a chunk face
     private static final int DIM_SQ = Config.CHUNK_DIM * Config.CHUNK_DIM;
+
     // number of blocks in a chunk
     private static final int DIM_CB = DIM_SQ * Config.CHUNK_DIM;
 
@@ -42,6 +43,7 @@ public class Chunk extends Entity {
         super();
 
         this.baseCoords = baseCoords;
+
         // initialize an array to hold every single block
         this.blockData = new Block[ DIM_CB ];
 
