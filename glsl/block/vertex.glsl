@@ -11,7 +11,7 @@ uniform mat4 uv_view_matrix;
 uniform mat4 uv_model_tsc_matrix;
 uniform mat4 uv_model_rot_matrix;
 uniform mat4 uv_projection_matrix;
-uniform vec3 uv_light_source;
+uniform vec3 uv_global_light_origin;
 uniform vec3 uv_fog;
 uniform vec3 uv_lighting_base;
 uniform vec3 uv_lighting_global;
@@ -43,7 +43,7 @@ void main(void) {
     frag_lighting = uv_lighting_ambient;
 
     // calculate the amount we should attenuate global lighting based on angle of the face (use normal_vec )
-    lighting_global_angle_factor = 0.5f + max( dot( normalize( uv_lighting_global_position ), normal)_vec  ), 0f ) / 2f;
+    lighting_global_angle_factor = 0.5f + max( dot( normalize( uv_global_light_origin ), normal)_vec  ), 0f ) / 2f;
     // unpack the global lighting vector and convert into a float vec [0f-1f]
     lighting_global_vec = vec3( av_lighting_global & 0xFF, ( av_lighting_global >> 8 ) & 0xFF, ( av_lighting_global >> 16 ) & 0xFF ) / 255f;
     // join the *attenuated* global lighting with the current frag_lighting value using max

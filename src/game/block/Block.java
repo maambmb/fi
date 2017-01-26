@@ -19,6 +19,8 @@ public class Block {
         this.globalLighting = false;
     }
 
+    // reset the illumination by setting it to the natural illumination
+    // of the block type. This will remove any propagated light
     public void resetIllumination() {
         for( LightSource src : LightSource.values() )
             this.setIllumination( src, Vector3in.ZERO );
@@ -33,6 +35,9 @@ public class Block {
         this.illumination[ src.ordinal() ] = v.packBytes();
     }
 
+    // propagate the lighting from a neighboring block onto this block
+    // mechanically we take the other block's attenuated light and max it against our own
+    // for all light sources
     public void propagate( Block b ) {
         for( LightSource src : LightSource.values() ) {
             Vector3in curr = this.getIllumination( src );
@@ -41,10 +46,13 @@ public class Block {
         }
     }
 
+    // a utility method for making the block globally illuminating
     public void addGlobalIllumination() {
         this.setIllumination( LightSource.GLOBAL, Vector3in.MAX_BYTES );
     }
 
+    // a utility method to check if the block is radiating any light at all
+    // useful in reducing the amount of wasted propagations during light calcs
     public boolean isLit() {
         for( int x : illumination)
             if( x > 0)

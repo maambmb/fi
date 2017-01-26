@@ -14,10 +14,11 @@ import game.gfx.shader.BlockShader;
 import util.Vector3fl;
 import util.Vector3in;
 
-// holds the chunks that comprise of the visible (and beyond) game world
-// is the main interface/access for getting/setting blocks
-// allows recomputation of lighting/models upon modification in a relatively efficient batched manner
 public class World {
+
+    // holds the chunks that comprise of the visible (and beyond) game world
+    // is the main interface/access for getting/setting blocks
+    // allows recomputation of lighting/models upon modification in a relatively efficient batched manner
 
     public static World WORLD;
     public static void init() {
@@ -108,9 +109,9 @@ public class World {
         }
 
         // buffer of blocks that we need to propagate light from
-        Set<Vector3in> propagated  = new HashSet<Vector3in>();
+        Set<Vector3in> toPropagate  = new HashSet<Vector3in>();
         // buffer to store updates ot propagated (can't modify a collection while we iterate)
-        Set<Vector3in> toPropagate = new HashSet<Vector3in>();
+        Set<Vector3in> propagated = new HashSet<Vector3in>();
 
         // break the propagation up into chunk-sized bites so the buffers never grow super large
         for( Vector3in mapCoords : this.requisiteChunks ) {
@@ -118,14 +119,14 @@ public class World {
             // add only the naturally illuminating blocks into the buffer
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> {
                 if( b.isLit() )
-                    propagated.add( v );
+                    toPropagate.add( v );
             });
 
             // iterate the number of times light is allowed to jump
             for( int n = 0; n < Config.LIGHT_JUMPS; n += 1 ) {
                 // for each of the 6 cube normals, propagate light outward
                 // but only if the other block isn't opaque - otherwise the light is blocked
-                for( Vector3in pos : propagated ) {
+                for( Vector3in pos : toPropagate ) {
                     Block b = this.getBlock( pos );
                     for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
                         Vector3in offsetPos = pos.add( normal.vector );
@@ -133,18 +134,19 @@ public class World {
                         if( other.blockType.opacity != BlockType.Opacity.OPAQUE ) {
                             other.propagate( b );
                             // if we do propagate make sure we add the propagated block to the buffer
-                            toPropagate.add( offsetPos );
+                            if( other.isLit() )
+                                propagated.add( offsetPos );
                         }
                     }
                 }
 
                 //update the buffer with the changes 
-                propagated.addAll( toPropagate );
-                toPropagate.clear();
+                toPropagate.addAll( propagated );
+                propagated.clear();
             }
 
             //clear the buffer when we're done with the propagation in preparation for the next chunk
-            propagated.clear();
+            toPropagate.clear();
         }
 
     }
@@ -164,6 +166,7 @@ public class World {
             AtlasLoader.TextureRef ref = AtlasLoader.LOADER.getTexture( Config.BLOCK_ATLAS );
             model.atlasId = ref.id;
 
+            // loop through each block of a dirty chunk
             Chunk chunk = this.chunkMap.get( mapCoords );
             chunk.iterateBlocks( (v,b) -> {
                 // examine each face/quad of each block
@@ -174,11 +177,12 @@ public class World {
                     // if the block touching the current face is opaque, then it is hidden and we should ignore
                     if( this.getBlock( v.add( normal.vector ) ).blockType.opacity == BlockType.Opacity.OPAQUE )
                         continue;
+
                     // each face is a quad comprising of 4 vertices
                     for( int i = 0; i < 4; i += 1 ) {
 
                         // to separate vertex coords from block coords, we must add unit vectors that are
-                        // orthogonal to the face's normal depending on which vertex we are looking at
+                        // orthogonal to the face's normal depending on which vertex we are looking at.
                         // use a 2 bit bit field to exhaust all 4 combinations
                         boolean vertexUseFirstOrtho  = ( i & 0x01 ) > 0;
                         boolean vertexUseSecondOrtho = ( i & 0x02 ) > 0;
@@ -191,21 +195,22 @@ public class World {
                         model.addAttributeData( AttributeVariable.POSITION, finalPosition );
 
                         // keep a tally of the level of shadow that should be applied to the vertex (0-3)
-                        // by checking the opacity of nearby shadower blocks
                         int shadowCount = 0;
 
-                        // for smooth lighting, need to add the different illuminations
+                        // for smooth lighting, need to add the different illuminations of a vertex
                         // from the block itself and its (up to 3) planar neighbors
-                        // start by adding the block's illu values in
+                        // start by adding the block's own illu values in
                         for( LightSource src : LightSource.values() )
                             this.lightBlender[ src.ordinal() ] = b.getIllumination( src );
 
                         // keep track of the number of contributions to the light blending
                         // for use in averaging later
                         int blendCount = 1;
+
+                        // for all 3 neighboring planar blocks (excluding the block this vertex belongs to)
                         for( int j = 1; j < 4; j += 1 ) {
 
-                            // get the position of a planar neighbor but offset by the cube face's normal
+                            // get the position of the planar neighbor but offset by the cube face's normal
                             // i.e. if the normal was TOP, this would be the block above the planar neighbor
                             Vector3in planarNeighborPos = v
                                 .add( normal.firstOrtho.vector.multiply( vertexUseFirstOrtho ? 1 : -1 ) )
@@ -227,19 +232,21 @@ public class World {
                             }
                         }
 
-                        // each block has 3 different faces: TOP(1), BOTTOM(1) and SIDE(4)
-                        // specify which face using an offset from the base tex coords
+                        // TODO: handle crosses
+                        // each block has 3 different face textures: TOP(1), BOTTOM(1) and SIDE(4)
+                        // specify which face tex by using an offset from the base tex coords
                         int texOffset = 0;
                         if( normal.vector.y > 0 )
                             texOffset = 1;
                         else if (normal.vector.y < 0 )
                             texOffset = 2;
 
-                        // add the normal by packing the vector as 3 bytes
+                        // add the normal by packing the vector into an int
                         model.addAttributeData( AttributeVariable.NORMAL, normal.vector.packBytes() );
-                        // add the occlusion amount (0-3) for the vertex
+                        // add the shadow amount (0-3) for the vertex
                         model.addAttributeData( AttributeVariable.SHADOW, shadowCount );
                         // add the tex coords for the specified atlas. Convert to opengl coords (i.e. between 0f - 1f )
+                        // by dividing by the number of faces along one dimension of the texture atlas
                         model.addAttributeData2D( AttributeVariable.TEX_COORDS, b.blockType.texCoords
                             .add( new Vector3in( texOffset, 0, 0 ) )
                             .toVector3fl()
@@ -254,16 +261,25 @@ public class World {
                         }
                     }
 
-                    // save the quad
+                    // we've added four vertices, time to persist that as a quad
                     model.addQuad();
                 }
             });
 
+            // all the data has been collected by the model
+            // now we can munge the data into buffers and shunt it off to VRAM
+            // using opengl
             model.buildModel();
+
+            // update the chunks model via the rendering component
             chunk.renderCmpt.model = model;
         }
     }
 
+    // refresh the world - update lighting and models
+    // of all dirty chunks. After this method has run
+    // we can expect the terrain models to be in sync with
+    // the underlying data
     public void refresh() {
         this.refreshLighting();
         this.refreshModels();

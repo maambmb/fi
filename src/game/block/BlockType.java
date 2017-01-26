@@ -19,19 +19,30 @@ public enum BlockType {
         Vector3in.ZERO,
         new Vector3in( 0, 0, 0 )
     ),
-    GLOWSTONE(
+    GLOW_BLOCK( 
         true,
         Opacity.OPAQUE,
         LightSource.CONSTANT,
-        new Vector3in(255,255,255),
+        new Vector3in( 0xFFFFFF ),
         new Vector3in( 0, 1, 0 )
     );
 
     public enum Opacity {
-        OPAQUE, TRANSPARENT, CROSSED, INVISIBLE
+        //fully opaque - does not allow light to propagate
+        OPAQUE, 
+        // partially transparent cube
+        TRANSPARENT, 
+        // partially transparent cross
+        // where a cross is formed by 2 quads making a cross intersection
+        // as opposed to 6 quads forming a cube
+        CROSSED, 
+        // a fully invisible block that shouldn't be rendered
+        INVISIBLE
     }
 
+    // can the block be walked on or do entities fall through
     public boolean solid;
+
     public LightSource lightSource;
     public Opacity opacity;
     public Vector3in texCoords;

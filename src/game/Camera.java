@@ -3,6 +3,7 @@ package game;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.component.Position3DComponent;
+import game.gfx.UniformVariable;
 import game.gfx.shader.BlockShader;
 import game.gfx.shader.Shader;
 
@@ -39,14 +40,16 @@ public class Camera extends Entity {
         this.matrixBuffer.m23 = -1;
         this.matrixBuffer.m32 = -2 * Config.NEAR_PLANE * Config.FAR_PLANE / frustrumLength;
         this.matrixBuffer.m33 = 0;
-        s.loadProjectionMatrix( this.matrixBuffer );
+
+        s.loadMatrix4f( UniformVariable.PROJECTION_MATRIX, this.matrixBuffer );
     }
 
     private void loadViewMatrix( Shader s ) {
         Matrix4f.setIdentity(this.matrixBuffer);
         MatrixUtils.rotateMatrix( this.matrixBuffer, this.posCmpt.rotation );
         Matrix4f.translate( this.posCmpt.position.negate().toVector3f(), this.matrixBuffer, this.matrixBuffer );
-        s.loadViewMatrix( this.matrixBuffer );
+
+        s.loadMatrix4f( UniformVariable.VIEW_MATRIX, this.matrixBuffer );
     }
 
     @Override

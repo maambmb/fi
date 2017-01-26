@@ -6,7 +6,7 @@ public enum UniformVariable {
     MODEL_ROTATE_MATRIX( "uv_model_rot_matrix" ),
     VIEW_MATRIX( "uv_view_matrix" ),
     PROJECTION_MATRIX( "uv_projection_matrix" ),
-    LIGHT_SOURCE( "uv_light_source" ),
+    GLOBAL_LIGHT_ORIGIN( "uv_global_light_origin" ),
     FOG_COLOR( "uv_fog" ),
     LIGHTING_BASE( "uv_lighting_base" ),
     LIGHTING_GLOBAL( "uv_lighting_global" ),

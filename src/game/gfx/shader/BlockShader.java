@@ -43,7 +43,7 @@ public class BlockShader extends Shader {
     }
 
     @Override
-    protected void setupVAOAttributes() {
+    protected void setupAttributeVariables() {
         for( AttributeVariable av : USED_ATTRIBUTE_VARS ) 
             this.createAttributeVariable( av );
         for( LightSource ls : LightSource.values() )
