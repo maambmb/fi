@@ -6,34 +6,38 @@ import util.Vector3in;
 public enum BlockType {
 
     AIR( 
-        BlockClass.ETHER,
+        false,
+        Opacity.INVISIBLE,
         LightSource.CONSTANT,
         Vector3in.ZERO
     ),
     GRAVEL( 
-        BlockClass.SOLID,
+        true,
+        Opacity.OPAQUE,
         LightSource.CONSTANT,
         Vector3in.ZERO
     ),
     GLOWSTONE(
-        BlockClass.SOLID,
+        true,
+        Opacity.OPAQUE,
         LightSource.CONSTANT,
         new Vector3in(255,255,255)
     );
-    // the "class" of a block. Block classes have different behaviour with respect to:
-    // 1) can they let light through
-    // 2) can they can be stood on
-    // 3) how they are rendered (like a normal cube or as a cross of 2 quads)
-    public BlockClass blockClass;
 
-    // describes the material's light emissions
+    public enum Opacity {
+        OPAQUE, TRANSPARENT, CROSSED, INVISIBLE
+    }
+
+    public boolean solid;
     public LightSource lightSource;
+    public Opacity opacity;
     public Vector3in illumination;
 
-    private BlockType( BlockClass material, LightSource src, Vector3in illumination ) {
-        this.blockClass = material;
-        this.lightSource = src;
-        this.illumination = illumination;
+    private BlockType( boolean solid, Opacity opacity, LightSource src, Vector3in illu ) {
+        this.solid        = solid;
+        this.opacity      = opacity;
+        this.lightSource  = src;
+        this.illumination = illu;
     }
 
 }

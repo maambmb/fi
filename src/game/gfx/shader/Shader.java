@@ -12,6 +12,7 @@ import org.lwjgl.util.vector.Matrix4f;
 import game.block.LightSource;
 import game.gfx.AttributeVariable;
 import game.gfx.UniformVariable;
+
 import util.FileUtils;
 import util.Vector3fl;
 import util.Vector3in;
@@ -53,7 +54,6 @@ public abstract class Shader {
         // bind to the program and set up the uniform variables
         this.use();
         setupUniformVariables();
-
     }
 
     // allocate a new uniform variable for the shader program

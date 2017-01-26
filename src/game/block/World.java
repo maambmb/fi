@@ -6,7 +6,9 @@ import java.util.Map;
 import java.util.Set;
 
 import game.Config;
+import game.gfx.AtlasLoader;
 import game.gfx.AttributeVariable;
+import game.gfx.Model;
 import game.gfx.ModelBuilder;
 
 import util.Vector3in;
@@ -130,7 +132,7 @@ public class World {
                     for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
                         Vector3in offsetPos = pos.add( normal.vector );
                         Block other = this.getBlock( offsetPos );
-                        if( !other.blockType.blockClass.opaque ) {
+                        if( other.blockType.opacity != BlockType.Opacity.OPAQUE ) {
                             other.propagate( b );
                             // if we do propagate make sure we add the propagated block to the buffer
                             toPropagate.add( offsetPos );
@@ -157,11 +159,11 @@ public class World {
             chunk.iterateBlocks( (v,b) -> {
                 // examine each face/quad of each block
                 for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
-                    // if the block is ethereal, then there is nothing to render so skip
-                    if( b.blockType.blockClass == BlockClass.ETHER )
+                    // if block is invisible - skip entirely
+                    if( b.blockType.opacity == BlockType.Opacity.INVISIBLE )
                         continue;
                     // if the block touching the current face is opaque, then it is hidden and we should ignore
-                    if( this.getBlock( v.add( normal.vector ) ).blockType.blockClass.opaque )
+                    if( this.getBlock( v.add( normal.vector ) ).blockType.opacity == BlockType.Opacity.OPAQUE )
                         continue;
                     // each face is a quad comprising of 4 vertices
                     for( int i = 0; i < 4; i += 1 ) {
@@ -202,7 +204,7 @@ public class World {
                             Block planarNeighbor = this.getBlock( planarNeighborPos );
 
                             // if the block is opaque then the vertex should have its shadow value increased by 1
-                            if( planarNeighbor.blockType.blockClass.opaque )
+                            if( planarNeighbor.blockType.opacity == BlockType.Opacity.OPAQUE )
                                 shadowCount += 1;
                             // otherwise, the planar neighbor is visible and we should add its illumination
                             // contribution to the light blender and increase the blend count by one
@@ -235,7 +237,9 @@ public class World {
                 }
             });
 
-            chunk.renderCmpt.model = this.modelBuilder.commit();
+            Model m   = this.modelBuilder.commit();
+            m.atlasId = AtlasLoader.LOADER.getTexture( Config.BLOCK_ATLAS );
+            chunk.renderCmpt.model = m;
         }
     }
 

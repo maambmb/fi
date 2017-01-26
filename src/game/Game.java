@@ -1,6 +1,7 @@
 package game;
 
 import game.block.World;
+import game.gfx.AtlasLoader;
 import game.gfx.shader.BlockShader;
 import game.listener.Listener;
 
@@ -23,6 +24,7 @@ public class Game {
         Listener.init();
         BlockShader.init();
         World.init();
+        AtlasLoader.init();
 
         Camera.init();
         Environment.init();
@@ -33,6 +35,7 @@ public class Game {
             Listener.GLOBAL_LISTENER.listen( new BlockShader.BlockShaderPrepareMessage() );
             Listener.GLOBAL_LISTENER.listen( new BlockShader.BlockShaderRenderMessage() );
         }
+
     }
 
 }
