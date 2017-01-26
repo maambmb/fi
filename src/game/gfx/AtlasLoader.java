@@ -10,32 +10,40 @@ import org.newdawn.slick.opengl.TextureLoader;
 
 public class AtlasLoader {
 
+    public class TextureRef {
+        public int id;
+        public int size;
+        public TextureRef( int id, int size ) {
+            this.id = id;
+            this.size = size;
+        }
+    }
+
     public static AtlasLoader LOADER;
     public static void init() {
         LOADER = new AtlasLoader();
     }
 
-    private Map<String,Integer> idMap;
+    private Map<String,TextureRef> texMap;
     public AtlasLoader() {
-        this.idMap = new HashMap<String,Integer>();
+        this.texMap = new HashMap<String,TextureRef>();
     }
 
-    public int getTexture( String path ) {
-        if( !this.idMap.containsKey( path ) ) {
+    public TextureRef getTexture( String path ) {
+        if( !this.texMap.containsKey( path ) ) {
             try {
                 Texture tex = TextureLoader.getTexture( "PNG", new FileInputStream( path ) );
-                this.idMap.put( path, tex.getTextureID() );
+                this.texMap.put( path, new TextureRef( tex.getTextureID(), tex.getTextureWidth() ) );
             }
             catch( Exception e ) { 
-                throw new RuntimeException( "Unable to load texture" );
-            }
+                throw new RuntimeException( "Unable to load texture" ); }
         }
-        return this.idMap.get( path );
+        return this.texMap.get( path );
     }
 
     public void destroy() {
-        for( int id : this.idMap.values() )
-            GL11.glDeleteTextures( id );
+        for( TextureRef tex : this.texMap.values() )
+            GL11.glDeleteTextures( tex.id );
     }
 
 }

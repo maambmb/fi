@@ -154,9 +154,15 @@ public class World {
         // rebuild only the models of dirty chunks
         for( Vector3in mapCoords: this.dirtyChunks ) {
 
+            // create the empty chunk model and choose the subset of attribute variables that will be used
+            // this model is terrain so we should use the vars that the block shader uses...
             Model model = new Model();
             for( AttributeVariable av : BlockShader.USED_ATTRIBUTE_VARS )
                 model.initAttributeVariable( av );
+
+            // grab the texture the model will be using and point the model at said texture atlas
+            AtlasLoader.TextureRef ref = AtlasLoader.LOADER.getTexture( Config.BLOCK_ATLAS );
+            model.atlasId = ref.id;
 
             Chunk chunk = this.chunkMap.get( mapCoords );
             chunk.iterateBlocks( (v,b) -> {
@@ -221,18 +227,28 @@ public class World {
                             }
                         }
 
-                        Vector3fl finalTexCoords = b.blockType.texCoords
-                            .add( new Vector3in( normal.ordinal(), 0, 0 ) )
-                            .toVector3fl()
-                            .divide( Config.BLOCK_ATLAS_TEX_DIM );
+                        // each block has 3 different faces: TOP(1), BOTTOM(1) and SIDE(4)
+                        // specify which face using an offset from the base tex coords
+                        int texOffset = 0;
+                        if( normal.vector.y > 0 )
+                            texOffset = 1;
+                        else if (normal.vector.y < 0 )
+                            texOffset = 2;
 
-                        model.addAttributeData2D( AttributeVariable.TEX_COORDS, finalTexCoords );
+                        // add the normal by packing the vector as 3 bytes
                         model.addAttributeData( AttributeVariable.NORMAL, normal.vector.packBytes() );
+                        // add the occlusion amount (0-3) for the vertex
                         model.addAttributeData( AttributeVariable.SHADOW, shadowCount );
+                        // add the tex coords for the specified atlas. Convert to opengl coords (i.e. between 0f - 1f )
+                        model.addAttributeData2D( AttributeVariable.TEX_COORDS, b.blockType.texCoords
+                            .add( new Vector3in( texOffset, 0, 0 ) )
+                            .toVector3fl()
+                            .divide( ref.size / Config.BLOCK_ATLAS_TEX_DIM )
+                        );
 
-                        // now add in all light values into the extra data
+                        // now add in all light values
                         for( LightSource ls : LightSource.values() ) {
-                            // make sure we average the blended light
+                            // average the blended light before we add it for *smooth* lighting effects
                             Vector3in lightVals = this.lightBlender[ ls.ordinal() ].divide( blendCount );
                             model.addAttributeData( ls.attributeVariable, lightVals.packBytes() );
                         }
@@ -243,8 +259,7 @@ public class World {
                 }
             });
 
-            model.commit();
-            model.atlasId = AtlasLoader.LOADER.getTexture( Config.BLOCK_ATLAS );
+            model.buildModel();
             chunk.renderCmpt.model = model;
         }
     }

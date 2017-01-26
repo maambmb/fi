@@ -20,6 +20,8 @@ import util.Vector3in;
 
 public class Model {
 
+    private static Object MUTEX = new Object();
+
     private static IntBuffer intBufferFromCollection( Collection<Object> coll ) {
         IntBuffer buf = BufferUtils.createIntBuffer( coll.size() );
         for( Object f : coll )
@@ -109,34 +111,36 @@ public class Model {
     }
 
     // create a model from the builder by ferrying the data into VRAM using OpenGL
-    public void commit() {
+    public void buildModel() {
 
-        this.bind();
-
-        int vboId = GL15.glGenBuffers();
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
-        IntBuffer ixBuf = intBufferFromCollection( this.indices );
-        GL15.glBufferData( GL15.GL_ELEMENT_ARRAY_BUFFER, ixBuf, GL15.GL_STATIC_DRAW );
-        this.vboIds.add( vboId );
-
-        for( AttributeVariable av : this.buffers.keySet() ) {
-
-            Collection<Object> buffer = this.buffers.get( av );
-            vboId = GL15.glGenBuffers();
-            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-            
-            if( av.dataType == Integer.class ) {
-                IntBuffer buf = intBufferFromCollection( buffer );
-                GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
-                GL20.glVertexAttribPointer( av.ordinal(), av.stride, GL11.GL_INT, false, 0, 0);
-            } else if ( av.dataType == Float.class ) {
-                FloatBuffer buf = floatBufferFromCollection( buffer );
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-                GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
-            }
-
+        synchronized( MUTEX ) {
+            this.bind();
+            int vboId = GL15.glGenBuffers();
+            GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
+            IntBuffer ixBuf = intBufferFromCollection( this.indices );
+            GL15.glBufferData( GL15.GL_ELEMENT_ARRAY_BUFFER, ixBuf, GL15.GL_STATIC_DRAW );
             this.vboIds.add( vboId );
-            buffer.clear();
+            this.indices.clear();
+
+            for( AttributeVariable av : this.buffers.keySet() ) {
+
+                Collection<Object> buffer = this.buffers.get( av );
+                vboId = GL15.glGenBuffers();
+                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+                
+                if( av.dataType == Integer.class ) {
+                    IntBuffer buf = intBufferFromCollection( buffer );
+                    GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
+                    GL20.glVertexAttribPointer( av.ordinal(), av.stride, GL11.GL_INT, false, 0, 0);
+                } else if ( av.dataType == Float.class ) {
+                    FloatBuffer buf = floatBufferFromCollection( buffer );
+                    GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+                    GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
+                }
+
+                this.vboIds.add( vboId );
+                buffer.clear();
+            }
         }
     }
 
