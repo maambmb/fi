@@ -14,6 +14,22 @@ public class Tuple {
             this.arg2 = arg2;
         }
 
+        @Override
+        public int hashCode() {
+            HashCoder.HASH_CODER.reset();
+            HashCoder.HASH_CODER.addHash( this.arg1 );
+            HashCoder.HASH_CODER.addHash( this.arg2 );
+            return HashCoder.HASH_CODER.hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (getClass() != obj.getClass())
+                return false;
+            Tuple.Binary<?,?> other = (Tuple.Binary<?,?>) obj;
+            return this.arg1.equals( other.arg1 ) && this.arg2.equals( other.arg2 );
+        }
+
     }
 
     // 3-tuple
@@ -27,6 +43,23 @@ public class Tuple {
             this.arg1 = arg1;
             this.arg2 = arg2;
             this.arg3 = arg3;
+        }
+
+        @Override
+        public int hashCode() {
+            HashCoder.HASH_CODER.reset();
+            HashCoder.HASH_CODER.addHash( this.arg1 );
+            HashCoder.HASH_CODER.addHash( this.arg2 );
+            HashCoder.HASH_CODER.addHash( this.arg3 );
+            return HashCoder.HASH_CODER.hash;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (getClass() != obj.getClass())
+                return false;
+            Tuple.Ternary<?,?,?> other = (Tuple.Ternary<?,?,?>) obj;
+            return this.arg1.equals( other.arg1 ) && this.arg2.equals( other.arg2 ) && this.arg3.equals( other.arg3 );
         }
 
     }

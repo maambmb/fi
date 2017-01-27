@@ -41,29 +41,31 @@ public abstract class Shader extends Entity {
         this.fragmentId = GL20.glCreateShader( GL20.GL_FRAGMENT_SHADER );
 
         // load the source files for each shader
-        GL20.glShaderSource( vertexId, FileUtils.readFile( vertex ) );
-        GL20.glShaderSource( fragmentId, FileUtils.readFile( fragment ) );
+        GL20.glShaderSource( this.vertexId, FileUtils.readFile( vertex ) );
+        GL20.glShaderSource( this.fragmentId, FileUtils.readFile( fragment ) );
 
         // compile and validate the shaders
         GL20.glCompileShader( this.vertexId );
-        if( GL20.glGetShaderi( this.vertexId, GL20.GL_COMPILE_STATUS ) == GL11.GL_FALSE )
+        if( GL20.glGetShaderi( this.vertexId, GL20.GL_COMPILE_STATUS ) == GL11.GL_FALSE ) {
+            System.err.println( GL20.glGetShaderInfoLog( this.vertexId, 1000 ) );
             throw new RuntimeException( String.format( "shader: '%s' couldn't be compiled", vertex ) );
+        }
         GL20.glCompileShader( this.fragmentId );
-        if( GL20.glGetShaderi( this.fragmentId, GL20.GL_COMPILE_STATUS ) == GL11.GL_FALSE )
+        if( GL20.glGetShaderi( this.fragmentId, GL20.GL_COMPILE_STATUS ) == GL11.GL_FALSE ) {
+            System.err.println( GL20.glGetShaderInfoLog( this.fragmentId, 1000 ) );
             throw new RuntimeException( String.format( "shader: '%s' couldn't be compiled", fragment ) );
-
-        // now bind to the program for setup
-        this.use();
-
-        // setup the attribute and uniform variables
-        setupAttributeVariables();
-        setupUniformVariables();
+        }
 
         // attach, link and validate the shaders to the program
         GL20.glAttachShader( this.programId, this.vertexId );
         GL20.glAttachShader( this.programId, this.fragmentId );
         GL20.glLinkProgram( this.programId );
         GL20.glValidateProgram( this.programId );
+
+        // setup the attribute and uniform variables
+        setupAttributeVariables();
+        setupUniformVariables();
+
     }
 
     // allocate a new uniform variable for the shader program

@@ -3,6 +3,8 @@ package util;
 // utility object for computing hashcodes
 public class HashCoder {
 
+    public static HashCoder HASH_CODER = new HashCoder();
+
     public int hash;
 
     public HashCoder() {

@@ -7,7 +7,7 @@ import game.gfx.shader.Shader;
 
 import util.Vector3fl;
 
-public class Environment extends Entity {
+public final class Environment extends Entity {
 
     public static Environment ENV;
     public static void init() {
@@ -23,7 +23,7 @@ public class Environment extends Entity {
 
         this.lighting     = new Vector3fl[ LightSource.values().length ];
         this.baseLighting = new Vector3fl();
-        this.fogColor     = new Vector3fl();
+        this.fogColor     = new Vector3fl(0.5f,0.5f,0.5f);
 
         this.globalLightOrigin = new Vector3fl();
 
@@ -32,6 +32,8 @@ public class Environment extends Entity {
         this.globalListenerClient.addSubscriber( BlockShader.BlockShaderPrepareMessage.class, (msg) -> {
             this.shaderPrepare( BlockShader.SHADER );
         });
+
+        this.setup();
     }
 
     private void shaderPrepare( Shader s ) {

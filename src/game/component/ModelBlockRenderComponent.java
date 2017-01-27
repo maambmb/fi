@@ -18,7 +18,8 @@ public class ModelBlockRenderComponent extends ModelRenderComponent {
     // as each chunk has a unique model. Thus when this component is destroyed
     // it should destroy the model (and free the VRAM) along with it.
     public void destroy() {
-        this.model.destroy();
+        if( this.model != null )
+            this.model.destroy();
     }
 
 }

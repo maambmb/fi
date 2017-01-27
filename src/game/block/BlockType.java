@@ -9,22 +9,22 @@ public enum BlockType {
         false,
         Opacity.INVISIBLE,
         LightSource.CONSTANT,
-        Vector3in.ZERO,
+        new Vector3in(),
         null
     ),
     GRAVEL( 
         true,
         Opacity.OPAQUE,
         LightSource.CONSTANT,
-        Vector3in.ZERO,
-        new Vector3in( 0, 0, 0 )
+        new Vector3in(),
+        new Vector3in()
     ),
     GLOW_BLOCK( 
         true,
         Opacity.OPAQUE,
         LightSource.CONSTANT,
         new Vector3in( 0xFFFFFF ),
-        new Vector3in( 0, 1, 0 )
+        new Vector3in()
     );
 
     public enum Opacity {

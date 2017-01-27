@@ -41,9 +41,9 @@ public class Model {
 
     // given four vertices of a quad (i:0,1,2,3), this is the order in which they should
     // be drawn - for use in the index VBO
-    private static final int[] QUAD_ENUMERATION = new int[] { 2, 1, 0, 3, 2, 0 };
+    private static final int[] QUAD_ENUMERATION = new int[] { 3, 1, 0, 2, 3, 0};
 
-    private int vertexCount;
+    public int vertexCount;
 
     // the index VBO buffer
     private List<Object> indices;
@@ -131,7 +131,13 @@ public class Model {
         GL30.glBindVertexArray( this.vaoId );
     }
 
+    private void unbind() {
+        GL30.glBindVertexArray( 0 );
+    }
+
     public void buildModel() {
+
+        this.vaoId = GL30.glGenVertexArrays();
 
         // bind to the model
         this.bind();
@@ -142,7 +148,7 @@ public class Model {
         IntBuffer ixBuf = intBufferFromCollection( this.indices );
         GL15.glBufferData( GL15.GL_ELEMENT_ARRAY_BUFFER, ixBuf, GL15.GL_STATIC_DRAW );
 
-        // keep track of the VBO ids for cleanup later
+        // keep track of the index VBO ids for cleanup later
         this.vboIds.add( vboId );
 
         // we can empty the index buffer now as the index data lives in VRAM
@@ -157,7 +163,7 @@ public class Model {
             // setup a new VBO
             vboId = GL15.glGenBuffers();
             GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-            
+
             // if the av is an integer, (and we hope the data put into the buffer is also that or else RIP)
             // create an intbuffer and push the data
             if( av.dataType == Integer.class ) {
@@ -167,8 +173,8 @@ public class Model {
             // else do the same but with a float buffer
             } else if ( av.dataType == Float.class ) {
                 FloatBuffer buf = floatBufferFromCollection( buffer );
-                GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
                 GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
+                GL20.glVertexAttribPointer( av.ordinal(), av.stride, GL11.GL_FLOAT, false, 0, 0);
             }
 
             // keep track of the VBO ids for cleanup later
@@ -177,26 +183,31 @@ public class Model {
             // we can empty the buffer as the data lives in VRAM now
             buffer.clear();
         }
+
+        this.unbind();
     }
 
     // jump through and delete all VBOs
     // before deleting the VAO itself
     public void destroy() {
+
         this.bind();
+
         for( int vboId : this.vboIds)
             GL15.glDeleteBuffers(vboId);
         GL30.glDeleteVertexArrays(this.vaoId);
+        this.unbind();
+
     }
 
     public void render() {
-        this.bind();
 
         // bind and activate the model's texture atlas
         GL13.glActiveTexture( GL13.GL_TEXTURE0 );
         GL11.glBindTexture( GL11.GL_TEXTURE_2D, this.atlasId );
 
         // bind to the model's VAO
-        GL30.glBindVertexArray( this.vaoId );
+        this.bind();
 
         // enable all the attribute variables used
         for( AttributeVariable av : this.buffers.keySet() )
@@ -210,7 +221,7 @@ public class Model {
             GL20.glDisableVertexAttribArray( av.ordinal() );
 
         // unbind the VAO
-        GL30.glBindVertexArray( this.vaoId );
+        this.unbind();
     }
 
 }

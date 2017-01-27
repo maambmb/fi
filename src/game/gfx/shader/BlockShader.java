@@ -4,7 +4,7 @@ import game.block.LightSource;
 import game.gfx.AttributeVariable;
 import game.gfx.UniformVariable;
 
-public class BlockShader extends Shader {
+public final class BlockShader extends Shader {
 
     public static class BlockShaderPrepareMessage { }
     public static class BlockShaderRenderMessage { }
@@ -15,14 +15,17 @@ public class BlockShader extends Shader {
         UniformVariable.VIEW_MATRIX,
         UniformVariable.PROJECTION_MATRIX,
         UniformVariable.LIGHTING_BASE,
-        UniformVariable.FOG_COLOR
+        UniformVariable.FOG_COLOR,
+        UniformVariable.GLOBAL_LIGHT_ORIGIN,
     };
 
     public static AttributeVariable[] USED_ATTRIBUTE_VARS = {
         AttributeVariable.POSITION,
         AttributeVariable.TEX_COORDS,
         AttributeVariable.NORMAL,
-        AttributeVariable.SHADOW
+        AttributeVariable.SHADOW,
+        AttributeVariable.LIGHTING_CONSTANT,
+        AttributeVariable.LIGHTING_GLOBAL,
     };
 
     public static BlockShader SHADER;
@@ -32,6 +35,7 @@ public class BlockShader extends Shader {
 
     private BlockShader() {
         super( "glsl/block/vertex.glsl", "glsl/block/fragment.glsl" );
+        this.setup();
     }
 
     @Override

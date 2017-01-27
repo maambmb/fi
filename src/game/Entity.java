@@ -21,7 +21,9 @@ public abstract class Entity {
         this.listener             = new Listener();
         this.globalListenerClient = Listener.GLOBAL_LISTENER.mkClient();
         this.componentList        = new ArrayList<Component>();
+    }
 
+    public void setup() {
         this.addComponents();
         for( Component c : this.componentList )
             c.setup( this );

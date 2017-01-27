@@ -20,7 +20,7 @@ public class Config {
     public static final int OPENGL_VERSION = 3;
     public static final int LWJGL_VERSION = 2;
     // games field of view (keep relative wide for dat anti-nausea)
-    public static float FIELD_OF_VIEW = 110;
+    public static float FIELD_OF_VIEW = 45;
     // fps cap (vsync)
     public static int FPS = 60;
     // x*y of the window

@@ -23,14 +23,18 @@ public class Block {
 
     // reset the illumination by setting it to the natural illumination
     // of the block type. This will remove any propagated light
+
+    private static Vector3in resetBuffer = new Vector3in();
+
     public void resetIllumination() {
+        Vector3in.zero( resetBuffer );
         for( LightSource src : LightSource.values() )
-            this.setIllumination( src, Vector3in.ZERO );
+            this.setIllumination( src, resetBuffer );
         this.setIllumination( blockType.lightSource, blockType.illumination );
     }
 
-    public Vector3in getIllumination( LightSource src ) {
-        return new Vector3in( this.illumination[ src.ordinal() ] );
+    public void getIllumination( LightSource src, Vector3in tgt ) {
+        Vector3in.unpackBytes( tgt, this.illumination[ src.ordinal() ] );
     }
 
     private void setIllumination( LightSource src, Vector3in v ) {
@@ -40,17 +44,29 @@ public class Block {
     // propagate the lighting from a neighboring block onto this block
     // mechanically we take the other block's attenuated light and max it against our own
     // for all light sources
+
+    private static Vector3in propagateBuffer1 = new Vector3in();
+    private static Vector3in propagateBuffer2 = new Vector3in();
+
     public void propagate( Block b ) {
         for( LightSource src : LightSource.values() ) {
-            Vector3in curr = this.getIllumination( src );
-            Vector3in other = b.getIllumination( src ).add( - Config.LIGHT_DROPOFF );
-            this.setIllumination( src, curr.max( other ) );
+        
+            b.getIllumination( src, propagateBuffer1 );
+            Vector3in.add( propagateBuffer1, propagateBuffer1, - Config.LIGHT_DROPOFF );
+
+            this.getIllumination( src, propagateBuffer2 );
+            Vector3in.max( propagateBuffer1 , propagateBuffer1, propagateBuffer2 );
+            this.setIllumination( src, propagateBuffer1 );
         }
     }
 
     // a utility method for making the block globally illuminating
+
+    private static Vector3in addBuffer = new Vector3in();
+
     public void addGlobalIllumination() {
-        this.setIllumination( LightSource.GLOBAL, Vector3in.MAX_BYTES );
+        Vector3in.unpackBytes( addBuffer, 0xFFFFFF );
+        this.setIllumination( LightSource.GLOBAL, addBuffer );
     }
 
     // a utility method to check if the block is radiating any light at all
