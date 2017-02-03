@@ -14,10 +14,8 @@ public final class RandomBlockSpawner extends Entity {
 
     public RandomBlockSpawner() {
         super();
-        //Listener.GLOBAL_LISTENER.addSubcriber( Game.UpdateMessage.class, this::update );
         this.rng = new Random();
-        this.setup();
-        for( int i = 0; i < 100; i +=1 )
+        for( int i = 0; i < 800; i +=1 )
             this.update();
         World.WORLD.refresh();
     }
@@ -25,16 +23,16 @@ public final class RandomBlockSpawner extends Entity {
     private void update() {
 
         Vector3in nextPos = new Vector3in(
-            this.rng.nextInt( 500 ) - 250,
-            this.rng.nextInt( 500 ) - 250,
-            this.rng.nextInt( 500 ) - 250
+            this.rng.nextInt( 20 ) - 10,
+            this.rng.nextInt( 20 ) - 10,
+            this.rng.nextInt( 20 ) - 10
         );
 
-        World.WORLD.setBlock( nextPos, BlockType.GRAVEL, false );
+        World.WORLD.setBlock( nextPos, BlockType.GRAVEL );
     }
 
     @Override
-    protected void addComponents() {
+    protected void registerComponents() {
     }
 
 }

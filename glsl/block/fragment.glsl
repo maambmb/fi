@@ -16,6 +16,6 @@ void main(void) {
     vec3 final_color = tex_color * frag_lighting;
 
     // and boom we're done :-D
-    out_Color = vec4( 1,1,1,0.5 );
+    out_Color = vec4(tex_color.xyz,1);
 
 }

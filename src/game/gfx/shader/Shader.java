@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.Entity;
+import game.component.GlobalSubscriberComponent;
 import game.gfx.AttributeVariable;
 import game.gfx.UniformVariable;
 
@@ -119,7 +120,7 @@ public abstract class Shader extends Entity {
     protected abstract void setupUniformVariables();
 
     @Override
-    public void addComponents() {
+    public void registerComponents() {
     }
 
     @Override

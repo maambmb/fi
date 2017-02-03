@@ -35,7 +35,6 @@ public final class BlockShader extends Shader {
 
     private BlockShader() {
         super( "glsl/block/vertex.glsl", "glsl/block/fragment.glsl" );
-        this.setup();
     }
 
     @Override

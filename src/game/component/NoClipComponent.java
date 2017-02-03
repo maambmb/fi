@@ -2,13 +2,16 @@ package game.component;
 
 import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
+import org.lwjgl.util.vector.Matrix4f;
 
 import game.Entity;
 import game.Game;
-
+import util.MatrixUtils;
 import util.Vector3fl;
 
 public class NoClipComponent implements Component { 
+
+    private static Matrix4f matrixBuffer = new Matrix4f();
 
     private Position3DComponent posCmpt;
 
@@ -17,14 +20,13 @@ public class NoClipComponent implements Component {
 
     @Override
     public void setup( Entity e ) {
-        // this component is updating every tick
-        e.globalListenerClient.addSubscriber( Game.UpdateMessage.class, this::update );
-        
-        // this component reads and modifies the entities 3D position
-        e.listener.addSubcriber( Position3DComponent.class, x -> this.posCmpt = x );
+        e.listener.addSubscriber( Position3DComponent.class, x -> this.posCmpt = x );
+        e.listener.addSubscriber( Game.UpdateMessage.class, this::update );
     }
-
-    private static Vector3fl marchBuffer = new Vector3fl();
+    
+    public void init() {
+    	
+    }
 
     private void updatePosition( float delta ) {
 
@@ -36,7 +38,7 @@ public class NoClipComponent implements Component {
         // TODO: make key bindings configurable
         // determine the strafe/march amounts based on WASD
         if( Keyboard.isKeyDown( Keyboard.KEY_D ))
-            strafe = 1f;
+            strafe = -1f;
         else if( Keyboard.isKeyDown( Keyboard.KEY_A ))
             strafe = 1f;
         if( Keyboard.isKeyDown( Keyboard.KEY_S ) )
@@ -48,15 +50,17 @@ public class NoClipComponent implements Component {
         if( strafe == 0f && march == 0f)
             return;
 
-        // get the vector pointing in the marching direction 
-        this.posCmpt.getDirectionVector( marchBuffer );
-        Vector3fl.multiply( marchBuffer, marchBuffer, march );
-
         // multiply the march and strafe vecs by their march and strafe amounts,
         // add the vectors together and normalize. Finally we can multiply by the speed.
         // If we naively added march + strafe, you would move faster diagonally (thx pythagorus)
-        Vector3fl.add( this.posCmpt.position, this.posCmpt.position, marchBuffer );
-        System.out.println( this.posCmpt.position );
+        Matrix4f.setIdentity( matrixBuffer );
+        MatrixUtils.addRotationToMatrix( matrixBuffer, this.posCmpt.rotation );
+        Vector3fl marchVec = new Vector3fl(0,0,-1).transform( matrixBuffer );
+        Vector3fl strafeVec = new Vector3fl(-1,0,0).transform(matrixBuffer);
+        Vector3fl finalVec = strafeVec.multiply( strafe ).add( marchVec.multiply( march ) );
+
+        
+        this.posCmpt.position = this.posCmpt.position.add( finalVec );
     }
 
     private void updateRotation( float delta ) {
@@ -64,20 +68,21 @@ public class NoClipComponent implements Component {
         int dX = - Mouse.getDX();
         int dY = Mouse.getDY();
 
-
         if( dX == 0 && dY == 0 )
             return;
+        
+        this.posCmpt.rotation.y += dX * 2.65f * delta;
+        this.posCmpt.rotation.x += dY * 2.65f * delta;
+        this.posCmpt.rotation.x = Math.max( this.posCmpt.rotation.x, -80f );
+        this.posCmpt.rotation.x = Math.min( this.posCmpt.rotation.x, 80f );
 
-        this.posCmpt.rotation.y += dX * 0.65f * delta;
-        float newRot = this.posCmpt.rotation.x + dY * 0.65f * delta;
-        this.posCmpt.rotation.x = Math.min( Math.max( -70, newRot ), 70 );
     }
+    
 
     private void update( Game.UpdateMessage msg ) {
 
         // get the amount of time elapsed since last tick in seconds
         float delta  = msg.deltaMs / 1000f;
-
         this.updateRotation( delta );
         this.updatePosition( delta );
 

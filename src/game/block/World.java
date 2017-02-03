@@ -50,42 +50,39 @@ public class World {
         this.dirtyChunks     = new HashSet<Vector3in>();
         this.requisiteChunks = new HashSet<Vector3in>();
     }
+    
+    private static Vector3in getMapCoords( Vector3in absCoords ) {
+    	Vector3in div = absCoords.divide( Config.CHUNK_DIM );
+    	if( absCoords.x < 0 && absCoords.x % Config.CHUNK_DIM != 0 )
+    		div.x += 1;
+    	if( absCoords.y < 0 && absCoords.y % Config.CHUNK_DIM != 0 )
+    		div.y += 1;
+    	if( absCoords.z < 0 && absCoords.z % Config.CHUNK_DIM != 0 )
+    		div.z += 1;
+    	return div;
+    }
 
-    // get chunks for a given set of chunk coords (i.e. (0,0,0) and (0,0,1) return different chunks)
-    // create a fresh chunk if it doesn't exist
     private Chunk getChunk( Vector3in mapCoords ) {
         if( !this.chunkMap.containsKey( mapCoords ) ) {
-            Vector3in baseCoords = new Vector3in( mapCoords );
-            Vector3in.multiply( baseCoords, baseCoords, Config.CHUNK_DIM );
-            this.chunkMap.put( new Vector3in( mapCoords ), new Chunk( baseCoords ) );
+        	Chunk c = new Chunk();
+        	c.positionCmpt.position = mapCoords.multiply(Config.CHUNK_DIM ).toVector3fl();
+            this.chunkMap.put( mapCoords, c );
         }
         return this.chunkMap.get( mapCoords );
     }
 
-    // get a block directly from the world
-
-    private static Vector3in getBuffer = new Vector3in();
-
     public Block getBlock( Vector3in absCoords ) {
-
-        // transform the coords by dividing by chunk dims to get chunk coordinates
-        Vector3in.segment( getBuffer, absCoords, Config.CHUNK_DIM );
-        Chunk chunk = this.getChunk( getBuffer );
-        Vector3in.abs( getBuffer, absCoords );
-        Vector3in.modulo( getBuffer, getBuffer, Config.CHUNK_DIM );
-
-        // doing the modulo returns the block coords for the returned chunk
-        return chunk.getBlock( getBuffer );
+    	Vector3in mapCoords = getMapCoords( absCoords );
+        Chunk chunk = this.getChunk( mapCoords );
+        if( chunk == null)
+        	return null;
+        return chunk.getBlock( absCoords.modulo( Config.CHUNK_DIM ).abs() );
     }
 
-    private static Vector3in setCoordsBuffer = new Vector3in();
-    private static Vector3in setOffsetBuffer = new Vector3in();
-    private static Vector3in setRelBuffer = new Vector3in();
-
-    public void setBlock( Vector3in absCoords, BlockType bt, boolean globalLighting ) {
+    public void setBlock( Vector3in absCoords, BlockType bt ) {
 
         // calculate the chunk coordinates by dividing through by chunk dims
-        Vector3in.segment( setCoordsBuffer, absCoords, Config.CHUNK_DIM );
+    	Vector3in mapCoords = getMapCoords( absCoords );
 
         // by changing a chunk, we potentially have modified the light values of all 8
         // neighbouring chunks. We must set all 9 chunks to dirty. We need the further
@@ -94,59 +91,41 @@ public class World {
             for( int j = -2; j <= 2; j +=1 ) {
                 for( int k = -2; k <= 2; k +=1 ) {
 
-                    Vector3in.set( setOffsetBuffer, i,j,k );
-                    Vector3in.add( setRelBuffer, setOffsetBuffer, setCoordsBuffer );
+                	Vector3in rawOffset = new Vector3in(i,j,k);
+                    Vector3in offsetMapCoords = mapCoords.add( rawOffset );
 
-                    // the inner 9 chunks are dirty
-                    if( setOffsetBuffer.max() <= 1 && setOffsetBuffer.min() >= -1 ) {
-                        this.getChunk( setRelBuffer );
-                        this.dirtyChunks.add( new Vector3in( setRelBuffer ) );
+                    if( rawOffset.toMaxElement() <= 1 && rawOffset.toMinElement() >= -1 ) {
+                        this.getChunk( offsetMapCoords );
+                        this.dirtyChunks.add( offsetMapCoords );
                     }
 
                     // the outer 37 chunks are requisite (but only if 
                     // they exist - don't make them if we don't need them)
-                    if( this.chunkMap.containsKey( setRelBuffer ) )
-                        this.requisiteChunks.add( new Vector3in( setRelBuffer ) );
+                    if( this.chunkMap.containsKey( offsetMapCoords ) )
+                        this.requisiteChunks.add( offsetMapCoords );
                 }
             }
         }
 
         // grab the actual chunk we want to modify, then grab the block and adjust the values
-        Chunk chunk = this.getChunk( setCoordsBuffer );
-        Vector3in.abs( setCoordsBuffer, absCoords );
-        Vector3in.modulo( setCoordsBuffer, setCoordsBuffer, Config.CHUNK_DIM );
-        Block block = chunk.getBlock( setCoordsBuffer );
+        Chunk chunk = this.getChunk( mapCoords );
+        Block block = chunk.getBlock( absCoords.modulo( Config.CHUNK_DIM ).abs() );
         block.blockType = bt;
-        block.globalLighting = globalLighting;
     }
-
-    private static Vector3in refreshIntPosBuffer   = new Vector3in();
-    private static Vector3fl refreshFloatPosBuffer = new Vector3fl();
-    private static Vector3in refreshLightBuffer    = new Vector3in();
-    private static Vector3fl refreshTexBuffer      = new Vector3fl();
-
 
     private void refreshLighting() {
 
         // dirty chunks need to be recalculated from scratch
         // so we clear all illumination values and set them to the block type's
         // natural illumination
-        for( Vector3in mapCoords : this.dirtyChunks ) {
-            this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> { 
-                b.resetIllumination();
+        for( Vector3in mapCoords : this.dirtyChunks )
+            this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> b.resetIllumination() );
 
-                // if a block has global lighting, set the block directly above it to have global illumination
-                if( b.globalLighting ) {
-                    Vector3in.add( refreshIntPosBuffer, v, Vector3in.CubeNormal.TOP.vector );
-                    this.getBlock( refreshIntPosBuffer ).addGlobalIllumination();
-                }
-            });
-        }
 
         // buffer of blocks that we need to propagate light from
         Set<Vector3in> toPropagate  = new HashSet<Vector3in>();
 
-        // buffer to store updates ot propagated (can't modify a collection while we iterate)
+        // buffer to store updates to propagated (can't modify a collection while we iterate)
         Set<Vector3in> propagated = new HashSet<Vector3in>();
 
         // break the propagation up into chunk-sized bites so the buffers never grow super large
@@ -155,7 +134,7 @@ public class World {
             // add only the naturally illuminating blocks into the buffer
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> {
                 if( b.isLit() )
-                    toPropagate.add( new Vector3in( v ) );
+                    toPropagate.add( v );
             });
 
             // iterate the number of times light is allowed to jump
@@ -166,14 +145,14 @@ public class World {
                 for( Vector3in pos : toPropagate ) {
                     Block b = this.getBlock( pos );
                     for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
-                        Vector3in.add( refreshIntPosBuffer, pos, normal.vector );
-                        Block other = this.getBlock( refreshIntPosBuffer );
+                    	Vector3in neighborVec = pos.add( normal.vector );
+                        Block other = this.getBlock( neighborVec );
                         if( other.blockType.opacity != BlockType.Opacity.OPAQUE ) {
                             other.propagate( b );
-
+                            
                             // if we do propagate make sure we add the propagated block to the buffer
                             if( other.isLit() )
-                                propagated.add( new Vector3in( refreshIntPosBuffer ) );
+                                propagated.add( neighborVec );
                         }
                     }
                 }
@@ -209,6 +188,8 @@ public class World {
             Chunk chunk = this.chunkMap.get( mapCoords );
             chunk.iterateBlocks( (v,b) -> {
 
+				Vector3in absCoords = mapCoords.multiply( Config.CHUNK_DIM).add( v );
+
                 // examine each face/quad of each block
                 for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
 
@@ -217,10 +198,13 @@ public class World {
                         continue;
 
                     // if the block touching the current face is opaque, then it is hidden and we should ignore
-                    Vector3in.add( refreshIntPosBuffer, v, normal.vector );
-                    if( this.getBlock( refreshIntPosBuffer ).blockType.opacity == BlockType.Opacity.OPAQUE )
+                    Vector3in neighborVec = absCoords.add( normal.vector );
+                    if( this.getBlock( neighborVec ).blockType.opacity == BlockType.Opacity.OPAQUE )
                         continue;
-
+                    
+                    if( normal == Vector3in.CubeNormal.LEFT || normal == Vector3in.CubeNormal.RIGHT ) {
+                    }
+                    
                     // each face is a quad comprising of 4 vertices
                     for( int i = 0; i < 4; i += 1 ) {
 
@@ -230,16 +214,12 @@ public class World {
                         boolean vertexUseFirstOrtho  = ( i & 0x01 ) > 0;
                         boolean vertexUseSecondOrtho = ( i & 0x02 ) > 0;
 
-                        Vector3in.max( refreshIntPosBuffer, normal.vector, 0 );
-                        Vector3in.add( refreshIntPosBuffer, refreshIntPosBuffer, v );
+                        Vector3in vertexVec = normal.vector.max(0).add( absCoords );
                         if( vertexUseFirstOrtho )
-                            Vector3in.add( refreshIntPosBuffer, refreshIntPosBuffer, normal.firstOrtho.vector );
+                        	vertexVec = vertexVec.add( normal.firstOrtho.vector );
                         if( vertexUseSecondOrtho )
-                            Vector3in.add( refreshIntPosBuffer, refreshIntPosBuffer, normal.secondOrtho.vector );
-                        // calculate the position of the vertex and transform to a floating point vector
-
-                        Vector3fl.set( refreshFloatPosBuffer, refreshIntPosBuffer );
-                        model.addAttributeData( AttributeVariable.POSITION, refreshFloatPosBuffer );
+                        	vertexVec = vertexVec.add( normal.secondOrtho.vector );
+                        model.addAttributeData( AttributeVariable.POSITION, vertexVec.toVector3fl() );
 
                         // keep a tally of the level of shadow that should be applied to the vertex (0-3)
                         int shadowCount = 0;
@@ -248,7 +228,7 @@ public class World {
                         // from the block itself and its (up to 3) planar neighbors
                         // start by adding the block's own illu values in
                         for( LightSource src : LightSource.values() )
-                            b.getIllumination( src, lightBlender[ src.ordinal() ] );
+                        	lightBlender[src.ordinal()] = b.getIllumination(src);
 
                         // keep track of the number of contributions to the light blending
                         // for use in averaging later
@@ -259,55 +239,49 @@ public class World {
 
                             // get the position of the planar neighbor but offset by the cube face's normal
                             // i.e. if the normal was TOP, this would be the block above the planar neighbor
-                            Vector3in.add( refreshIntPosBuffer, v, normal.vector );
-                            if( vertexUseFirstOrtho )
-                                Vector3in.add( refreshIntPosBuffer, refreshIntPosBuffer, normal.firstOrtho.vector );
-                            else
-                                Vector3in.subtract( refreshIntPosBuffer, refreshIntPosBuffer, normal.firstOrtho.vector );
-                            if( vertexUseSecondOrtho )
-                                Vector3in.add( refreshIntPosBuffer, refreshIntPosBuffer, normal.secondOrtho.vector );
-                            else
-                                Vector3in.subtract( refreshIntPosBuffer, refreshIntPosBuffer, normal.secondOrtho.vector );
-
-                            Block planarNeighbor = this.getBlock( refreshIntPosBuffer );
+                        	Vector3in planarNeighborVec = absCoords
+                        			.add( normal.firstOrtho.vector.multiply( vertexUseFirstOrtho ? 1 : -1 ) )
+                        			.add( normal.secondOrtho.vector.multiply( vertexUseSecondOrtho ? 1 : -1 ) );
 
                             // if the block is opaque then the vertex should have its shadow value increased by 1
-                            if( planarNeighbor.blockType.opacity == BlockType.Opacity.OPAQUE )
+                            if( this.getBlock( planarNeighborVec.add( normal.vector ) ).blockType.opacity == BlockType.Opacity.OPAQUE )
                                 shadowCount += 1;
 
                             // otherwise, the planar neighbor is visible and we should add its illumination
                             // contribution to the light blender and increase the blend count by one
                             else {
+                            	Block planarNeighbor = this.getBlock( planarNeighborVec );
                                 for( LightSource src : LightSource.values() ) {
-                                    planarNeighbor.getIllumination( src, refreshLightBuffer );
-                                    Vector3in.add( lightBlender[ src.ordinal() ], lightBlender[ src.ordinal() ], refreshLightBuffer );
+                                    lightBlender[src.ordinal()] = planarNeighbor.getIllumination( src ).add( lightBlender[ src.ordinal() ]);
                                     blendCount += 1;
                                 }
                             }
                         }
 
                         // add the normal by packing the vector into an int
-                        model.addAttributeData( AttributeVariable.NORMAL, normal.vector.packBytes() );
+                        model.addAttributeData( AttributeVariable.NORMAL, normal.vector.toPackedBytes() );
 
                         // add the shadow amount (0-3) for the vertex
                         model.addAttributeData( AttributeVariable.SHADOW, shadowCount );
 
                         // add the tex coords for the specified atlas. Convert to opengl coords (i.e. between 0f - 1f )
                         // by dividing by the number of faces along one dimension of the texture atlas
-                        Vector3fl.set( refreshTexBuffer, b.blockType.texCoords );
-                        Vector3fl.divide( refreshTexBuffer, refreshTexBuffer, (float) ref.size / Config.BLOCK_ATLAS_TEX_DIM );
-                        model.addAttributeData2D( AttributeVariable.TEX_COORDS, refreshTexBuffer );
+                        
+                        Vector3in texCoords = new Vector3in( vertexUseFirstOrtho ? 1 : 0, vertexUseSecondOrtho ? 1 : 0, 0 );
+                        Vector3fl texCoordsFl = texCoords.add( b.blockType.texCoords ).multiply( Config.BLOCK_ATLAS_TEX_DIM ).toVector3fl().divide( ref.size );
+                        model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoordsFl );
 
                         // now add in all light values
                         for( LightSource ls : LightSource.values() ) {
                             // average the blended light before we add it for *smooth* lighting effects
-                            Vector3in.divide( refreshLightBuffer, lightBlender[ ls.ordinal() ], blendCount );
-                            model.addAttributeData( ls.attributeVariable, refreshLightBuffer.packBytes() );
+                            Vector3in illu = lightBlender[ls.ordinal()].divide( blendCount );
+                            model.addAttributeData( ls.attributeVariable, illu );
                         }
                     }
 
-                    // we've added four vertices, time to persist that as a quad
-                    model.addQuad();
+					// we've added four vertices, time to persist that as a quad
+					model.addQuad();
+
                 }
             });
 

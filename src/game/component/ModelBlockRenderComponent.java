@@ -2,6 +2,7 @@ package game.component;
 
 import game.Entity;
 import game.gfx.shader.BlockShader;
+import game.gfx.shader.BlockShader.BlockShaderRenderMessage;
 
 public class ModelBlockRenderComponent extends ModelRenderComponent {
 
@@ -9,8 +10,11 @@ public class ModelBlockRenderComponent extends ModelRenderComponent {
     public void setup( Entity e ) {
         super.setup( e );
         // only render when the block shader program is active
-        e.globalListenerClient.addSubscriber( BlockShader.BlockShaderRenderMessage.class, 
-            (msg) -> this.shaderRender( BlockShader.SHADER ) );
+        e.listener.addSubscriber( BlockShader.BlockShaderRenderMessage.class, this::render );
+    }
+    
+    private void render( BlockShaderRenderMessage msg ) {
+    	this.shaderRender( BlockShader.SHADER );
     }
 
     @Override

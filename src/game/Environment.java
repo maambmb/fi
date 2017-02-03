@@ -1,6 +1,7 @@
 package game;
 
 import game.block.LightSource;
+import game.component.GlobalSubscriberComponent;
 import game.gfx.UniformVariable;
 import game.gfx.shader.BlockShader;
 import game.gfx.shader.Shader;
@@ -20,7 +21,8 @@ public final class Environment extends Entity {
     public Vector3fl fogColor;
 
     private Environment() {
-
+    	super();
+    	
         this.lighting     = new Vector3fl[ LightSource.values().length ];
         this.baseLighting = new Vector3fl();
         this.fogColor     = new Vector3fl(0.5f,0.5f,0.5f);
@@ -29,11 +31,12 @@ public final class Environment extends Entity {
 
         for( int i = 0; i < this.lighting.length; i += 1 )
             this.lighting[i] = new Vector3fl();
-        this.globalListenerClient.addSubscriber( BlockShader.BlockShaderPrepareMessage.class, (msg) -> {
-            this.shaderPrepare( BlockShader.SHADER );
-        });
+    }
 
-        this.setup();
+    @Override
+    protected void registerComponents() {
+    	this.registerComponent( new GlobalSubscriberComponent() );
+        this.listener.addSubscriber( BlockShader.BlockShaderPrepareMessage.class, this::blockShaderPrepare );
     }
 
     private void shaderPrepare( Shader s ) {
@@ -44,10 +47,9 @@ public final class Environment extends Entity {
         s.loadVector3fl( UniformVariable.FOG_COLOR, this.fogColor );
         s.loadVector3fl( UniformVariable.GLOBAL_LIGHT_ORIGIN, this.globalLightOrigin );
     }
-
-    @Override
-    protected void addComponents() {
-
+    
+    private void blockShaderPrepare( BlockShader.BlockShaderPrepareMessage msg ) {
+    	this.shaderPrepare( BlockShader.SHADER );
     }
 
 }

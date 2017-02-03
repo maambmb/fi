@@ -2,6 +2,7 @@ package game.block;
 
 import game.Config;
 import game.Entity;
+import game.component.GlobalSubscriberComponent;
 import game.component.ModelBlockRenderComponent;
 import game.component.Position3DComponent;
 
@@ -26,22 +27,21 @@ public final class Chunk extends Entity {
     }
 
     // convert an ix back into a position vector
-    private static void unpack( int p, Vector3in v ) {
+    private static Vector3in unpack( int p ) {
         int rem = p % DIM_SQ;
-        v.y = p / DIM_SQ;
-        v.x = rem / Config.CHUNK_DIM;
-        v.z = rem % Config.CHUNK_DIM;
+        int y = p / DIM_SQ;
+        int x = rem / Config.CHUNK_DIM;
+        int z = rem % Config.CHUNK_DIM;
+        return new Vector3in( x, y, z );
     }
 
     // the raw block data
     private Block[] blockData;
-    private Vector3in baseCoords;
     public ModelBlockRenderComponent renderCmpt;
+    public Position3DComponent positionCmpt;
 
-    public Chunk( Vector3in baseCoords ) {
+    public Chunk() {
         super();
-
-        this.baseCoords = baseCoords;
 
         // initialize an array to hold every single block
         this.blockData = new Block[ DIM_CB ];
@@ -49,8 +49,6 @@ public final class Chunk extends Entity {
         // initialize each block as an empty/air block
         for( int i = 0; i < DIM_CB; i += 1 )
             this.blockData[i] = new Block();
-
-        this.setup();
     }
 
     // retrieve a block from the chunk
@@ -59,14 +57,9 @@ public final class Chunk extends Entity {
     }
 
     // given an iterator fn, run it on every single block
-
-    private static Vector3in iterateBuffer = new Vector3in();
-
     public void iterateBlocks( Lambda.ActionBinary<Vector3in,Block> fn ) {
         for( int i = 0; i < DIM_CB; i += 1 ) {
-            unpack( i, iterateBuffer );
-            Vector3in.add( iterateBuffer, iterateBuffer, this.baseCoords );
-            fn.run( iterateBuffer, this.blockData[i] );
+            fn.run( unpack(i), this.blockData[i] );
         }
     }
 
@@ -79,12 +72,10 @@ public final class Chunk extends Entity {
     }
 
     @Override
-    public void addComponents() {
-        Position3DComponent pos = new Position3DComponent();
-        this.addComponent( pos );
-
-        this.renderCmpt = new ModelBlockRenderComponent();
-        this.addComponent( renderCmpt );
+    public void registerComponents() {
+        this.positionCmpt = this.registerComponent( new Position3DComponent() );
+        this.renderCmpt = this.registerComponent( new ModelBlockRenderComponent() );
+        this.registerComponent( new GlobalSubscriberComponent() );
     }
 
 }

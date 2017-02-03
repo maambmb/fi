@@ -11,34 +11,33 @@ import util.MatrixUtils;
 
 public abstract class ModelRenderComponent implements Component {
 
-    private Matrix4f matrixBuffer;
+    private static Matrix4f matrixBuffer = new Matrix4f();
+
     private Position3DComponent posCmpt;
     public Model model;
 
     public ModelRenderComponent() {
-        // use this buffer for doing matrix manipulations
-        this.matrixBuffer = new Matrix4f();
     }
 
     @Override
     public void setup( Entity e ) {
         // grab the position 3d cmpt from the entity
-        e.listener.addSubcriber( Position3DComponent.class, x -> this.posCmpt = x );
+        e.listener.addSubscriber( Position3DComponent.class, x -> this.posCmpt = x );
     }
 
     // create a matrix which represents an entities rotation and shunt it to the shader
     private void loadRotateModelMatrix( Shader s ) {
-        Matrix4f.setIdentity( this.matrixBuffer );
-        MatrixUtils.rotateMatrix( this.matrixBuffer, this.posCmpt.rotation );
-        s.loadMatrix4f( UniformVariable.MODEL_ROTATE_MATRIX, this.matrixBuffer );
+        Matrix4f.setIdentity( matrixBuffer );
+        MatrixUtils.addRotationToMatrix( matrixBuffer, this.posCmpt.rotation );
+        s.loadMatrix4f( UniformVariable.MODEL_ROTATE_MATRIX, matrixBuffer );
     }
 
     // create a matrix which represents an entities scale + translation and shunt it to the shader
     private void loadTranslateScaleMatrix( Shader s ) {
-        Matrix4f.setIdentity( this.matrixBuffer );
-        MatrixUtils.translateMatrix( this.matrixBuffer, this.posCmpt.position );
-        MatrixUtils.scaleMatrix( this.matrixBuffer, this.posCmpt.scale );
-        s.loadMatrix4f( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX, this.matrixBuffer );
+        Matrix4f.setIdentity( matrixBuffer );
+        MatrixUtils.addTranslationToMatrix( matrixBuffer, this.posCmpt.position );
+        MatrixUtils.addScaleToMatrix( matrixBuffer, this.posCmpt.scale );
+        s.loadMatrix4f( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX, matrixBuffer );
     }
 
     // render an entity using the model specified
@@ -54,6 +53,10 @@ public abstract class ModelRenderComponent implements Component {
 
         // then render the underlying model
         this.model.render();
+    }
+    
+    public void init() {
+    	
     }
 
 }

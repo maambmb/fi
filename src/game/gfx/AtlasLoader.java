@@ -9,6 +9,7 @@ import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
 import game.Entity;
+import game.component.GlobalSubscriberComponent;
 
 public class AtlasLoader extends Entity {
 
@@ -34,6 +35,7 @@ public class AtlasLoader extends Entity {
     private Map<String,TextureRef> texMap;
 
     public AtlasLoader() {
+    	super();
         this.texMap = new HashMap<String,TextureRef>();
     }
 
@@ -52,7 +54,8 @@ public class AtlasLoader extends Entity {
     }
 
     @Override
-    public void addComponents() {
+    public void registerComponents() {
+    	this.registerComponent( new GlobalSubscriberComponent() );
     }
 
     @Override

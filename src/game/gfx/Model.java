@@ -41,9 +41,10 @@ public class Model {
 
     // given four vertices of a quad (i:0,1,2,3), this is the order in which they should
     // be drawn - for use in the index VBO
-    private static final int[] QUAD_ENUMERATION = new int[] { 3, 1, 0, 2, 3, 0};
+    private static final int[] ENUMERATION = new int[] { 3, 1, 0, 3, 0, 2};
 
     public int vertexCount;
+    private int indexCount;
 
     // the index VBO buffer
     private List<Object> indices;
@@ -65,6 +66,7 @@ public class Model {
         this.buffers     = new HashMap<AttributeVariable,List<Object>>();
         this.vboIds      = new ArrayList<Integer>();
         this.vertexCount = 0;
+        this.indexCount  = 0;
     }
 
     // prepare the model to use the specified attribute variable
@@ -122,9 +124,10 @@ public class Model {
     // record a new quad by adding 4 to the vertex count
     // and adding the 6 new indices to the index vbo buffer
     public void addQuad() {
-        for( int offset : QUAD_ENUMERATION )
-            this.indices.add( this.vertexCount + offset );
-        this.vertexCount += 4;
+        for( int offset : ENUMERATION )
+            this.indices.add( this.indexCount + offset );
+        this.indexCount += 4;
+        this.vertexCount += 6;
     }
 
     private void bind() {

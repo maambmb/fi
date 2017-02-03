@@ -2,6 +2,7 @@ package game;
 
 import org.lwjgl.util.vector.Matrix4f;
 
+import game.component.GlobalSubscriberComponent;
 import game.component.NoClipComponent;
 import game.component.Position3DComponent;
 import game.gfx.UniformVariable;
@@ -9,7 +10,6 @@ import game.gfx.shader.BlockShader;
 import game.gfx.shader.Shader;
 
 import util.MatrixUtils;
-import util.Vector3fl;
 
 public final class Camera extends Entity {
 
@@ -24,15 +24,12 @@ public final class Camera extends Entity {
 
     private Camera() {
         super();
-        this.globalListenerClient.addSubscriber( BlockShader.BlockShaderPrepareMessage.class,
-            (msg) -> this.shaderPrepare( BlockShader.SHADER ) );
-        this.setup();
     }
 
     private void loadProjectionMatrix( Shader s ) {
 
         float aspectRatio    = Config.GAME_WIDTH / (float)Config.GAME_HEIGHT;
-        float yScale         = (float) (aspectRatio / Math.tan( Math.toRadians( Config.FIELD_OF_VIEW )));
+        float yScale         = (float) (aspectRatio / Math.tan( Math.toRadians( Config.FIELD_OF_VIEW / 2f )));
         float xScale         = yScale / aspectRatio;
         float frustrumLength = Config.FAR_PLANE - Config.NEAR_PLANE;
 
@@ -48,29 +45,29 @@ public final class Camera extends Entity {
         s.loadMatrix4f( UniformVariable.PROJECTION_MATRIX, matrixBuffer );
     }
 
-    private static Vector3fl viewBuffer = new Vector3fl(); 
-
     private void loadViewMatrix( Shader s ) {
+
         Matrix4f.setIdentity(matrixBuffer);
-
-        Vector3fl.negate( viewBuffer, this.posCmpt.rotation );
-        MatrixUtils.rotateMatrix( matrixBuffer, viewBuffer );
-        Vector3fl.negate( viewBuffer, this.posCmpt.position );
-        MatrixUtils.translateMatrix( matrixBuffer, viewBuffer );
-
+        MatrixUtils.addRotationMatrixReversed( matrixBuffer, this.posCmpt.rotation.multiply(-1) );
+        MatrixUtils.addTranslationToMatrix( matrixBuffer , this.posCmpt.position.multiply(-1) );
         s.loadMatrix4f( UniformVariable.VIEW_MATRIX, matrixBuffer );
     }
 
     @Override
-    public void addComponents() {
-        this.posCmpt = new Position3DComponent();
-        this.addComponent( this.posCmpt );
-        this.addComponent( new NoClipComponent() );
+    public void registerComponents() {
+        this.posCmpt = this.registerComponent( new Position3DComponent() );
+        this.registerComponent( new NoClipComponent() );
+        this.registerComponent( new GlobalSubscriberComponent() );
+        this.listener.addSubscriber( BlockShader.BlockShaderPrepareMessage.class, this::blockShaderPrepare );
     }
 
     private void shaderPrepare( Shader s ) {
         this.loadViewMatrix( s );
         this.loadProjectionMatrix( s );
     } 
+    
+    private void blockShaderPrepare( BlockShader.BlockShaderPrepareMessage msg ) {
+    	this.shaderPrepare( BlockShader.SHADER );
+    }
 
 }
