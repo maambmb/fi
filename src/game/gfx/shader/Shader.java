@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.Entity;
+import game.component.GlobalSubscriberComponent;
 import game.gfx.AttributeVariable;
 import game.gfx.UniformVariable;
 
@@ -108,18 +109,21 @@ public abstract class Shader extends Entity {
     }
 
     // bind to a shader program
-    public void use() {
+    protected void use() {
         GL20.glUseProgram( this.programId );
     }
+    
+    protected void enableAttributeVariable( AttributeVariable av ) {
+		GL20.glEnableVertexAttribArray( av.ordinal() );
+    }
 
-    // setup all VAO variables
-    protected abstract void setupAttributeVariables();
-
-    // setup all uniform variables
-    protected abstract void setupUniformVariables();
+    protected void disableAttributeVariable( AttributeVariable av ) {
+		GL20.glDisableVertexAttribArray( av.ordinal() );
+    }
 
     @Override
     public void registerComponents() {
+    	this.registerComponent(new GlobalSubscriberComponent());
     }
     
     @Override
@@ -134,4 +138,9 @@ public abstract class Shader extends Entity {
         GL20.glDeleteProgram( this.programId );
     }
 
+    // setup all VAO variables
+    protected abstract void setupAttributeVariables();
+
+    // setup all uniform variables
+    protected abstract void setupUniformVariables();
 }

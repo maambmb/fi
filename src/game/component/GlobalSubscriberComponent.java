@@ -16,11 +16,11 @@ public class GlobalSubscriberComponent implements Component {
 	}
 	
 	public void init() {
-		Listener.GLOBAL_LISTENER.addChild( this.listener );
+		Listener.GLOBAL.addChild( this.listener );
 	}
 	
 	public void destroy() {
-		Listener.GLOBAL_LISTENER.removeChild( this.listener );
+		Listener.GLOBAL.removeChild( this.listener );
 	}
 	
 }

@@ -57,7 +57,7 @@ public class Game {
         GL11.glClear( GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT );
         GL11.glEnable( GL11.GL_CULL_FACE );
         GL11.glTexParameteri( GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST );
-        Vector3fl fogColor = Environment.ENV.fogColor;
+        Vector3fl fogColor = Environment.GLOBAL.fogColor;
         GL11.glClearColor( fogColor.x, fogColor.y, fogColor.z, 1 );
     }
 
@@ -82,12 +82,11 @@ public class Game {
         World.init();
 
         // create global entities
+        InputArbiter.init();
         BlockShader.init();
         Camera.init();
         Environment.init();
         AtlasLoader.init();
-
-            BlockShader.SHADER.use();
 
         new RandomBlockSpawner();
 
@@ -99,13 +98,13 @@ public class Game {
             // (to form a delta timestep) - then set this new reading as the previous one so we're
             // ready for the next loop iteration
             this.currTime = System.currentTimeMillis();
-            Listener.GLOBAL_LISTENER.listen( new UpdateMessage( this.prevTime, this.currTime ) );
+            Listener.GLOBAL.listen( new UpdateMessage( this.prevTime, this.currTime ) );
             this.prevTime = this.currTime;
 
             // then perform draws for all the various shader programs
-            BlockShader.SHADER.use();
-            Listener.GLOBAL_LISTENER.listen( new BlockShader.BlockShaderPrepareMessage() );
-            Listener.GLOBAL_LISTENER.listen( new BlockShader.BlockShaderRenderMessage() );
+            Listener.GLOBAL.listen( new BlockShader.BlockShaderPreRenderMessage() );
+            Listener.GLOBAL.listen( new BlockShader.BlockShaderRenderMessage() );
+            Listener.GLOBAL.listen( new BlockShader.BlockShaderPreRenderMessage() );
 
             World.WORLD.refresh();
             this.updateCtx();
@@ -114,7 +113,7 @@ public class Game {
         
 
         // if we've exited the loop, the game is about to end. Try and clean up all resources by destroying all resources
-        Listener.GLOBAL_LISTENER.listen( new DestroyMessage() );
+        Listener.GLOBAL.listen( new DestroyMessage() );
 
         // finally destroy the display ctx
         this.destroyCtx();

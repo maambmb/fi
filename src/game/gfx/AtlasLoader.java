@@ -26,9 +26,9 @@ public class AtlasLoader extends Entity {
         }
     }
 
-    public static AtlasLoader LOADER;
+    public static AtlasLoader GLOBAL;
     public static void init() {
-        LOADER = new AtlasLoader();
+        GLOBAL = new AtlasLoader();
     }
 
     // the internal cache which maps texture path to handle

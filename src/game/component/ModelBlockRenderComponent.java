@@ -14,7 +14,7 @@ public class ModelBlockRenderComponent extends ModelRenderComponent {
     }
     
     private void render( BlockShaderRenderMessage msg ) {
-    	this.shaderRender( BlockShader.SHADER );
+    	this.shaderRender( BlockShader.GLOBAL );
     }
 
     @Override

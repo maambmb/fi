@@ -3,6 +3,7 @@ package game;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.component.GlobalSubscriberComponent;
+import game.component.InputListenerComponent;
 import game.component.NoClipComponent;
 import game.component.Position3DComponent;
 import game.gfx.UniformVariable;
@@ -13,9 +14,9 @@ import util.MatrixUtils;
 
 public final class Camera extends Entity {
 
-    public static Camera camera;
+    public static Camera GLOBAL;
     public static void init() {
-        camera = new Camera();
+        GLOBAL = new Camera();
     }
 
     private static Matrix4f matrixBuffer = new Matrix4f();
@@ -24,6 +25,7 @@ public final class Camera extends Entity {
 
     private Camera() {
         super();
+        this.listener.addSubscriber( BlockShader.BlockShaderPreRenderMessage.class, this::blockShaderPreRender );
     }
 
     private void loadProjectionMatrix( Shader s ) {
@@ -58,16 +60,17 @@ public final class Camera extends Entity {
         this.posCmpt = this.registerComponent( new Position3DComponent() );
         this.registerComponent( new NoClipComponent() );
         this.registerComponent( new GlobalSubscriberComponent() );
-        this.listener.addSubscriber( BlockShader.BlockShaderPrepareMessage.class, this::blockShaderPrepare );
+        InputListenerComponent inputCmpt = this.registerComponent( new InputListenerComponent( InputArbiter.Priority.CONTROL ));
+        inputCmpt.startListening();
     }
 
-    private void shaderPrepare( Shader s ) {
+    private void preRender( Shader s ) {
         this.loadViewMatrix( s );
         this.loadProjectionMatrix( s );
     } 
     
-    private void blockShaderPrepare( BlockShader.BlockShaderPrepareMessage msg ) {
-    	this.shaderPrepare( BlockShader.SHADER );
+    private void blockShaderPreRender( BlockShader.BlockShaderPreRenderMessage msg ) {
+    	this.preRender( BlockShader.GLOBAL );
     }
 
 }

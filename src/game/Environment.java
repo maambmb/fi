@@ -10,9 +10,9 @@ import util.Vector3fl;
 
 public final class Environment extends Entity {
 
-    public static Environment ENV;
+    public static Environment GLOBAL;
     public static void init() {
-        ENV = new Environment();
+        GLOBAL = new Environment();
     }
 
     public Vector3fl[] lighting;
@@ -36,10 +36,10 @@ public final class Environment extends Entity {
     @Override
     protected void registerComponents() {
     	this.registerComponent( new GlobalSubscriberComponent() );
-        this.listener.addSubscriber( BlockShader.BlockShaderPrepareMessage.class, this::blockShaderPrepare );
+        this.listener.addSubscriber( BlockShader.BlockShaderPreRenderMessage.class, this::blockShaderPreRender );
     }
 
-    private void shaderPrepare( Shader s ) {
+    private void preRender( Shader s ) {
         for( LightSource src : LightSource.values() )
             s.loadVector3fl( src.uniformVariable, this.lighting[ src.ordinal() ] );
 
@@ -48,8 +48,8 @@ public final class Environment extends Entity {
         s.loadVector3fl( UniformVariable.GLOBAL_LIGHT_ORIGIN, this.globalLightOrigin );
     }
     
-    private void blockShaderPrepare( BlockShader.BlockShaderPrepareMessage msg ) {
-    	this.shaderPrepare( BlockShader.SHADER );
+    private void blockShaderPreRender( BlockShader.BlockShaderPreRenderMessage msg ) {
+    	this.preRender( BlockShader.GLOBAL );
     }
 
 }

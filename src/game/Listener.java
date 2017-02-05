@@ -14,9 +14,9 @@ public class Listener {
     // subscription is done on a message class basis
     // subs are provided a unique id when they subscribe
 
-    public static Listener GLOBAL_LISTENER;
+    public static Listener GLOBAL;
     public static void init() {
-        GLOBAL_LISTENER = new Listener();
+        GLOBAL = new Listener();
     }
 
     // all sub ids grouped by the class of message they have subscribed to

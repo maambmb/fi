@@ -15,6 +15,7 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
+import game.gfx.shader.BlockShader;
 import util.Vector3fl;
 import util.Vector3in;
 
@@ -145,6 +146,9 @@ public class Model {
         // bind to the model
         this.bind();
 
+        for( AttributeVariable av : BlockShader.GLOBAL.USED_ATTRIBUTE_VARS )
+			GL20.glEnableVertexAttribArray( av.ordinal() );
+        
         // create the vbo for the index data, load it into a buffer and push it
         int vboId = GL15.glGenBuffers();
         GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
@@ -156,12 +160,6 @@ public class Model {
 
         // we can empty the index buffer now as the index data lives in VRAM
         this.indices.clear();
-
-		GL20.glEnableVertexAttribArray( 0 );
-		GL20.glEnableVertexAttribArray( 1 );
-		GL20.glEnableVertexAttribArray( 2 );
-		GL20.glEnableVertexAttribArray( 3 );
-		GL20.glEnableVertexAttribArray( 4 );
 
 		for( AttributeVariable av : AttributeVariable.values()) {
 
@@ -203,7 +201,6 @@ public class Model {
     public void destroy() {
 
         this.bind();
-
         for( int vboId : this.vboIds)
             GL15.glDeleteBuffers(vboId);
         GL30.glDeleteVertexArrays(this.vaoId);
@@ -220,15 +217,8 @@ public class Model {
         // bind to the model's VAO
         this.bind();
 
-        for( AttributeVariable av : this.buffers.keySet() )
-            GL20.glEnableVertexAttribArray( av.ordinal() );
-
         // draw the model!
         GL11.glDrawElements( GL11.GL_TRIANGLES, this.vertexCount, GL11.GL_UNSIGNED_INT, 0 );
-
-        // disable all the attribute variables used
-        for( AttributeVariable av : this.buffers.keySet() )
-            GL20.glDisableVertexAttribArray( av.ordinal() );
 
         // unbind the VAO
         this.unbind();

@@ -1,13 +1,11 @@
 package game.gfx.shader;
 
-import org.lwjgl.opengl.GL20;
-
 import game.gfx.AttributeVariable;
 import game.gfx.UniformVariable;
 
 public final class BlockShader extends Shader {
 
-    public static class BlockShaderPrepareMessage { }
+    public static class BlockShaderPreRenderMessage { }
     public static class BlockShaderRenderMessage { }
 
     private static UniformVariable[] USED_UNIFORM_VARS = {
@@ -31,13 +29,14 @@ public final class BlockShader extends Shader {
         AttributeVariable.LIGHTING_GLOBAL,
     };
 
-    public static BlockShader SHADER;
+    public static BlockShader GLOBAL;
     public static void init() {
-        SHADER = new BlockShader();
+        GLOBAL = new BlockShader();
     }
 
     private BlockShader() {
         super( "glsl/block/vertex.glsl", "glsl/block/fragment.glsl" );
+        this.listener.addSubscriber( BlockShaderPreRenderMessage.class, this::preRender);
     }
 
     @Override
@@ -51,5 +50,11 @@ public final class BlockShader extends Shader {
         for( AttributeVariable av : USED_ATTRIBUTE_VARS ) 
             this.createAttributeVariable( av );
     }
+    
+	protected void preRender( BlockShaderPreRenderMessage msg ) {
+		this.use();
+	}
+    
+    
 
 }

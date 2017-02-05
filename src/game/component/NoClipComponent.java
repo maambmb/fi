@@ -14,6 +14,7 @@ public class NoClipComponent implements Component {
     private static Matrix4f matrixBuffer = new Matrix4f();
 
     private Position3DComponent posCmpt;
+    private InputListenerComponent inputCmpt;
 
     public NoClipComponent() {
     }
@@ -22,6 +23,7 @@ public class NoClipComponent implements Component {
     public void setup( Entity e ) {
         e.listener.addSubscriber( Position3DComponent.class, x -> this.posCmpt = x );
         e.listener.addSubscriber( Game.UpdateMessage.class, this::update );
+        e.listener.addSubscriber( InputListenerComponent.class, x -> this.inputCmpt = x );
     }
     
     public void init() {
@@ -34,16 +36,19 @@ public class NoClipComponent implements Component {
         // either -1f, 0f or 1f
         float strafe = 0f;
         float march  = 0f;
+        
+        if( !this.inputCmpt.canListen() )
+        	return;
 
         // TODO: make key bindings configurable
         // determine the strafe/march amounts based on WASD
-        if( Keyboard.isKeyDown( Keyboard.KEY_D ))
+        if( this.inputCmpt.isKeyDown( Keyboard.KEY_D ) )
             strafe = -1f;
-        else if( Keyboard.isKeyDown( Keyboard.KEY_A ))
+        if( this.inputCmpt.isKeyDown( Keyboard.KEY_A ) )
             strafe = 1f;
-        if( Keyboard.isKeyDown( Keyboard.KEY_S ) )
+        if( this.inputCmpt.isKeyDown( Keyboard.KEY_S ) )
             march = -1f;
-        else if( Keyboard.isKeyDown( Keyboard.KEY_W ) )
+        if( this.inputCmpt.isKeyDown( Keyboard.KEY_W ) )
             march = 1f;
 
         // if we're not strafing or marching we're not moving so abort

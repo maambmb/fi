@@ -175,7 +175,7 @@ public class World {
                 model.initAttributeVariable( av );
 
             // grab the texture the model will be using and point the model at said texture atlas
-            AtlasLoader.TextureRef ref = AtlasLoader.LOADER.getTexture( Config.BLOCK_ATLAS );
+            AtlasLoader.TextureRef ref = AtlasLoader.GLOBAL.getTexture( Config.BLOCK_ATLAS );
             model.atlasId = ref.id;
 
             // loop through each block of a dirty chunk
