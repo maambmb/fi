@@ -3,7 +3,7 @@ package game;
 import java.util.ArrayList;
 import java.util.List;
 
-import game.component.Component;
+import game.Game.DestroyMessage;
 
 public abstract class Entity {
 
@@ -19,6 +19,8 @@ public abstract class Entity {
         this.componentList = new ArrayList<Component>();
         this.registerComponents();
         this.setup();
+        
+        this.listener.addSubscriber(DestroyMessage.class, (x) -> this.destroy() );
     }
 
     private void setup() {
@@ -46,5 +48,6 @@ public abstract class Entity {
         for( Component c : this.componentList )
             c.destroy();
     }
+    
 
 }

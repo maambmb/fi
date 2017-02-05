@@ -1,10 +1,10 @@
-package game.component;
+package game.gfx;
 
 import org.lwjgl.util.vector.Matrix4f;
 
+import game.Component;
 import game.Entity;
-import game.gfx.Model;
-import game.gfx.UniformVariable;
+import game.Position3DComponent;
 import game.gfx.shader.Shader;
 
 import util.MatrixUtils;

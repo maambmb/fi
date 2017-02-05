@@ -1,11 +1,12 @@
-package game.component;
+package game.input;
 
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.input.Mouse;
 import org.lwjgl.util.vector.Matrix4f;
 
+import game.Component;
 import game.Entity;
 import game.Game;
+import game.Position3DComponent;
 import util.MatrixUtils;
 import util.Vector3fl;
 
@@ -42,14 +43,14 @@ public class NoClipComponent implements Component {
 
         // TODO: make key bindings configurable
         // determine the strafe/march amounts based on WASD
-        if( this.inputCmpt.isKeyDown( Keyboard.KEY_D ) )
+        if( this.inputCmpt.isKeyDown( Key.KEY_D ) )
             strafe = -1f;
-        if( this.inputCmpt.isKeyDown( Keyboard.KEY_A ) )
+        if( this.inputCmpt.isKeyDown( Key.KEY_A ) )
             strafe = 1f;
-        if( this.inputCmpt.isKeyDown( Keyboard.KEY_S ) )
-            march = -1f;
-        if( this.inputCmpt.isKeyDown( Keyboard.KEY_W ) )
+        if( this.inputCmpt.isKeyDown( Key.KEY_W ) )
             march = 1f;
+        if( this.inputCmpt.isKeyDown( Key.KEY_S ) )
+            march = -1f;
 
         // if we're not strafing or marching we're not moving so abort
         if( strafe == 0f && march == 0f)

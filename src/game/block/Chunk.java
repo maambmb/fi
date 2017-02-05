@@ -2,10 +2,9 @@ package game.block;
 
 import game.Config;
 import game.Entity;
-import game.component.GlobalSubscriberComponent;
-import game.component.ModelBlockRenderComponent;
-import game.component.Position3DComponent;
-
+import game.Position3DComponent;
+import game.gfx.GlobalSubscriberComponent;
+import game.gfx.ModelBlockRenderComponent;
 import util.Lambda;
 import util.Vector3in;
 

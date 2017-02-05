@@ -1,8 +1,9 @@
-package game.component;
+package game.input;
 
 import java.util.Iterator;
+
+import game.Component;
 import game.Entity;
-import game.InputArbiter;
 
 public class InputListenerComponent implements Component {
 
@@ -12,16 +13,24 @@ public class InputListenerComponent implements Component {
 		this.priority = priority;
 	}
 
-	public Iterator<Integer> getPressedKeys() {
+	public Iterable<Key> getPressedKeys() {
 		return InputArbiter.GLOBAL.getPressedKeys();
 	}
 	
-	public boolean isKeyDown( int keyCode ) {
-		return InputArbiter.GLOBAL.isKeyDown( keyCode );
+	public boolean isKeyDown( Key key ) {
+		return InputArbiter.GLOBAL.isKeyDown( key );
+	}
+	
+	public boolean isKeyDown( KeyMap map ) {
+		return this.isKeyDown( map.mappedKey );
 	}
 
-	public boolean isPressed( int keyCode ) {
-		return InputArbiter.GLOBAL.isPressed( keyCode );
+	public boolean isPressed( Key key ) {
+		return InputArbiter.GLOBAL.isPressed( key );
+	}
+
+	public boolean isPressed( KeyMap map ) {
+		return this.isPressed( map.mappedKey );
 	}
 	
 	public boolean canListen() {

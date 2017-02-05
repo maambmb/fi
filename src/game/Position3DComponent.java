@@ -1,7 +1,6 @@
-package game.component;
+package game;
 
 
-import game.Entity;
 import util.Vector3fl;
 
 public class Position3DComponent implements Component {

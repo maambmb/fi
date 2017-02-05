@@ -15,7 +15,7 @@ public final class RandomBlockSpawner extends Entity {
     public RandomBlockSpawner() {
         super();
         this.rng = new Random();
-        for( int i = 0; i < 9000; i +=1 ) {
+        for( int i = 0; i < 500; i +=1 ) {
         	int x = this.rng.nextInt( 60 ) - 15;
         	int y = this.rng.nextInt( 60 ) - 15;
         	int z = this.rng.nextInt( 60 ) - 15;

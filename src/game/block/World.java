@@ -7,9 +7,9 @@ import java.util.Set;
 
 import game.Config;
 import game.block.BlockType.Opacity;
-import game.gfx.AtlasLoader;
 import game.gfx.AttributeVariable;
 import game.gfx.Model;
+import game.gfx.TextureRef;
 import game.gfx.shader.BlockShader;
 
 import util.Vector3fl;
@@ -175,8 +175,7 @@ public class World {
                 model.initAttributeVariable( av );
 
             // grab the texture the model will be using and point the model at said texture atlas
-            AtlasLoader.TextureRef ref = AtlasLoader.GLOBAL.getTexture( Config.BLOCK_ATLAS );
-            model.atlasId = ref.id;
+            model.texture = TextureRef.BLOCK;
 
             // loop through each block of a dirty chunk
             Chunk chunk = this.chunkMap.get( mapCoords );
@@ -212,7 +211,7 @@ public class World {
                         // add the tex coords for the specified atlas. Convert to opengl coords (i.e. between 0f - 1f )
                         // by dividing by the number of faces along one dimension of the texture atlas
                         Vector3in texCoords = new Vector3in( vertexIsFarSide1 ? 1 : 0, vertexIsFarSide2 ? 1 : 0, 0 );
-                        Vector3fl texCoordsFl = texCoords.add( b.blockType.texCoords ).multiply( Config.BLOCK_ATLAS_TEX_DIM ).toVector3fl().divide( ref.size );
+                        Vector3fl texCoordsFl = model.texture.getGlCoords( texCoords.add( b.blockType.texCoords ).multiply( Config.BLOCK_ATLAS_TEX_DIM ) );
                         model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoordsFl );
 						
 						Vector3in side1Vec = absCoords.add( normal.firstOrtho.vector.multiply( vertexIsFarSide1 ? 1 : -1 ) );

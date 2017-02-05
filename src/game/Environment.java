@@ -1,7 +1,7 @@
 package game;
 
 import game.block.LightSource;
-import game.component.GlobalSubscriberComponent;
+import game.gfx.GlobalSubscriberComponent;
 import game.gfx.UniformVariable;
 import game.gfx.shader.BlockShader;
 import game.gfx.shader.Shader;

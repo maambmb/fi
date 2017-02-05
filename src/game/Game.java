@@ -8,8 +8,10 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.PixelFormat;
 
 import game.block.World;
-import game.gfx.AtlasLoader;
+import game.gfx.TextureRef;
 import game.gfx.shader.BlockShader;
+import game.input.InputArbiter;
+import game.input.Key;
 import util.Vector3fl;
 import util.Vector3in;
 
@@ -76,6 +78,9 @@ public class Game {
 
         // fill the cubenorml enum with extra meta information
         Vector3in.CubeNormal.init();
+        Key.init();
+        TextureRef.init();
+        
         // create the global msg listener
         Listener.init();
         // create the world object (manager of chunks)
@@ -86,13 +91,15 @@ public class Game {
         BlockShader.init();
         Camera.init();
         Environment.init();
-        AtlasLoader.init();
 
         new RandomBlockSpawner();
 
         // loop until we detect a close (done in updateCtx)
         while( !this.gameOver ) {
             this.prepareCtx();
+            
+            if( InputArbiter.GLOBAL.isKeyDown( Key.KEY_ESCAPE ))
+            	this.gameOver = true;
 
             // take a new reading of the time, and create an update message with this and the previous reading
             // (to form a delta timestep) - then set this new reading as the previous one so we're
@@ -114,6 +121,8 @@ public class Game {
 
         // if we've exited the loop, the game is about to end. Try and clean up all resources by destroying all resources
         Listener.GLOBAL.listen( new DestroyMessage() );
+        
+        TextureRef.destroy();
 
         // finally destroy the display ctx
         this.destroyCtx();

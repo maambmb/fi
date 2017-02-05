@@ -12,8 +12,6 @@ public class Config {
     public static final float FAR_PLANE = 1000f;
     // closest distance to draw
     public static final float NEAR_PLANE = 0.1f;
-    // block texture atlas path
-    public static final String BLOCK_ATLAS = "tex/block.png";
     // single block face texture size
     public static final int BLOCK_ATLAS_TEX_DIM = 32;
     // gfx versions

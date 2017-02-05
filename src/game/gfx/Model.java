@@ -60,7 +60,7 @@ public class Model {
     private int vaoId;
 
     // the texture atlas' opengl id
-    public int atlasId;
+    public TextureRef texture;
 
     public Model() {
         this.indices     = new ArrayList<Object>();
@@ -212,7 +212,7 @@ public class Model {
 
         // bind and activate the model's texture atlas
         GL13.glActiveTexture( GL13.GL_TEXTURE0 );
-        GL11.glBindTexture( GL11.GL_TEXTURE_2D, this.atlasId );
+        GL11.glBindTexture( GL11.GL_TEXTURE_2D, this.texture.id );
 
         // bind to the model's VAO
         this.bind();

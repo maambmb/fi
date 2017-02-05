@@ -2,14 +2,13 @@ package game;
 
 import org.lwjgl.util.vector.Matrix4f;
 
-import game.component.GlobalSubscriberComponent;
-import game.component.InputListenerComponent;
-import game.component.NoClipComponent;
-import game.component.Position3DComponent;
+import game.gfx.GlobalSubscriberComponent;
 import game.gfx.UniformVariable;
 import game.gfx.shader.BlockShader;
 import game.gfx.shader.Shader;
-
+import game.input.InputArbiter;
+import game.input.InputListenerComponent;
+import game.input.NoClipComponent;
 import util.MatrixUtils;
 
 public final class Camera extends Entity {

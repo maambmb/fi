@@ -1,4 +1,4 @@
-package game.component;
+package game.gfx;
 
 import game.Entity;
 import game.gfx.shader.BlockShader;

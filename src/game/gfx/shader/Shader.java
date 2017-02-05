@@ -10,8 +10,8 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.Entity;
-import game.component.GlobalSubscriberComponent;
 import game.gfx.AttributeVariable;
+import game.gfx.GlobalSubscriberComponent;
 import game.gfx.UniformVariable;
 
 import util.FileUtils;

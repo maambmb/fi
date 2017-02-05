@@ -1,5 +1,6 @@
-package game.component;
+package game.gfx;
 
+import game.Component;
 import game.Entity;
 import game.Listener;
 

@@ -1,6 +1,4 @@
-package game.component;
-
-import game.Entity;
+package game;
 
 public interface Component {
 
