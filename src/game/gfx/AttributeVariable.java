@@ -11,7 +11,6 @@ public enum AttributeVariable {
 
     public String name;
     public int stride;
-    public int offset;
     public Class<?> dataType;
 
     public static int TOTAL_WIDTH;
@@ -22,13 +21,5 @@ public enum AttributeVariable {
         this.dataType = dataType;
     }
 
-    public static void init() {
-        int ix = 0;
-        for( AttributeVariable av : AttributeVariable.values() ) {
-            av.offset = ix;
-            ix += av.stride;
-        }
-        TOTAL_WIDTH = ix;
-    }
 
 }

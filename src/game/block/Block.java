@@ -36,9 +36,9 @@ public class Block {
     // propagate the lighting from a neighboring block onto this block
     // mechanically we take the other block's attenuated light and max it against our own
     // for all light sources
-    public void propagate( Block b ) {
+    public void propagate( Block b, int drop ) {
         for( LightSource src : LightSource.values() ) {
-        	Vector3in otherIllu = b.getIllumination( src ).add( - Config.LIGHT_DROPOFF );
+        	Vector3in otherIllu = b.getIllumination( src ).add( - drop );
         	Vector3in thisIllu = this.getIllumination( src );
         	this.setIllumination( src, thisIllu.max( otherIllu ) );
         }

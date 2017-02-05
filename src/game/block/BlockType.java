@@ -17,7 +17,7 @@ public enum BlockType {
         Opacity.OPAQUE,
         LightSource.CONSTANT,
         new Vector3in(),
-        new Vector3in()
+        new Vector3in(0,1,0)
     ),
     GLOW_BLOCK( 
         true,

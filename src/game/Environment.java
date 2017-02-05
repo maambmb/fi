@@ -24,13 +24,13 @@ public final class Environment extends Entity {
     	super();
     	
         this.lighting     = new Vector3fl[ LightSource.values().length ];
-        this.baseLighting = new Vector3fl();
+        this.baseLighting = new Vector3fl(0.5f,0.5f,0.5f);
         this.fogColor     = new Vector3fl(0.5f,0.5f,0.5f);
 
         this.globalLightOrigin = new Vector3fl();
 
         for( int i = 0; i < this.lighting.length; i += 1 )
-            this.lighting[i] = new Vector3fl();
+            this.lighting[i] = new Vector3fl(1,1,1);
     }
 
     @Override

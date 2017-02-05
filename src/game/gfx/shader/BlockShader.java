@@ -1,6 +1,7 @@
 package game.gfx.shader;
 
-import game.block.LightSource;
+import org.lwjgl.opengl.GL20;
+
 import game.gfx.AttributeVariable;
 import game.gfx.UniformVariable;
 
@@ -17,6 +18,8 @@ public final class BlockShader extends Shader {
         UniformVariable.LIGHTING_BASE,
         UniformVariable.FOG_COLOR,
         UniformVariable.GLOBAL_LIGHT_ORIGIN,
+        UniformVariable.LIGHTING_CONSTANT,
+        UniformVariable.LIGHTING_GLOBAL,
     };
 
     public static AttributeVariable[] USED_ATTRIBUTE_VARS = {
@@ -41,16 +44,12 @@ public final class BlockShader extends Shader {
     protected void setupUniformVariables() {
         for( UniformVariable uv : USED_UNIFORM_VARS )
             this.createUniformVariable( uv );
-        for( LightSource ls : LightSource.values() )
-            this.createUniformVariable( ls.uniformVariable );
     }
 
     @Override
     protected void setupAttributeVariables() {
         for( AttributeVariable av : USED_ATTRIBUTE_VARS ) 
             this.createAttributeVariable( av );
-        for( LightSource ls : LightSource.values() )
-            this.createAttributeVariable( ls.attributeVariable );
     }
 
 }

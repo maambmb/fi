@@ -10,7 +10,6 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.Entity;
-import game.component.GlobalSubscriberComponent;
 import game.gfx.AttributeVariable;
 import game.gfx.UniformVariable;
 
@@ -60,13 +59,13 @@ public abstract class Shader extends Entity {
         // attach, link and validate the shaders to the program
         GL20.glAttachShader( this.programId, this.vertexId );
         GL20.glAttachShader( this.programId, this.fragmentId );
+
+        setupAttributeVariables();
+
         GL20.glLinkProgram( this.programId );
         GL20.glValidateProgram( this.programId );
 
-        // setup the attribute and uniform variables
-        setupAttributeVariables();
         setupUniformVariables();
-
     }
 
     // allocate a new uniform variable for the shader program
@@ -122,7 +121,7 @@ public abstract class Shader extends Entity {
     @Override
     public void registerComponents() {
     }
-
+    
     @Override
     // destroy the shader program when this entity is destroyed
     public void destroy() {

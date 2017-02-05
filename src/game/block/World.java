@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import game.Config;
+import game.block.BlockType.Opacity;
 import game.gfx.AtlasLoader;
 import game.gfx.AttributeVariable;
 import game.gfx.Model;
@@ -22,11 +23,6 @@ public class World {
 
     public static World WORLD;
     public static void init() {
-
-        lightBlender = new Vector3in[ LightSource.values().length ];
-        for( int i = 0; i< lightBlender.length; i += 1 )
-            lightBlender[i] = new Vector3in();
-
         WORLD = new World();
     }
 
@@ -54,11 +50,11 @@ public class World {
     private static Vector3in getMapCoords( Vector3in absCoords ) {
     	Vector3in div = absCoords.divide( Config.CHUNK_DIM );
     	if( absCoords.x < 0 && absCoords.x % Config.CHUNK_DIM != 0 )
-    		div.x += 1;
+    		div.x -= 1;
     	if( absCoords.y < 0 && absCoords.y % Config.CHUNK_DIM != 0 )
-    		div.y += 1;
+    		div.y -= 1;
     	if( absCoords.z < 0 && absCoords.z % Config.CHUNK_DIM != 0 )
-    		div.z += 1;
+    		div.z -= 1;
     	return div;
     }
 
@@ -74,9 +70,7 @@ public class World {
     public Block getBlock( Vector3in absCoords ) {
     	Vector3in mapCoords = getMapCoords( absCoords );
         Chunk chunk = this.getChunk( mapCoords );
-        if( chunk == null)
-        	return null;
-        return chunk.getBlock( absCoords.modulo( Config.CHUNK_DIM ).abs() );
+        return chunk.getBlock(absCoords.subtract( mapCoords.multiply( Config.CHUNK_DIM ) ));
     }
 
     public void setBlock( Vector3in absCoords, BlockType bt ) {
@@ -109,7 +103,7 @@ public class World {
 
         // grab the actual chunk we want to modify, then grab the block and adjust the values
         Chunk chunk = this.getChunk( mapCoords );
-        Block block = chunk.getBlock( absCoords.modulo( Config.CHUNK_DIM ).abs() );
+        Block block = chunk.getBlock( absCoords.subtract( mapCoords.multiply( Config.CHUNK_DIM)));
         block.blockType = bt;
     }
 
@@ -134,7 +128,7 @@ public class World {
             // add only the naturally illuminating blocks into the buffer
             this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> {
                 if( b.isLit() )
-                    toPropagate.add( v );
+                    toPropagate.add( v.add( mapCoords.multiply(Config.CHUNK_DIM ) ) );
             });
 
             // iterate the number of times light is allowed to jump
@@ -148,7 +142,7 @@ public class World {
                     	Vector3in neighborVec = pos.add( normal.vector );
                         Block other = this.getBlock( neighborVec );
                         if( other.blockType.opacity != BlockType.Opacity.OPAQUE ) {
-                            other.propagate( b );
+                            other.propagate( b, Config.LIGHT_DROPOFF );
                             
                             // if we do propagate make sure we add the propagated block to the buffer
                             if( other.isLit() )
@@ -188,8 +182,7 @@ public class World {
             Chunk chunk = this.chunkMap.get( mapCoords );
             chunk.iterateBlocks( (v,b) -> {
 
-				Vector3in absCoords = mapCoords.multiply( Config.CHUNK_DIM).add( v );
-
+            	Vector3in absCoords = v.add ( mapCoords.multiply( Config.CHUNK_DIM ) );
                 // examine each face/quad of each block
                 for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
 
@@ -198,86 +191,71 @@ public class World {
                         continue;
 
                     // if the block touching the current face is opaque, then it is hidden and we should ignore
-                    Vector3in neighborVec = absCoords.add( normal.vector );
-                    if( this.getBlock( neighborVec ).blockType.opacity == BlockType.Opacity.OPAQUE )
+                    Vector3in offsetVec = absCoords.add( normal.vector );
+                    Block offsetBlock = this.getBlock( offsetVec );
+                    if( offsetBlock.blockType.opacity == BlockType.Opacity.OPAQUE )
                         continue;
-                    
-                    if( normal == Vector3in.CubeNormal.LEFT || normal == Vector3in.CubeNormal.RIGHT ) {
-                    }
                     
                     // each face is a quad comprising of 4 vertices
                     for( int i = 0; i < 4; i += 1 ) {
+                    	
+                    	boolean vertexIsFarSide1 = ( i & 0x01 ) > 0;
+                    	boolean vertexIsFarSide2 = ( i & 0x02 ) > 0;
+                    	
 
-                        // to separate vertex coords from block coords, we must add unit vectors that are
-                        // orthogonal to the face's normal depending on which vertex we are looking at.
-                        // use a 2 bit bit field to exhaust all 4 combinations
-                        boolean vertexUseFirstOrtho  = ( i & 0x01 ) > 0;
-                        boolean vertexUseSecondOrtho = ( i & 0x02 ) > 0;
-
-                        Vector3in vertexVec = normal.vector.max(0).add( absCoords );
-                        if( vertexUseFirstOrtho )
-                        	vertexVec = vertexVec.add( normal.firstOrtho.vector );
-                        if( vertexUseSecondOrtho )
-                        	vertexVec = vertexVec.add( normal.secondOrtho.vector );
-                        model.addAttributeData( AttributeVariable.POSITION, vertexVec.toVector3fl() );
-
-                        // keep a tally of the level of shadow that should be applied to the vertex (0-3)
-                        int shadowCount = 0;
-
-                        // for smooth lighting, need to add the different illuminations of a vertex
-                        // from the block itself and its (up to 3) planar neighbors
-                        // start by adding the block's own illu values in
-                        for( LightSource src : LightSource.values() )
-                        	lightBlender[src.ordinal()] = b.getIllumination(src);
-
-                        // keep track of the number of contributions to the light blending
-                        // for use in averaging later
-                        int blendCount = 1;
-
-                        // for all 3 neighboring planar blocks (excluding the block this vertex belongs to)
-                        for( int j = 1; j < 4; j += 1 ) {
-
-                            // get the position of the planar neighbor but offset by the cube face's normal
-                            // i.e. if the normal was TOP, this would be the block above the planar neighbor
-                        	Vector3in planarNeighborVec = absCoords
-                        			.add( normal.firstOrtho.vector.multiply( vertexUseFirstOrtho ? 1 : -1 ) )
-                        			.add( normal.secondOrtho.vector.multiply( vertexUseSecondOrtho ? 1 : -1 ) );
-
-                            // if the block is opaque then the vertex should have its shadow value increased by 1
-                            if( this.getBlock( planarNeighborVec.add( normal.vector ) ).blockType.opacity == BlockType.Opacity.OPAQUE )
-                                shadowCount += 1;
-
-                            // otherwise, the planar neighbor is visible and we should add its illumination
-                            // contribution to the light blender and increase the blend count by one
-                            else {
-                            	Block planarNeighbor = this.getBlock( planarNeighborVec );
-                                for( LightSource src : LightSource.values() ) {
-                                    lightBlender[src.ordinal()] = planarNeighbor.getIllumination( src ).add( lightBlender[ src.ordinal() ]);
-                                    blendCount += 1;
-                                }
-                            }
-                        }
-
-                        // add the normal by packing the vector into an int
-                        model.addAttributeData( AttributeVariable.NORMAL, normal.vector.toPackedBytes() );
-
-                        // add the shadow amount (0-3) for the vertex
-                        model.addAttributeData( AttributeVariable.SHADOW, shadowCount );
+                        // now using the bools above, calculate the vertex's position and add it to the model
+						model.addAttributeData( AttributeVariable.POSITION, v.add( normal.vector.max( 0 ) )
+								.add( normal.firstOrtho.vector.multiply( vertexIsFarSide1 ? 1 : 0 ) )
+								.add( normal.secondOrtho.vector.multiply( vertexIsFarSide2 ? 1 : 0 ) )
+								.toVector3fl() );
 
                         // add the tex coords for the specified atlas. Convert to opengl coords (i.e. between 0f - 1f )
                         // by dividing by the number of faces along one dimension of the texture atlas
-                        
-                        Vector3in texCoords = new Vector3in( vertexUseFirstOrtho ? 1 : 0, vertexUseSecondOrtho ? 1 : 0, 0 );
+                        Vector3in texCoords = new Vector3in( vertexIsFarSide1 ? 1 : 0, vertexIsFarSide2 ? 1 : 0, 0 );
                         Vector3fl texCoordsFl = texCoords.add( b.blockType.texCoords ).multiply( Config.BLOCK_ATLAS_TEX_DIM ).toVector3fl().divide( ref.size );
                         model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoordsFl );
+						
+						Vector3in side1Vec = absCoords.add( normal.firstOrtho.vector.multiply( vertexIsFarSide1 ? 1 : -1 ) );
+						Block side1Block = this.getBlock( side1Vec );
+						Block side1OffsetBlock = this.getBlock( side1Vec.add( normal.vector ) );
 
-                        // now add in all light values
-                        for( LightSource ls : LightSource.values() ) {
-                            // average the blended light before we add it for *smooth* lighting effects
-                            Vector3in illu = lightBlender[ls.ordinal()].divide( blendCount );
-                            model.addAttributeData( ls.attributeVariable, illu );
+						Vector3in side2Vec = absCoords.add( normal.secondOrtho.vector.multiply( vertexIsFarSide2 ? 1 : -1 ) );
+						Block side2Block = this.getBlock( side2Vec );
+						Block side2OffsetBlock = this.getBlock( side2Vec.add( normal.vector ) );
+
+						Vector3in cornerVec = absCoords
+								.add( normal.firstOrtho.vector.multiply( vertexIsFarSide1 ? 1 : -1 ) )
+								.add( normal.secondOrtho.vector.multiply( vertexIsFarSide2 ? 1 : -1 ) );
+						Block cornerBlock = this.getBlock( cornerVec );
+						Block cornerOffsetBlock = this.getBlock( cornerVec.add( normal.vector ) );
+						
+                        if( side1OffsetBlock.blockType.opacity == Opacity.OPAQUE && side2OffsetBlock.blockType.opacity == Opacity.OPAQUE )
+							model.addAttributeData( AttributeVariable.SHADOW, 3 );
+                        else {
+                        	int total = side1OffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
+                        	total += side2OffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
+                        	total += cornerOffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
+							model.addAttributeData( AttributeVariable.SHADOW, total );
                         }
+                        
+                        
+                        for( LightSource src : LightSource.values() ) {
+                        	Vector3in baseLight = offsetBlock.getIllumination(src);
+							if( side1OffsetBlock.blockType.opacity != Opacity.OPAQUE && side1Block.blockType.opacity == Opacity.OPAQUE)
+								baseLight = baseLight.max( side1OffsetBlock.getIllumination( src ));
+							if( side2OffsetBlock.blockType.opacity != Opacity.OPAQUE && side2Block.blockType.opacity == Opacity.OPAQUE)
+								baseLight = baseLight.max( side2OffsetBlock.getIllumination( src ));
+							if( cornerOffsetBlock.blockType.opacity != Opacity.OPAQUE && cornerBlock.blockType.opacity == Opacity.OPAQUE )
+								if( side1OffsetBlock.blockType.opacity != Opacity.OPAQUE || side2OffsetBlock.blockType.opacity != Opacity.OPAQUE )
+									baseLight = baseLight.max( cornerOffsetBlock.getIllumination( src ));
+                            model.addAttributeData( src.attributeVariable, baseLight.toPackedBytes() );
+                        } 
+
+                        // add the shadow amount (0-3) for the vertex
+                        // add the normal by packing the vector into an int
+                        model.addAttributeData( AttributeVariable.NORMAL, normal.vector.toPackedBytes() );
                     }
+
 
 					// we've added four vertices, time to persist that as a quad
 					model.addQuad();

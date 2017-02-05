@@ -157,11 +157,19 @@ public class Model {
         // we can empty the index buffer now as the index data lives in VRAM
         this.indices.clear();
 
-        for( AttributeVariable av : this.buffers.keySet() ) {
+		GL20.glEnableVertexAttribArray( 0 );
+		GL20.glEnableVertexAttribArray( 1 );
+		GL20.glEnableVertexAttribArray( 2 );
+		GL20.glEnableVertexAttribArray( 3 );
+		GL20.glEnableVertexAttribArray( 4 );
+
+		for( AttributeVariable av : AttributeVariable.values()) {
 
             // grab the attribute variable buffer
             // atm we don't know if it holds ints or floats
             Collection<Object> buffer = this.buffers.get( av );
+            if( buffer == null)
+            	continue;
 
             // setup a new VBO
             vboId = GL15.glGenBuffers();
@@ -172,7 +180,7 @@ public class Model {
             if( av.dataType == Integer.class ) {
                 IntBuffer buf = intBufferFromCollection( buffer );
                 GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
-                GL20.glVertexAttribPointer( av.ordinal(), av.stride, GL11.GL_INT, false, 0, 0);
+                GL30.glVertexAttribIPointer( av.ordinal(), av.stride, GL11.GL_INT, 0, 0  );
             // else do the same but with a float buffer
             } else if ( av.dataType == Float.class ) {
                 FloatBuffer buf = floatBufferFromCollection( buffer );
@@ -212,7 +220,6 @@ public class Model {
         // bind to the model's VAO
         this.bind();
 
-        // enable all the attribute variables used
         for( AttributeVariable av : this.buffers.keySet() )
             GL20.glEnableVertexAttribArray( av.ordinal() );
 

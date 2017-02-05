@@ -35,8 +35,8 @@ public abstract class ModelRenderComponent implements Component {
     // create a matrix which represents an entities scale + translation and shunt it to the shader
     private void loadTranslateScaleMatrix( Shader s ) {
         Matrix4f.setIdentity( matrixBuffer );
-        MatrixUtils.addTranslationToMatrix( matrixBuffer, this.posCmpt.position );
         MatrixUtils.addScaleToMatrix( matrixBuffer, this.posCmpt.scale );
+        MatrixUtils.addTranslationToMatrix( matrixBuffer, this.posCmpt.position );
         s.loadMatrix4f( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX, matrixBuffer );
     }
 

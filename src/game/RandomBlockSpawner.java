@@ -15,20 +15,14 @@ public final class RandomBlockSpawner extends Entity {
     public RandomBlockSpawner() {
         super();
         this.rng = new Random();
-        for( int i = 0; i < 800; i +=1 )
-            this.update();
+        for( int i = 0; i < 3000; i +=1 ) {
+        	int x = this.rng.nextInt( 30 ) - 15;
+        	int y = this.rng.nextInt( 30 ) - 15;
+        	int z = this.rng.nextInt( 30 ) - 15;
+        	BlockType bt = i % 40 == 0 ? BlockType.GLOW_BLOCK : BlockType.GRAVEL;
+        	World.WORLD.setBlock( new Vector3in( x,y,z ), bt );
+        }
         World.WORLD.refresh();
-    }
-
-    private void update() {
-
-        Vector3in nextPos = new Vector3in(
-            this.rng.nextInt( 20 ) - 10,
-            this.rng.nextInt( 20 ) - 10,
-            this.rng.nextInt( 20 ) - 10
-        );
-
-        World.WORLD.setBlock( nextPos, BlockType.GRAVEL );
     }
 
     @Override

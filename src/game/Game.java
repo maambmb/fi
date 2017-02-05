@@ -87,6 +87,7 @@ public class Game {
         Environment.init();
         AtlasLoader.init();
 
+            BlockShader.SHADER.use();
 
         new RandomBlockSpawner();
 
