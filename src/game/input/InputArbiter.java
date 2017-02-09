@@ -11,6 +11,7 @@ import java.util.Set;
 import org.lwjgl.input.Keyboard;
 
 import game.Entity;
+import game.Listener;
 import game.Game.UpdateMessage;
 import game.gfx.GlobalSubscriberComponent;
 
@@ -31,7 +32,7 @@ public class InputArbiter extends Entity {
 	
 	public static InputArbiter GLOBAL;
 	public static void init() {
-		GLOBAL= new InputArbiter();
+		GLOBAL = new InputArbiter();
 	}
 	
 	private Map<Priority,Set<InputListenerComponent>> inputListenerMap;
@@ -57,6 +58,7 @@ public class InputArbiter extends Entity {
 			if( isDown && ! this.prevDown[ key.ordinal() ] )
 				this.pressedKeys.add( key );
 		}
+
 	}
 	
 	public InputArbiter() {
