@@ -16,26 +16,12 @@ import game.gfx.GlobalSubscriberComponent;
 
 public class Input extends Entity {
 
-	public enum Priority {
-		
-		TOP_LISTENER( false ),
-		GUI_01( true ),
-		CONTROL( true );
-		
-		private Priority( boolean capturing ) {
-			this.capturing = capturing;
-		}
-		
-		public boolean capturing;
-		
-	}
-	
 	public static Input GLOBAL;
 	public static void init() {
 		GLOBAL = new Input();
 	}
 	
-	private Map<Priority,Set<InputListenerComponent>> inputListenerMap;
+	private Map<InputPriority,Set<InputListenerComponent>> inputListenerMap;
 	private boolean[] prevDown;
 	private boolean[] currDown;
 	private long[] lastPressed;
@@ -54,9 +40,6 @@ public class Input extends Entity {
 		
 		for( Key key : Key.values() ) {
 
-			if( key == Key.NO_KEY )
-				continue;
-
 			int ix = key.ordinal();
 			this.prevDown[ ix ] = this.currDown[ ix ];
 			this.currDown[ ix ] = Keyboard.isKeyDown( key.keyCode );
@@ -74,8 +57,8 @@ public class Input extends Entity {
 	}
 	
 	public Input() {
-		this.inputListenerMap = new HashMap<Priority,Set<InputListenerComponent>>();
-		for( Priority il : Priority.values())
+		this.inputListenerMap = new HashMap<InputPriority,Set<InputListenerComponent>>();
+		for( InputPriority il : InputPriority.values())
 			this.inputListenerMap.put( il , new HashSet<InputListenerComponent>() );
 		this.prevDown = new boolean[ Key.values().length ];
 		this.currDown = new boolean[ Key.values().length ];
@@ -93,7 +76,7 @@ public class Input extends Entity {
 	}
 	
 	public boolean canListen( InputListenerComponent cmpt ) {
-		for( Priority il : Priority.values() ) {
+		for( InputPriority il : InputPriority.values() ) {
 			if( il == cmpt.priority )
 				return this.inputListenerMap.get( il ).contains( cmpt );
 			else if( il.capturing && this.inputListenerMap.get( il ).size() > 0 )

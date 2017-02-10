@@ -9,8 +9,6 @@ import game.gui.Glyph;
 
 public enum Key {
 	
-	NO_KEY( -1 ),
-	
 	KEY_A( Keyboard.KEY_A, Glyph.LOWER_A, Glyph.UPPER_A ),
 	KEY_B( Keyboard.KEY_B, Glyph.LOWER_B, Glyph.UPPER_B ),
 	KEY_C( Keyboard.KEY_C, Glyph.LOWER_C, Glyph.UPPER_C ),
@@ -38,27 +36,32 @@ public enum Key {
 	KEY_Y( Keyboard.KEY_Y, Glyph.LOWER_Y, Glyph.UPPER_Y ),
 	KEY_Z( Keyboard.KEY_Z, Glyph.LOWER_Z, Glyph.UPPER_Z ),
 
-	KEY_1( Keyboard.KEY_0, Glyph.NUM_0 ),
-	KEY_2( Keyboard.KEY_1, Glyph.NUM_1 ),
-	KEY_3( Keyboard.KEY_2, Glyph.NUM_2 ),
-	KEY_4( Keyboard.KEY_3, Glyph.NUM_3 ),
-	KEY_5( Keyboard.KEY_4, Glyph.NUM_4 ),
-	KEY_6( Keyboard.KEY_5, Glyph.NUM_5 ),
-	KEY_7( Keyboard.KEY_6, Glyph.NUM_6 ),
-	KEY_8( Keyboard.KEY_7, Glyph.NUM_7 ),
-	KEY_9( Keyboard.KEY_8, Glyph.NUM_8 ),
-	KEY_0( Keyboard.KEY_9, Glyph.NUM_9 ),
+	KEY_0( Keyboard.KEY_0, Glyph.NUM_0, Glyph.RPARENS ),
+	KEY_1( Keyboard.KEY_1, Glyph.NUM_1, Glyph.EXCLAMATION ),
+	KEY_2( Keyboard.KEY_2, Glyph.NUM_2, Glyph.DQUOTE ),
+	KEY_3( Keyboard.KEY_3, Glyph.NUM_3, Glyph.DOLLAR ),
+	KEY_4( Keyboard.KEY_4, Glyph.NUM_4, Glyph.DOLLAR ),
+	KEY_5( Keyboard.KEY_5, Glyph.NUM_5, Glyph.PERCENT ),
+	KEY_6( Keyboard.KEY_6, Glyph.NUM_6, Glyph.HAT ),
+	KEY_7( Keyboard.KEY_7, Glyph.NUM_7, Glyph.AMPERSAND ),
+	KEY_8( Keyboard.KEY_8, Glyph.NUM_8, Glyph.ASTERIX ),
+	KEY_9( Keyboard.KEY_9, Glyph.NUM_9, Glyph.LPARENS ),
 	
 	KEY_LBRACKET( Keyboard.KEY_LBRACKET, Glyph.LSQUARE, Glyph.LBRACE ),
 	KEY_RBRACKET( Keyboard.KEY_RBRACKET, Glyph.RSQUARE, Glyph.RBRACE ),
 	KEY_COLON( Keyboard.KEY_COLON, Glyph.SEMICOLON, Glyph.COLON ),
 	KEY_PERIOD( Keyboard.KEY_PERIOD, Glyph.PERIOD, Glyph.RANGLE ),
 	KEY_COMMA( Keyboard.KEY_COMMA, Glyph.COMMA, Glyph.LANGLE ),
-	KEY_SUBTRACT( Keyboard.KEY_SUBTRACT, Glyph.DASH, Glyph.UNDERSCORE ),
+	KEY_DASH( Keyboard.KEY_MINUS, Glyph.DASH, Glyph.UNDERSCORE ),
 	KEY_EQUALS( Keyboard.KEY_EQUALS, Glyph.EQUALS, Glyph.PLUS ),
-	KEY_SPACE( Keyboard.KEY_SPACE, Glyph.SPACE ),
+	KEY_SPACE( Keyboard.KEY_SPACE, Glyph.SPACE, Glyph.SPACE ),
 	KEY_SLASH( Keyboard.KEY_SLASH, Glyph.SLASH, Glyph.QUESTION ),
 	KEY_GRAVE( Keyboard.KEY_GRAVE, Glyph.GRAVE ),
+	KEY_QUOTE( Keyboard.KEY_APOSTROPHE, Glyph.SQUOTE, Glyph.AT ),
+
+	KEY_HAT( Keyboard.KEY_CIRCUMFLEX, Glyph.HAT, Glyph.HAT ),
+	KEY_UNDERSCORE( Keyboard.KEY_UNDERLINE, Glyph.UNDERSCORE, Glyph.UNDERSCORE),
+	KEY_AT( Keyboard.KEY_AT, Glyph.AT, Glyph.AT ),
 
 	KEY_LSHIFT( Keyboard.KEY_LSHIFT ),
 	KEY_LCONTROL( Keyboard.KEY_LCONTROL ),
@@ -77,10 +80,6 @@ public enum Key {
 		lookup = new HashMap<Integer,Key>();
 		for( Key k : Key.values())
 			lookup.put( k.keyCode, k );
-	}
-	
-	public static Key fromKeyCode( int k ) {
-		return lookup.getOrDefault( k, Key.NO_KEY );
 	}
 	
 	public int keyCode;

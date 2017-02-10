@@ -22,9 +22,6 @@ public class TextRenderComponent implements Component {
 	public GUIDepth depth;
 	public Vector3fl position;
 	private List<Tuple.Binary<Glyph,Vector3in>> glyphs;
-	
-	private int xCursor;
-	private int yCursor;
 
 	private static Matrix4f matrixBuffer = new Matrix4f();
 	

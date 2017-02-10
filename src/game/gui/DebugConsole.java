@@ -8,8 +8,8 @@ import game.Entity;
 import game.Game.UpdateMessage;
 import game.gfx.GlobalSubscriberComponent;
 import game.input.Input;
-import game.input.Input.Priority;
 import game.input.InputListenerComponent;
+import game.input.InputPriority;
 import game.input.Key;
 import util.Vector3in;
 
@@ -69,7 +69,7 @@ public class DebugConsole extends Entity {
 	protected void registerComponents() {
 		this.registerComponent( new GlobalSubscriberComponent() );
 		this.textCmpt = this.registerComponent( new TextRenderComponent() );
-		this.inputCmpt = this.registerComponent( new InputListenerComponent( Priority.GUI_01 ) );
+		this.inputCmpt = this.registerComponent( new InputListenerComponent( InputPriority.GUI_01 ) );
 		this.inputCmpt.startListening();
 	}
 	
@@ -84,11 +84,14 @@ public class DebugConsole extends Entity {
 			else if( Input.GLOBAL.isKeyPressed( Key.KEY_BACKSPACE) )
 				this.removeGlyph();
 
-			for( Key k : Input.GLOBAL.getPressedKeys() )
+			for( Key k : Input.GLOBAL.getPressedKeys() ) {
+				if( k.lowerGlyph == null )
+					continue;
 				if( capital && k.upperGlyph != null )
 					this.addGlyph( k.upperGlyph );
 				else if( !capital && k.lowerGlyph != null )
 					this.addGlyph( k.lowerGlyph );
+			}
 		}
 		
 		this.textCmpt.reset();

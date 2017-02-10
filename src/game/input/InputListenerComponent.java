@@ -5,9 +5,9 @@ import game.Entity;
 
 public class InputListenerComponent implements Component {
 
-	public Input.Priority priority;
+	public InputPriority priority;
 
-	public InputListenerComponent( Input.Priority priority ) {
+	public InputListenerComponent( InputPriority priority ) {
 		this.priority = priority;
 	}
 

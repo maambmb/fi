@@ -3,8 +3,6 @@ package game.gui;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.lwjgl.input.Keyboard;
-
 public enum Glyph {
 
 	LOWER_A('a'),
