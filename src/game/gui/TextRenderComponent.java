@@ -29,7 +29,7 @@ public class TextRenderComponent implements Component {
 	public TextRenderComponent( ) {
 		this.fontMap = FontMap.DEBUG;
 		this.depth = GUIDepth.DEPTH_0;
-		this.fontSize = 0.016f;
+		this.fontSize = 0.02f;
 		this.position = new Vector3fl();
 		this.glyphs = new ArrayList<Tuple.Binary<Glyph,Vector3in>>();
 	}

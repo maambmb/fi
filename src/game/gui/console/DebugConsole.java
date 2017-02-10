@@ -19,7 +19,7 @@ public class DebugConsole extends Entity {
 
 	public static DebugConsole GLOBAL;
 	public static void init() {
-		GLOBAL = new DebugConsole(40,10);
+		GLOBAL = new DebugConsole(400,10);
 	}
 	
 	private List<Glyph> current;
