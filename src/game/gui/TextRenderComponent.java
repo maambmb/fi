@@ -20,6 +20,7 @@ public class TextRenderComponent implements Component {
 	public FontMap fontMap;
 	public float fontSize;
 	public GUIDepth depth;
+	public boolean visible;
 	public Vector3fl position;
 	private List<Tuple.Binary<Glyph,Vector3in>> glyphs;
 
@@ -41,7 +42,7 @@ public class TextRenderComponent implements Component {
     
     private void render( GUIShaderRenderMessage msg ) {
 
-    	if( msg.depth != this.depth )
+    	if( msg.depth != this.depth || !this.visible )
     		return;
     	
     	int xCur = 0;

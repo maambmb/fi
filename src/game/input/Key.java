@@ -74,7 +74,6 @@ public enum Key {
 	KEY_BACKSPACE( Keyboard.KEY_BACK );
 
 	private static Map<Integer,Key> lookup;
-	public static char DEFAULT_CHAR;
 
 	public static void init() {
 		lookup = new HashMap<Integer,Key>();

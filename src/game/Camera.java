@@ -6,8 +6,8 @@ import game.block.BlockShader;
 import game.gfx.GlobalSubscriberComponent;
 import game.gfx.Shader;
 import game.gfx.UniformVariable;
-import game.input.Input;
 import game.input.InputListenerComponent;
+import game.input.InputPriority;
 import game.input.NoClipComponent;
 import util.MatrixUtils;
 
@@ -58,7 +58,7 @@ public final class Camera extends Entity {
         this.posCmpt = this.registerComponent( new Position3DComponent() );
         this.registerComponent( new NoClipComponent() );
         this.registerComponent( new GlobalSubscriberComponent() );
-        InputListenerComponent inputCmpt = this.registerComponent( new InputListenerComponent( Input.Priority.CONTROL ));
+        InputListenerComponent inputCmpt = this.registerComponent( new InputListenerComponent( InputPriority.CONTROL ));
         inputCmpt.startListening();
     }
 

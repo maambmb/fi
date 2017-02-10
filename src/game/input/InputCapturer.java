@@ -14,11 +14,11 @@ import game.Entity;
 import game.Game.UpdateMessage;
 import game.gfx.GlobalSubscriberComponent;
 
-public class Input extends Entity {
+public class InputCapturer extends Entity {
 
-	public static Input GLOBAL;
+	public static InputCapturer GLOBAL;
 	public static void init() {
-		GLOBAL = new Input();
+		GLOBAL = new InputCapturer();
 	}
 	
 	private Map<InputPriority,Set<InputListenerComponent>> inputListenerMap;
@@ -56,7 +56,7 @@ public class Input extends Entity {
 
 	}
 	
-	public Input() {
+	public InputCapturer() {
 		this.inputListenerMap = new HashMap<InputPriority,Set<InputListenerComponent>>();
 		for( InputPriority il : InputPriority.values())
 			this.inputListenerMap.put( il , new HashSet<InputListenerComponent>() );

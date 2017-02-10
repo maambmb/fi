@@ -10,11 +10,12 @@ import org.lwjgl.opengl.PixelFormat;
 import game.block.BlockShader;
 import game.block.World;
 import game.gfx.TextureRef;
-import game.gui.DebugConsole;
 import game.gui.FontMap;
 import game.gui.GUIDepth;
 import game.gui.GUIShader;
-import game.input.Input;
+import game.gui.Glyph;
+import game.gui.console.DebugConsole;
+import game.input.InputCapturer;
 import game.input.Key;
 import util.Vector3fl;
 import util.Vector3in;
@@ -78,13 +79,14 @@ public class Game {
         Vector3in.CubeNormal.init();
         Key.init();
         TextureRef.init();
+        Glyph.init();
         FontMap.init();
         
         // create the world object (manager of chunks)
         World.init();
 
         // create global entities
-        Input.init();
+        InputCapturer.init();
         BlockShader.init();
         GUIShader.init();
         Camera.init();
@@ -96,8 +98,11 @@ public class Game {
         // loop until we detect a close (done in updateCtx)
         while( !this.gameOver ) {
         	
-            if( Input.GLOBAL.isKeyDown( Key.KEY_ESCAPE ))
+        	// do top level input checks (escape should quit
+            if( InputCapturer.GLOBAL.isKeyDown( Key.KEY_ESCAPE ))
             	this.gameOver = true;
+            if( InputCapturer.GLOBAL.isKeyPressed( Key.KEY_GRAVE ))
+            	DebugConsole.GLOBAL.toggle();
 
             // take a new reading of the time, and create an update message with this and the previous reading
             // (to form a delta timestep) - then set this new reading as the previous one so we're

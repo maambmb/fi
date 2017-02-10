@@ -3,6 +3,8 @@ package game.gui;
 import java.util.HashMap;
 import java.util.Map;
 
+import game.Game.DestroyMessage;
+import game.Listener;
 import game.gfx.AttributeVariable;
 import game.gfx.Model;
 import game.gfx.TextureRef;
@@ -56,12 +58,18 @@ public enum FontMap {
 		this.glyphLookup = new HashMap<Glyph,Model>();
 		this.stripCount = atlas.size / charDimensions.x;
 		this.aspectRatio = (float)charDimensions.x / charDimensions.y;
+		Listener.GLOBAL.addSubscriber( DestroyMessage.class, this::destroy );
 	}
 		
 	public Model getModel( Glyph g ) {
 		if( ! this.glyphLookup.containsKey( g ) )
 			return this.glyphLookup.get( Glyph.SCANLINES );
 		return this.glyphLookup.get( g );
+	}
+	
+	private void destroy( DestroyMessage msg ) {
+		for( Model m : this.glyphLookup.values() )
+			m.destroy();
 	}
 
 	private Model buildModel( int ix ) {

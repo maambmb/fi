@@ -43,13 +43,13 @@ public class NoClipComponent implements Component {
 
         // TODO: make key bindings configurable
         // determine the strafe/march amounts based on WASD
-        if( Input.GLOBAL.isKeyDown( Key.KEY_D ) )
+        if( InputCapturer.GLOBAL.isKeyDown( Key.KEY_D ) )
             strafe = -1f;
-        if( Input.GLOBAL.isKeyDown( Key.KEY_A ) )
+        if( InputCapturer.GLOBAL.isKeyDown( Key.KEY_A ) )
             strafe = 1f;
-        if( Input.GLOBAL.isKeyDown( Key.KEY_W ) )
+        if( InputCapturer.GLOBAL.isKeyDown( Key.KEY_W ) )
             march = 1f;
-        if( Input.GLOBAL.isKeyDown( Key.KEY_S ) )
+        if( InputCapturer.GLOBAL.isKeyDown( Key.KEY_S ) )
             march = -1f;
 
         // if we're not strafing or marching we're not moving so abort

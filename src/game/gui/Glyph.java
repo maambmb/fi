@@ -111,13 +111,13 @@ public enum Glyph {
 	
 	public static char DEFAULT_CHAR;
 	private static Map<Character,Glyph> lookup;
-	private char lookupChar;
+	public char underlying;
 
 	public static void init() {
 		lookup =  new HashMap<Character,Glyph>();
 		for( Glyph g : Glyph.values() )
-			if( g.lookupChar != DEFAULT_CHAR)
-				lookup.put( g.lookupChar , g );
+			if( g.underlying != DEFAULT_CHAR)
+				lookup.put( g.underlying , g );
 	}
 	
 	public static Glyph lookup( char c ) {
@@ -125,7 +125,7 @@ public enum Glyph {
 	}
 	
 	private Glyph( char c ) {
-		this.lookupChar = c;
+		this.underlying = c;
 	}
 	
 	private Glyph() {

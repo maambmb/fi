@@ -12,15 +12,15 @@ public class InputListenerComponent implements Component {
 	}
 
 	public boolean canListen() {
-		return Input.GLOBAL.canListen( this );
+		return InputCapturer.GLOBAL.canListen( this );
 	}
 	
 	public void startListening() {
-		Input.GLOBAL.addListener( this );
+		InputCapturer.GLOBAL.addListener( this );
 	}
 	
 	public void stopListening() {
-		Input.GLOBAL.removeListener( this );
+		InputCapturer.GLOBAL.removeListener( this );
 	}
 
 	@Override
