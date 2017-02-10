@@ -1,8 +1,6 @@
 #version 400 core
 
 in vec2 frag_tex_coords;
-in vec3 frag_lighting;
-
 uniform sampler2D textureSampler;
 
 out vec4 out_Color;
@@ -16,6 +14,7 @@ void main(void) {
     	discard;
     }
 
-    // multiply the texture's color with the lighting to get the final pixel color
-    out_Color = tex_color * vec4(frag_lighting.xyz,1);
+    // multiply the texture's color
+    out_Color = tex_color;
+
 }

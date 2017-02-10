@@ -1,4 +1,4 @@
-package game.gfx.shader;
+package game.gfx;
 
 import java.nio.FloatBuffer;
 import java.util.HashMap;
@@ -10,10 +10,6 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.Entity;
-import game.gfx.AttributeVariable;
-import game.gfx.GlobalSubscriberComponent;
-import game.gfx.UniformVariable;
-
 import util.FileUtils;
 import util.Vector3fl;
 import util.Vector3in;
@@ -108,8 +104,8 @@ public abstract class Shader extends Entity {
         GL20.glUniform1i( uvId, i);
     }
 
-    // bind to a shader program
-    protected void use() {
+    // bind to the program
+    public void use() {
         GL20.glUseProgram( this.programId );
     }
     
@@ -130,7 +126,6 @@ public abstract class Shader extends Entity {
     // destroy the shader program when this entity is destroyed
     public void destroy() {
         super.destroy();
-        GL20.glUseProgram( 0 );
         GL20.glDetachShader( this.programId, this.vertexId );
         GL20.glDetachShader( this.programId, this.fragmentId );
         GL20.glDeleteShader( this.vertexId );

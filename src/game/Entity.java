@@ -17,7 +17,6 @@ public abstract class Entity {
     protected Entity() {
         this.listener = new Listener();
         this.componentList = new ArrayList<Component>();
-        this.registerComponents();
         this.setup();
         
         this.listener.addSubscriber(DestroyMessage.class, (x) -> this.destroy() );

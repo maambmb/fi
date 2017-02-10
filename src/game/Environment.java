@@ -1,11 +1,10 @@
 package game;
 
+import game.block.BlockShader;
 import game.block.LightSource;
 import game.gfx.GlobalSubscriberComponent;
+import game.gfx.Shader;
 import game.gfx.UniformVariable;
-import game.gfx.shader.BlockShader;
-import game.gfx.shader.Shader;
-
 import util.Vector3fl;
 
 public final class Environment extends Entity {

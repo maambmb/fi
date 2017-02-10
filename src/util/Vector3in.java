@@ -60,6 +60,10 @@ public class Vector3in {
         this.y = y;
         this.z = z;
     }
+    
+    public Vector3in( int x, int y) {
+    	this( x,y,0);
+    }
 
     public Vector3in() {
     }

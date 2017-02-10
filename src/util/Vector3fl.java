@@ -22,6 +22,10 @@ public class Vector3fl {
     	this(v.x,v.y,v.z);
     }
     
+    public Vector3fl( float x, float y) {
+    	this( x, y, 0f );
+    }
+    
     public Vector3fl( Vector3f v ) {
     	this(v.x,v.y,v.z);
     }

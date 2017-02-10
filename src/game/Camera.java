@@ -2,10 +2,12 @@ package game;
 
 import org.lwjgl.util.vector.Matrix4f;
 
+import game.Game.UpdateMessage;
+import game.block.BlockShader;
 import game.gfx.GlobalSubscriberComponent;
+import game.gfx.Shader;
 import game.gfx.UniformVariable;
-import game.gfx.shader.BlockShader;
-import game.gfx.shader.Shader;
+import game.gui.ModelTextRenderComponent;
 import game.input.InputArbiter;
 import game.input.InputListenerComponent;
 import game.input.NoClipComponent;
@@ -19,12 +21,14 @@ public final class Camera extends Entity {
     }
 
     private static Matrix4f matrixBuffer = new Matrix4f();
+    private ModelTextRenderComponent textCmpt;
 
     private Position3DComponent posCmpt;
 
     private Camera() {
         super();
         this.listener.addSubscriber( BlockShader.BlockShaderPreRenderMessage.class, this::blockShaderPreRender );
+        this.listener.addSubscriber(UpdateMessage.class, this::update );
     }
 
     private void loadProjectionMatrix( Shader s ) {
@@ -53,6 +57,11 @@ public final class Camera extends Entity {
         MatrixUtils.addTranslationToMatrix( matrixBuffer , this.posCmpt.position.multiply(-1) );
         s.loadMatrix4f( UniformVariable.VIEW_MATRIX, matrixBuffer );
     }
+    
+    private void update( UpdateMessage m ) {
+
+    	this.textCmpt.setText( String.format( "Position: %s", this.posCmpt.position ) );
+    }
 
     @Override
     public void registerComponents() {
@@ -61,6 +70,8 @@ public final class Camera extends Entity {
         this.registerComponent( new GlobalSubscriberComponent() );
         InputListenerComponent inputCmpt = this.registerComponent( new InputListenerComponent( InputArbiter.Priority.CONTROL ));
         inputCmpt.startListening();
+        
+        this.textCmpt = this.registerComponent( new ModelTextRenderComponent() );
     }
 
     private void preRender( Shader s ) {

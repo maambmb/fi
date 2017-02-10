@@ -1,6 +1,7 @@
-package game.gfx.shader;
+package game.block;
 
 import game.gfx.AttributeVariable;
+import game.gfx.Shader;
 import game.gfx.UniformVariable;
 
 public final class BlockShader extends Shader {
@@ -36,7 +37,6 @@ public final class BlockShader extends Shader {
 
     private BlockShader() {
         super( "glsl/block/vertex.glsl", "glsl/block/fragment.glsl" );
-        this.listener.addSubscriber( BlockShaderPreRenderMessage.class, this::preRender);
     }
 
     @Override
@@ -50,11 +50,6 @@ public final class BlockShader extends Shader {
         for( AttributeVariable av : USED_ATTRIBUTE_VARS ) 
             this.createAttributeVariable( av );
     }
-    
-	protected void preRender( BlockShaderPreRenderMessage msg ) {
-		this.use();
-	}
-    
     
 
 }

@@ -15,7 +15,7 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 
-import game.gfx.shader.BlockShader;
+import game.block.BlockShader;
 import util.Vector3fl;
 import util.Vector3in;
 
@@ -68,12 +68,9 @@ public class Model {
         this.vboIds      = new ArrayList<Integer>();
         this.vertexCount = 0;
         this.indexCount  = 0;
-    }
-
-    // prepare the model to use the specified attribute variable
-    // allocate a buffer for it in the buffer map
-    public void initAttributeVariable( AttributeVariable av ) {
-        this.buffers.put( av, new ArrayList<Object>() );
+        this.vaoId       = -1;
+        for( AttributeVariable av : AttributeVariable.values() )
+        	this.buffers.put( av, new ArrayList<Object>() );
     }
 
     // adding attribute data happens below. Type safety is pretty
@@ -135,19 +132,15 @@ public class Model {
         GL30.glBindVertexArray( this.vaoId );
     }
 
-    private void unbind() {
-        GL30.glBindVertexArray( 0 );
-    }
-
     public void buildModel() {
 
+    	if( this.indexCount == 0 )
+    		return;
+    	
         this.vaoId = GL30.glGenVertexArrays();
 
         // bind to the model
         this.bind();
-
-        for( AttributeVariable av : BlockShader.GLOBAL.USED_ATTRIBUTE_VARS )
-			GL20.glEnableVertexAttribArray( av.ordinal() );
         
         // create the vbo for the index data, load it into a buffer and push it
         int vboId = GL15.glGenBuffers();
@@ -163,16 +156,23 @@ public class Model {
 
 		for( AttributeVariable av : AttributeVariable.values()) {
 
-            // grab the attribute variable buffer
-            // atm we don't know if it holds ints or floats
             Collection<Object> buffer = this.buffers.get( av );
-            if( buffer == null)
+            
+            // if the buffer is empty (and hasn't been used then ignore)
+            if( buffer.size() == 0 )
             	continue;
+            
+            // if the buffer has been used incorrectly then throw because something aint right...
+            if( buffer.size() != this.indexCount * av.stride )
+            	throw new RuntimeException( String.format( "Incorrect number of elements found in %s buffer: %s vs %s", av, buffer.size(), this.indexCount * av.stride ) );
+
+            // okay we're using this attrib var, enable it for the VAO
+			GL20.glEnableVertexAttribArray( av.ordinal() );
 
             // setup a new VBO
             vboId = GL15.glGenBuffers();
             GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-
+            
             // if the av is an integer, (and we hope the data put into the buffer is also that or else RIP)
             // create an intbuffer and push the data
             if( av.dataType == Integer.class ) {
@@ -192,36 +192,33 @@ public class Model {
             // we can empty the buffer as the data lives in VRAM now
             buffer.clear();
         }
-
-        this.unbind();
     }
 
     // jump through and delete all VBOs
     // before deleting the VAO itself
     public void destroy() {
 
-        this.bind();
         for( int vboId : this.vboIds)
             GL15.glDeleteBuffers(vboId);
         GL30.glDeleteVertexArrays(this.vaoId);
-        this.unbind();
 
     }
 
     public void render() {
 
+    	if( this.vaoId < 0 )
+    		return;
+    	
         // bind and activate the model's texture atlas
-        GL13.glActiveTexture( GL13.GL_TEXTURE0 );
         GL11.glBindTexture( GL11.GL_TEXTURE_2D, this.texture.id );
+        GL13.glActiveTexture( GL13.GL_TEXTURE0 );
+        GL11.glTexParameteri( GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST );
 
         // bind to the model's VAO
         this.bind();
 
         // draw the model!
         GL11.glDrawElements( GL11.GL_TRIANGLES, this.vertexCount, GL11.GL_UNSIGNED_INT, 0 );
-
-        // unbind the VAO
-        this.unbind();
     }
 
 }

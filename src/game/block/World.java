@@ -10,8 +10,6 @@ import game.block.BlockType.Opacity;
 import game.gfx.AttributeVariable;
 import game.gfx.Model;
 import game.gfx.TextureRef;
-import game.gfx.shader.BlockShader;
-
 import util.Vector3fl;
 import util.Vector3in;
 
@@ -171,8 +169,6 @@ public class World {
             // create the empty chunk model and choose the subset of attribute variables that will be used
             // this model is terrain so we should use the vars that the block shader uses...
             Model model = new Model();
-            for( AttributeVariable av : BlockShader.USED_ATTRIBUTE_VARS )
-                model.initAttributeVariable( av );
 
             // grab the texture the model will be using and point the model at said texture atlas
             model.texture = TextureRef.BLOCK;
@@ -264,14 +260,9 @@ public class World {
 
             // all the data has been collected by the model
             // now we can munge the data into buffers and shunt it off to VRAM
-            // using opengl (but only if there is stuff vertices to draw!)
-
-            if( model.vertexCount > 0 ) {
-                model.buildModel();
-
-                // update the chunks model via the rendering component
-                chunk.renderCmpt.model = model;
-            }
+			model.buildModel();
+			// update the chunks model via the rendering component
+			chunk.renderCmpt.model = model;
 
         }
     }

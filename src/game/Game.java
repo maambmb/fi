@@ -7,9 +7,10 @@ import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.PixelFormat;
 
+import game.block.BlockShader;
 import game.block.World;
 import game.gfx.TextureRef;
-import game.gfx.shader.BlockShader;
+import game.gui.GUIShader;
 import game.input.InputArbiter;
 import game.input.Key;
 import util.Vector3fl;
@@ -24,9 +25,7 @@ public class Game {
         public long deltaMs;
 
         public UpdateMessage( long prevTime, long currTime ) {
-
             this.deltaMs = currTime - prevTime;
-
         }
 
     }
@@ -58,7 +57,6 @@ public class Game {
         GL11.glEnable( GL11.GL_DEPTH_TEST );
         GL11.glClear( GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT );
         GL11.glEnable( GL11.GL_CULL_FACE );
-        GL11.glTexParameteri( GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST );
         Vector3fl fogColor = Environment.GLOBAL.fogColor;
         GL11.glClearColor( fogColor.x, fogColor.y, fogColor.z, 1 );
     }
@@ -89,6 +87,7 @@ public class Game {
         // create global entities
         InputArbiter.init();
         BlockShader.init();
+        GUIShader.init();
         Camera.init();
         Environment.init();
 
@@ -109,11 +108,14 @@ public class Game {
             this.prevTime = this.currTime;
 
             // then perform draws for all the various shader programs
+            BlockShader.GLOBAL.use();
             Listener.GLOBAL.listen( new BlockShader.BlockShaderPreRenderMessage() );
             Listener.GLOBAL.listen( new BlockShader.BlockShaderRenderMessage() );
-            Listener.GLOBAL.listen( new BlockShader.BlockShaderPreRenderMessage() );
 
-            World.WORLD.refresh();
+            GUIShader.GLOBAL.use();
+            Listener.GLOBAL.listen( new GUIShader.GUIShaderRenderMessage() );
+
+            //World.WORLD.refresh();
             this.updateCtx();
             this.prevTime = this.currTime;
         }
@@ -122,6 +124,7 @@ public class Game {
         // if we've exited the loop, the game is about to end. Try and clean up all resources by destroying all resources
         Listener.GLOBAL.listen( new DestroyMessage() );
         
+        // destroy the atlas of textures
         TextureRef.destroy();
 
         // finally destroy the display ctx
