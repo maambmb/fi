@@ -2,10 +2,12 @@
 
 in vec2 av_position_2d;
 in vec2 av_tex_coords;
+in int av_color;
 
 uniform mat4 uv_model_tsc_matrix;
 
 out vec2 frag_tex_coords;
+out vec3 frag_color;
 
 void main(void) {
 
@@ -15,5 +17,7 @@ void main(void) {
     // just pass the tex coords through *yawn*
     frag_tex_coords = vec2( av_tex_coords.xy );
 
+	//
+    frag_color = vec3( av_color & 0xFF, ( av_color >> 8 ) & 0xFF, ( av_color >> 16 ) & 0xFF ) / 255;
 }
 

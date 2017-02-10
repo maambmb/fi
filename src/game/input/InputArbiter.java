@@ -3,7 +3,6 @@ package game.input;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,7 +10,6 @@ import java.util.Set;
 import org.lwjgl.input.Keyboard;
 
 import game.Entity;
-import game.Listener;
 import game.Game.UpdateMessage;
 import game.gfx.GlobalSubscriberComponent;
 

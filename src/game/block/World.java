@@ -35,10 +35,6 @@ public class World {
     // dirty chunks that themselves need recalcs ( should border all dirty chunks )
     private Set<Vector3in> requisiteChunks;
 
-    // a buffer to store the sums of illuminations from multiple different blocks
-    // for the purposes of averaging for smooth lighting
-    private static Vector3in[] lightBlender;
-
     public World() {
         this.chunkMap        = new HashMap<Vector3in,Chunk>();
         this.dirtyChunks     = new HashSet<Vector3in>();

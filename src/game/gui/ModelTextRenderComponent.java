@@ -1,11 +1,16 @@
 package game.gui;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import game.Entity;
 import game.gfx.AttributeVariable;
 import game.gfx.Model;
 import game.gfx.ModelRenderComponent;
 import game.gui.GUIShader.GUIShaderRenderMessage;
+import util.Tuple;
 import util.Vector3fl;
+import util.Vector3in;
 
 public class ModelTextRenderComponent extends ModelRenderComponent {
 
@@ -13,11 +18,13 @@ public class ModelTextRenderComponent extends ModelRenderComponent {
 	public FontMap fontMap;
 	public float fontSize;
 	public Vector3fl position;
+	private List<Tuple.Binary<Character,Vector3in>> characterList;
 	
 	public ModelTextRenderComponent() {
 		this.fontMap = FontMap.DEBUG;
 		this.fontSize = 0.02f;
 		this.position = new Vector3fl();
+		this.characterList = new ArrayList<Tuple.Binary<Character,Vector3in>>();
 	}
 	
     @Override
@@ -35,18 +42,30 @@ public class ModelTextRenderComponent extends ModelRenderComponent {
     	this.model.render();
     }
     
-    public void setText( String txt ) {
+    public void clearText() {
+    	this.characterList.clear();
+    }
+    
+    public void addString( String s ) {
+    	this.addString( s, new Vector3in( 0xFFFFFF ) );
+    }
+    
+    public void addString( String s, Vector3in color ) {
+    	for( char c : s.toCharArray() )
+			this.characterList.add( Tuple.create( c, color ) );
+    }
+    
+    public void rebuild() {
 
     	this.destroy();
     	this.model = new Model();
     	this.model.texture = this.fontMap.atlas;
 
-    	char[] charArray = txt.toCharArray();
     	float fontHeight = this.fontSize * this.fontMap.charDimensions.y / this.fontMap.charDimensions.x;
-    	
-    	for( int i = 0; i < charArray.length; i +=1 ) {
+    	for( int i = 0; i < this.characterList.size(); i +=1 ) {
 
-			Vector3fl baseTex = this.fontMap.getPosition( charArray[i] );
+    		Tuple.Binary<Character,Vector3in> coloredChar = this.characterList.get( i );
+			Vector3fl baseTex = this.fontMap.getPosition( coloredChar.arg1 );
 
     		for( int j = 0; j < 4; j += 1 ) {
 
@@ -62,7 +81,8 @@ public class ModelTextRenderComponent extends ModelRenderComponent {
     				farHorizontal ? this.fontMap.charDimensions.x : 0f,
     				farVertical ? this.fontMap.charDimensions.y : 0f
     			).add( baseTex ) );
-
+    			
+    			this.model.addAttributeData( AttributeVariable.COLOR, coloredChar.arg2.toPackedBytes() );
     			
     		}
     		this.model.addQuad();

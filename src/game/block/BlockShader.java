@@ -9,27 +9,6 @@ public final class BlockShader extends Shader {
     public static class BlockShaderPreRenderMessage { }
     public static class BlockShaderRenderMessage { }
 
-    private static UniformVariable[] USED_UNIFORM_VARS = {
-        UniformVariable.MODEL_ROTATE_MATRIX,
-        UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX,
-        UniformVariable.VIEW_MATRIX,
-        UniformVariable.PROJECTION_MATRIX,
-        UniformVariable.LIGHTING_BASE,
-        UniformVariable.FOG_COLOR,
-        UniformVariable.GLOBAL_LIGHT_ORIGIN,
-        UniformVariable.LIGHTING_CONSTANT,
-        UniformVariable.LIGHTING_GLOBAL,
-    };
-
-    public static AttributeVariable[] USED_ATTRIBUTE_VARS = {
-        AttributeVariable.POSITION,
-        AttributeVariable.TEX_COORDS,
-        AttributeVariable.NORMAL,
-        AttributeVariable.SHADOW,
-        AttributeVariable.LIGHTING_CONSTANT,
-        AttributeVariable.LIGHTING_GLOBAL,
-    };
-
     public static BlockShader GLOBAL;
     public static void init() {
         GLOBAL = new BlockShader();
@@ -41,14 +20,25 @@ public final class BlockShader extends Shader {
 
     @Override
     protected void setupUniformVariables() {
-        for( UniformVariable uv : USED_UNIFORM_VARS )
-            this.createUniformVariable( uv );
+    	this.createUniformVariable( UniformVariable.MODEL_ROTATE_MATRIX );
+    	this.createUniformVariable( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX );
+    	this.createUniformVariable( UniformVariable.VIEW_MATRIX );
+    	this.createUniformVariable( UniformVariable.PROJECTION_MATRIX );
+    	this.createUniformVariable( UniformVariable.LIGHTING_BASE );
+    	this.createUniformVariable( UniformVariable.FOG_COLOR );
+    	this.createUniformVariable( UniformVariable.GLOBAL_LIGHT_ORIGIN );
+    	this.createUniformVariable( UniformVariable.LIGHTING_CONSTANT );
+    	this.createUniformVariable( UniformVariable.LIGHTING_GLOBAL );
     }
 
     @Override
     protected void setupAttributeVariables() {
-        for( AttributeVariable av : USED_ATTRIBUTE_VARS ) 
-            this.createAttributeVariable( av );
+    	this.createAttributeVariable( AttributeVariable.POSITION );
+    	this.createAttributeVariable( AttributeVariable.TEX_COORDS );
+    	this.createAttributeVariable( AttributeVariable.NORMAL );
+    	this.createAttributeVariable( AttributeVariable.SHADOW );
+    	this.createAttributeVariable( AttributeVariable.LIGHTING_CONSTANT );
+    	this.createAttributeVariable( AttributeVariable.LIGHTING_GLOBAL );
     }
     
 

@@ -26,6 +26,7 @@ public class GUIShader extends Shader {
     protected void setupAttributeVariables() {
     	this.createAttributeVariable( AttributeVariable.POSITION_2D );
     	this.createAttributeVariable( AttributeVariable.TEX_COORDS );
+    	this.createAttributeVariable( AttributeVariable.COLOR );
     }
     
 }

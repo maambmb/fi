@@ -116,7 +116,7 @@ public class Vector3fl {
 
     @Override
     public String toString() {
-        return String.format( "Vector3fl( %s, %s, %s )", this.x, this.y, this.z );
+        return String.format( "Vector3fl( %.2f, %.2f, %.2f )", this.x, this.y, this.z );
     }
 
 

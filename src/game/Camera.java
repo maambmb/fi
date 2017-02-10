@@ -12,6 +12,7 @@ import game.input.InputArbiter;
 import game.input.InputListenerComponent;
 import game.input.NoClipComponent;
 import util.MatrixUtils;
+import util.Vector3in;
 
 public final class Camera extends Entity {
 
@@ -60,7 +61,11 @@ public final class Camera extends Entity {
     
     private void update( UpdateMessage m ) {
 
-    	this.textCmpt.setText( String.format( "Position: %s", this.posCmpt.position ) );
+    	this.textCmpt.clearText();
+    	this.textCmpt.addString( "Position: " );
+    	this.textCmpt.addString( this.posCmpt.rotation.toString(), new Vector3in( 0x00FF00 ) );
+    	this.textCmpt.rebuild();
+
     }
 
     @Override

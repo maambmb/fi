@@ -1,6 +1,5 @@
 package game.block;
 
-import game.Config;
 import util.Vector3in;
 
 // representing a block/cube of terrain

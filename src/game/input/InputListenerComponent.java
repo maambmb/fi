@@ -1,7 +1,5 @@
 package game.input;
 
-import java.util.Iterator;
-
 import game.Component;
 import game.Entity;
 

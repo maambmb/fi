@@ -1,6 +1,8 @@
 #version 400 core
 
 in vec2 frag_tex_coords;
+in vec3 frag_color;
+
 uniform sampler2D textureSampler;
 
 out vec4 out_Color;
@@ -15,6 +17,6 @@ void main(void) {
     }
 
     // multiply the texture's color
-    out_Color = tex_color;
+    out_Color = tex_color * vec4( frag_color.xyz, 1 );
 
 }

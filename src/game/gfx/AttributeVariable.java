@@ -4,6 +4,7 @@ public enum AttributeVariable {
 
     POSITION( "av_position", 3, Float.class ),
     POSITION_2D( "av_position_2d", 2, Float.class ),
+    COLOR( "av_color", 1, Integer.class ),
     TEX_COORDS( "av_tex_coords", 2, Float.class ),
     NORMAL( "av_normal", 1, Integer.class ),
     SHADOW( "av_shadow", 1, Integer.class ),
