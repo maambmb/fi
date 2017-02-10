@@ -5,42 +5,22 @@ import game.Entity;
 
 public class InputListenerComponent implements Component {
 
-	public InputArbiter.Priority priority;
+	public Input.Priority priority;
 
-	public InputListenerComponent( InputArbiter.Priority priority ) {
+	public InputListenerComponent( Input.Priority priority ) {
 		this.priority = priority;
 	}
 
-	public Iterable<Key> getPressedKeys() {
-		return InputArbiter.GLOBAL.getPressedKeys();
-	}
-	
-	public boolean isKeyDown( Key key ) {
-		return InputArbiter.GLOBAL.isKeyDown( key );
-	}
-	
-	public boolean isKeyDown( KeyMap map ) {
-		return this.isKeyDown( map.mappedKey );
-	}
-
-	public boolean isPressed( Key key ) {
-		return InputArbiter.GLOBAL.isPressed( key );
-	}
-
-	public boolean isPressed( KeyMap map ) {
-		return this.isPressed( map.mappedKey );
-	}
-	
 	public boolean canListen() {
-		return InputArbiter.GLOBAL.canListen( this );
+		return Input.GLOBAL.canListen( this );
 	}
 	
 	public void startListening() {
-		InputArbiter.GLOBAL.addListener( this );
+		Input.GLOBAL.addListener( this );
 	}
 	
 	public void stopListening() {
-		InputArbiter.GLOBAL.removeListener( this );
+		Input.GLOBAL.removeListener( this );
 	}
 
 	@Override

@@ -49,6 +49,17 @@ public class Vector3in {
             this.vector = v;
         }
     }
+    
+    public static Vector3in ZERO = new Vector3in();
+    
+    public static Vector3in WHITE = new Vector3in(0xFFFFFF);
+    public static Vector3in GREEN = new Vector3in(0x00FF00);
+    public static Vector3in RED = new Vector3in(0x0000FF);
+    public static Vector3in BLUE = new Vector3in(0xFF0000);
+    public static Vector3in MAGENTA = new Vector3in(0xFF00FF);
+    public static Vector3in YELLOW = new Vector3in(0x00FFFF);
+    public static Vector3in CYAN = new Vector3in(0xFFFF00);
+
 
     // the 3 elements of the vector
     public int x;
@@ -133,7 +144,7 @@ public class Vector3in {
     public Vector3fl toVector3fl() {
     	return new Vector3fl( this.x, this.y, this.z );
     }
-
+    
     @Override
     public int hashCode() {
         HashCoder.HASH_CODER.reset();

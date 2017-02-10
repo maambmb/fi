@@ -9,7 +9,7 @@ public class Config {
     // amount to decrease light per propagation
     public static final int LIGHT_DROPOFF = 256 / LIGHT_JUMPS;
     // furthest distance to draw
-    public static final float FAR_PLANE = 1000f;
+    public static final float FAR_PLANE = 10000f;
     // closest distance to draw
     public static final float NEAR_PLANE = 0.1f;
     // single block face texture size
@@ -24,5 +24,9 @@ public class Config {
     // x*y of the window
     public static int GAME_WIDTH  = 800;
     public static int GAME_HEIGHT = 600;
+    
+    public static float DEFAULT_CHARACTER_WIDTH = 0.02f;
+    
+    public static int KEY_LOCK_MS = 600;
 
 }

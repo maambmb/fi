@@ -6,8 +6,13 @@ import game.gfx.UniformVariable;
 
 public class GUIShader extends Shader {
 
-    public static class GUIShaderRenderMessage { }
-
+	public static class GUIShaderRenderMessage {
+		public GUIDepth depth;
+		public GUIShaderRenderMessage( GUIDepth d ) {
+			this.depth = d;
+		}
+	}
+	
     public static GUIShader GLOBAL;
     public static void init() {
         GLOBAL = new GUIShader();
@@ -20,13 +25,13 @@ public class GUIShader extends Shader {
     @Override
     protected void setupUniformVariables() {
 		this.createUniformVariable( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX );
+		this.createUniformVariable( UniformVariable.COLOR );
     }
 
     @Override
     protected void setupAttributeVariables() {
     	this.createAttributeVariable( AttributeVariable.POSITION_2D );
     	this.createAttributeVariable( AttributeVariable.TEX_COORDS );
-    	this.createAttributeVariable( AttributeVariable.COLOR );
     }
     
 }

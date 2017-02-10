@@ -12,7 +12,7 @@ public class Position3DComponent implements Component {
     public Position3DComponent() { 
     	this.position = new Vector3fl();
     	this.rotation = new Vector3fl();
-    	this.scale = 10;
+    	this.scale = 1f;
     }
 
     public void setup( Entity e ) {

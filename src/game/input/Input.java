@@ -9,14 +9,16 @@ import java.util.Set;
 
 import org.lwjgl.input.Keyboard;
 
+import game.Config;
 import game.Entity;
 import game.Game.UpdateMessage;
 import game.gfx.GlobalSubscriberComponent;
 
-public class InputArbiter extends Entity {
+public class Input extends Entity {
 
 	public enum Priority {
 		
+		TOP_LISTENER( false ),
 		GUI_01( true ),
 		CONTROL( true );
 		
@@ -28,15 +30,17 @@ public class InputArbiter extends Entity {
 		
 	}
 	
-	public static InputArbiter GLOBAL;
+	public static Input GLOBAL;
 	public static void init() {
-		GLOBAL = new InputArbiter();
+		GLOBAL = new Input();
 	}
 	
 	private Map<Priority,Set<InputListenerComponent>> inputListenerMap;
 	private boolean[] prevDown;
 	private boolean[] currDown;
+	private long[] lastPressed;
 	private List<Key> pressedKeys;
+	private long currTime;
 	
 	@Override
 	protected void registerComponents() {
@@ -44,27 +48,38 @@ public class InputArbiter extends Entity {
 	}
 	
 	private void update( UpdateMessage m ){
-
+		
+		this.currTime = m.totalMs;
 		this.pressedKeys.clear();
-		for( int i = 0; i < Key.values().length; i +=1 )
-			this.prevDown[ i ] = this.currDown[ i ];
+		
+		for( Key key : Key.values() ) {
 
-		while( Keyboard.next() ) {
-			Key key = Key.fromKeyCode( Keyboard.getEventKey() );
-			boolean isDown = Keyboard.getEventKeyState();
-			this.currDown[ key.ordinal() ] = isDown;
-			if( isDown && ! this.prevDown[ key.ordinal() ] )
-				this.pressedKeys.add( key );
+			if( key == Key.NO_KEY )
+				continue;
+
+			int ix = key.ordinal();
+			this.prevDown[ ix ] = this.currDown[ ix ];
+			this.currDown[ ix ] = Keyboard.isKeyDown( key.keyCode );
+			if( this.currDown[ ix ] ) {
+				if( ! this.prevDown[ ix ] ) {
+					this.pressedKeys.add( key );
+					this.lastPressed[ ix ] = this.currTime;
+				}
+				else if( this.lastPressed[ ix ] + Config.KEY_LOCK_MS < this.currTime )
+					this.pressedKeys.add( key );
+			}
+			
 		}
 
 	}
 	
-	public InputArbiter() {
+	public Input() {
 		this.inputListenerMap = new HashMap<Priority,Set<InputListenerComponent>>();
 		for( Priority il : Priority.values())
 			this.inputListenerMap.put( il , new HashSet<InputListenerComponent>() );
 		this.prevDown = new boolean[ Key.values().length ];
 		this.currDown = new boolean[ Key.values().length ];
+		this.lastPressed = new long[ Key.values().length ];
 		this.pressedKeys = new ArrayList<Key>();
 		this.listener.addSubscriber( UpdateMessage.class, this::update );
 	}
@@ -94,10 +109,9 @@ public class InputArbiter extends Entity {
 	public boolean isKeyDown( Key key ) {
 		return this.currDown[ key.ordinal() ];
 	}
-
-	public boolean isPressed( Key key ) {
+	
+	public boolean isKeyPressed( Key key ) {
 		return this.pressedKeys.contains( key );
 	}
-	
 
 }

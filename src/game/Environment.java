@@ -6,6 +6,7 @@ import game.gfx.GlobalSubscriberComponent;
 import game.gfx.Shader;
 import game.gfx.UniformVariable;
 import util.Vector3fl;
+import util.Vector3in;
 
 public final class Environment extends Entity {
 
@@ -14,22 +15,23 @@ public final class Environment extends Entity {
         GLOBAL = new Environment();
     }
 
-    public Vector3fl[] lighting;
-    public Vector3fl baseLighting;
+    public Vector3in[] lighting;
+    public Vector3in baseLighting;
+    public Vector3in fogColor;
+
     public Vector3fl globalLightOrigin;
-    public Vector3fl fogColor;
 
     private Environment() {
     	super();
     	
-        this.lighting     = new Vector3fl[ LightSource.values().length ];
-        this.baseLighting = new Vector3fl(0.5f,0.5f,0.5f);
-        this.fogColor     = new Vector3fl(0.5f,0.5f,0.5f);
+        this.lighting     = new Vector3in[ LightSource.values().length ];
+        this.baseLighting = new Vector3in( 0x333333 );
+        this.fogColor     = new Vector3in( 0x101010 );
 
         this.globalLightOrigin = new Vector3fl();
 
         for( int i = 0; i < this.lighting.length; i += 1 )
-            this.lighting[i] = new Vector3fl(1,1,1);
+            this.lighting[i] = new Vector3in(0xFFFFFF);
     }
 
     @Override
@@ -40,10 +42,10 @@ public final class Environment extends Entity {
 
     private void preRender( Shader s ) {
         for( LightSource src : LightSource.values() )
-            s.loadVector3fl( src.uniformVariable, this.lighting[ src.ordinal() ] );
+            s.loadInt( src.uniformVariable, this.lighting[ src.ordinal() ].toPackedBytes() );
 
-        s.loadVector3fl( UniformVariable.LIGHTING_BASE, this.baseLighting );
-        s.loadVector3fl( UniformVariable.FOG_COLOR, this.fogColor );
+        s.loadInt( UniformVariable.LIGHTING_BASE, this.baseLighting.toPackedBytes() );
+        s.loadInt( UniformVariable.FOG_COLOR, this.fogColor.toPackedBytes() );
         s.loadVector3fl( UniformVariable.GLOBAL_LIGHT_ORIGIN, this.globalLightOrigin );
     }
     

@@ -7,13 +7,15 @@ import org.lwjgl.opengl.GL11;
 import org.newdawn.slick.opengl.Texture;
 import org.newdawn.slick.opengl.TextureLoader;
 
+import game.Game.DestroyMessage;
+import game.Listener;
 import util.Vector3fl;
 import util.Vector3in;
 
 public enum TextureRef {
 
 	BLOCK( "tex/block.png", 512 ),
-	FONT_DEBUG( "fnt/debug.png", 128 );
+	FONT_DEBUG( "tex/font_debug.png", 128 );
 	
 	public int id;
 	public int size;
@@ -30,7 +32,6 @@ public enum TextureRef {
 				throw new RuntimeException( "Unable to load texture");
 			}
 		}
-
 	}
 	
 	public static void destroy() {
@@ -45,6 +46,11 @@ public enum TextureRef {
 	private TextureRef( String path, int size ) {
 		this.path = path;
 		this.size = size;
+		Listener.GLOBAL.addSubscriber( DestroyMessage.class, this::destroy );
+	}
+	
+	private void destroy( DestroyMessage m ) {
+		GL11.glDeleteTextures( this.id );
 	}
 	
 }

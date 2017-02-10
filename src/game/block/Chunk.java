@@ -35,7 +35,7 @@ public final class Chunk extends Entity {
 
     // the raw block data
     private Block[] blockData;
-    public ModelBlockRenderComponent renderCmpt;
+    public BlockRenderComponent renderCmpt;
     public Position3DComponent positionCmpt;
 
     public Chunk() {
@@ -72,7 +72,7 @@ public final class Chunk extends Entity {
     @Override
     public void registerComponents() {
         this.positionCmpt = this.registerComponent( new Position3DComponent() );
-        this.renderCmpt = this.registerComponent( new ModelBlockRenderComponent() );
+        this.renderCmpt = this.registerComponent( new BlockRenderComponent() );
         this.registerComponent( new GlobalSubscriberComponent() );
     }
 

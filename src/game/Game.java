@@ -10,8 +10,11 @@ import org.lwjgl.opengl.PixelFormat;
 import game.block.BlockShader;
 import game.block.World;
 import game.gfx.TextureRef;
+import game.gui.DebugConsole;
+import game.gui.FontMap;
+import game.gui.GUIDepth;
 import game.gui.GUIShader;
-import game.input.InputArbiter;
+import game.input.Input;
 import game.input.Key;
 import util.Vector3fl;
 import util.Vector3in;
@@ -22,10 +25,12 @@ public class Game {
 
     public static class UpdateMessage {
 
+        public long totalMs;
         public long deltaMs;
 
         public UpdateMessage( long prevTime, long currTime ) {
             this.deltaMs = currTime - prevTime;
+            this.totalMs = currTime;
         }
 
     }
@@ -52,15 +57,7 @@ public class Game {
         if( Display.isCloseRequested() )
             this.gameOver = true;
     }
-
-    private void prepareCtx() {
-        GL11.glEnable( GL11.GL_DEPTH_TEST );
-        GL11.glClear( GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT );
-        GL11.glEnable( GL11.GL_CULL_FACE );
-        Vector3fl fogColor = Environment.GLOBAL.fogColor;
-        GL11.glClearColor( fogColor.x, fogColor.y, fogColor.z, 1 );
-    }
-
+    
     private void destroyCtx() {
         Display.destroy();
     }
@@ -74,30 +71,32 @@ public class Game {
         // record the start of the game
         this.prevTime = System.currentTimeMillis();
 
+        // create the global msg listener
+        Listener.init();
+
         // fill the cubenorml enum with extra meta information
         Vector3in.CubeNormal.init();
         Key.init();
         TextureRef.init();
+        FontMap.init();
         
-        // create the global msg listener
-        Listener.init();
         // create the world object (manager of chunks)
         World.init();
 
         // create global entities
-        InputArbiter.init();
+        Input.init();
         BlockShader.init();
         GUIShader.init();
         Camera.init();
+        DebugConsole.init();
         Environment.init();
 
         new RandomBlockSpawner();
 
         // loop until we detect a close (done in updateCtx)
         while( !this.gameOver ) {
-            this.prepareCtx();
-            
-            if( InputArbiter.GLOBAL.isKeyDown( Key.KEY_ESCAPE ))
+        	
+            if( Input.GLOBAL.isKeyDown( Key.KEY_ESCAPE ))
             	this.gameOver = true;
 
             // take a new reading of the time, and create an update message with this and the previous reading
@@ -107,15 +106,25 @@ public class Game {
             Listener.GLOBAL.listen( new UpdateMessage( this.prevTime, this.currTime ) );
             this.prevTime = this.currTime;
 
+			GL11.glEnable( GL11.GL_DEPTH_TEST );
+			GL11.glClear( GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT );
+			GL11.glEnable( GL11.GL_CULL_FACE );
+
+			Vector3fl fogColor = Environment.GLOBAL.fogColor.toVector3fl().divide( 0xFF );
+			GL11.glClearColor( fogColor.x, fogColor.y, fogColor.z, 1 );
+
             // then perform draws for all the various shader programs
             BlockShader.GLOBAL.use();
             Listener.GLOBAL.listen( new BlockShader.BlockShaderPreRenderMessage() );
             Listener.GLOBAL.listen( new BlockShader.BlockShaderRenderMessage() );
 
-            GUIShader.GLOBAL.use();
-            Listener.GLOBAL.listen( new GUIShader.GUIShaderRenderMessage() );
+			GL11.glDisable( GL11.GL_DEPTH_TEST );
 
-            //World.WORLD.refresh();
+            GUIShader.GLOBAL.use();
+            for( GUIDepth d : GUIDepth.values() )
+				Listener.GLOBAL.listen( new GUIShader.GUIShaderRenderMessage( d ) );
+
+            World.WORLD.refresh();
             this.updateCtx();
             this.prevTime = this.currTime;
         }
@@ -123,9 +132,6 @@ public class Game {
 
         // if we've exited the loop, the game is about to end. Try and clean up all resources by destroying all resources
         Listener.GLOBAL.listen( new DestroyMessage() );
-        
-        // destroy the atlas of textures
-        TextureRef.destroy();
 
         // finally destroy the display ctx
         this.destroyCtx();

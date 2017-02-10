@@ -43,13 +43,13 @@ public class NoClipComponent implements Component {
 
         // TODO: make key bindings configurable
         // determine the strafe/march amounts based on WASD
-        if( this.inputCmpt.isKeyDown( Key.KEY_D ) )
+        if( Input.GLOBAL.isKeyDown( Key.KEY_D ) )
             strafe = -1f;
-        if( this.inputCmpt.isKeyDown( Key.KEY_A ) )
+        if( Input.GLOBAL.isKeyDown( Key.KEY_A ) )
             strafe = 1f;
-        if( this.inputCmpt.isKeyDown( Key.KEY_W ) )
+        if( Input.GLOBAL.isKeyDown( Key.KEY_W ) )
             march = 1f;
-        if( this.inputCmpt.isKeyDown( Key.KEY_S ) )
+        if( Input.GLOBAL.isKeyDown( Key.KEY_S ) )
             march = -1f;
 
         // if we're not strafing or marching we're not moving so abort
@@ -63,7 +63,7 @@ public class NoClipComponent implements Component {
         MatrixUtils.addRotationToMatrix( matrixBuffer, this.posCmpt.rotation );
         Vector3fl marchVec = new Vector3fl(0,0,-1).transform( matrixBuffer );
         Vector3fl strafeVec = new Vector3fl(-1,0,0).transform(matrixBuffer);
-        Vector3fl finalVec = strafeVec.multiply( strafe ).add( marchVec.multiply( march ) );
+        Vector3fl finalVec = strafeVec.multiply( strafe ).add( marchVec.multiply( march ) ).multiply( 0.1f );
 
         
         this.posCmpt.position = this.posCmpt.position.add( finalVec );
