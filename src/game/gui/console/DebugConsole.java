@@ -30,14 +30,12 @@ public class DebugConsole extends Entity {
 	private TextRenderComponent textCmpt;
 
 	private int maxWidth;
-	private int maxHeight;
 	private boolean active;
 	
 	public DebugConsole( int maxWidth, int maxHeight ) {
 		this.history = new LinkedList<List<Glyph>>();
 		this.current = new ArrayList<Glyph>();
 		this.maxWidth = maxWidth;
-		this.maxHeight = maxHeight;
 		this.cursor = 0;
 
 		for( int i = 0; i < maxHeight; i += 1)
