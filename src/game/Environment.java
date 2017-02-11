@@ -18,17 +18,18 @@ public final class Environment extends Entity {
     public Vector3in[] lighting;
     public Vector3in baseLighting;
     public Vector3in fogColor;
+    public float maxDistance = 50f;
 
-    public Vector3fl globalLightOrigin;
+    public Vector3fl lightOrigin;
 
     private Environment() {
     	super();
     	
         this.lighting     = new Vector3in[ LightSource.values().length ];
-        this.baseLighting = new Vector3in( 0x333333 );
-        this.fogColor     = new Vector3in( 0x101010 );
+        this.baseLighting = new Vector3in( 0xFFFFFF );
+        this.fogColor     = new Vector3in( 0x00FFFF );
 
-        this.globalLightOrigin = new Vector3fl();
+        this.lightOrigin = new Vector3fl(1,1,1);
 
         for( int i = 0; i < this.lighting.length; i += 1 )
             this.lighting[i] = new Vector3in(0xFFFFFF);
@@ -46,7 +47,8 @@ public final class Environment extends Entity {
 
         s.loadInt( UniformVariable.LIGHTING_BASE, this.baseLighting.toPackedBytes() );
         s.loadInt( UniformVariable.FOG_COLOR, this.fogColor.toPackedBytes() );
-        s.loadVector3fl( UniformVariable.GLOBAL_LIGHT_ORIGIN, this.globalLightOrigin );
+        s.loadVector3fl( UniformVariable.LIGHT_ORIGIN, this.lightOrigin );
+        s.loadFloat( UniformVariable.MAX_DISTANCE, this.maxDistance );
     }
     
     private void blockShaderPreRender( BlockShader.BlockShaderPreRenderMessage msg ) {

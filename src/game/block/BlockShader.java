@@ -3,6 +3,7 @@ package game.block;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.Config;
+import game.Environment;
 import game.gfx.AttributeVariable;
 import game.gfx.Shader;
 import game.gfx.UniformVariable;
@@ -27,23 +28,22 @@ public final class BlockShader extends Shader {
 
         float yScale = (float) (Config.ASPECT_RATIO / Math.tan( Math.toRadians( Config.FIELD_OF_VIEW / 2f )));
         float xScale = yScale / Config.ASPECT_RATIO;
-        float frustrumLength = Config.FAR_PLANE - Config.NEAR_PLANE;
+        float frustrumLength = Environment.GLOBAL.maxDistance - Config.NEAR_PLANE;
 
         Matrix4f.setIdentity(matrixBuffer);
 
         matrixBuffer.m00 = xScale;
         matrixBuffer.m11 = yScale;
-        matrixBuffer.m22 = - (Config.FAR_PLANE + Config.NEAR_PLANE) / frustrumLength;
+        matrixBuffer.m22 = - (Environment.GLOBAL.maxDistance + Config.NEAR_PLANE) / frustrumLength;
         matrixBuffer.m23 = -1;
-        matrixBuffer.m32 = -2 * Config.NEAR_PLANE * Config.FAR_PLANE / frustrumLength;
+        matrixBuffer.m32 = -2 * Config.NEAR_PLANE * Environment.GLOBAL.maxDistance / frustrumLength;
         matrixBuffer.m33 = 0;
 
         this.loadMatrix4f( UniformVariable.PROJECTION_MATRIX, matrixBuffer );
     }
     
-    @Override
     public void use() {
-    	super.use();
+    	this.useProgram();
     	this.loadProjectionMatrix();
     }
 
@@ -55,9 +55,10 @@ public final class BlockShader extends Shader {
     	this.createUniformVariable( UniformVariable.PROJECTION_MATRIX );
     	this.createUniformVariable( UniformVariable.LIGHTING_BASE );
     	this.createUniformVariable( UniformVariable.FOG_COLOR );
-    	this.createUniformVariable( UniformVariable.GLOBAL_LIGHT_ORIGIN );
+    	this.createUniformVariable( UniformVariable.LIGHT_ORIGIN );
     	this.createUniformVariable( UniformVariable.LIGHTING_CONSTANT );
     	this.createUniformVariable( UniformVariable.LIGHTING_GLOBAL );
+    	this.createUniformVariable( UniformVariable.MAX_DISTANCE );
     }
 
     @Override

@@ -8,8 +8,6 @@ public class Config {
     public static final int LIGHT_JUMPS = 12;
     // amount to decrease light per propagation
     public static final int LIGHT_DROPOFF = 256 / LIGHT_JUMPS;
-    // furthest distance to draw
-    public static final float FAR_PLANE = 10000f;
     // closest distance to draw
     public static final float NEAR_PLANE = 0.1f;
     // single block face texture size

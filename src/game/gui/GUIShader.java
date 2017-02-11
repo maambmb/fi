@@ -42,9 +42,8 @@ public class GUIShader extends Shader {
     	this.createAttributeVariable( AttributeVariable.TEX_COORDS );
     }
     
-    @Override
     public void use() {
-    	super.use();
+    	this.useProgram();
     	this.loadProjectionMatrix();
     }
     

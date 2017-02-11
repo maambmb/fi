@@ -83,6 +83,11 @@ public abstract class Shader extends Entity {
         int uvId = this.uniformLookup.get( uv );
         GL20.glUniform3f( uvId, v.x, v.y, v.z);
     }
+    
+    public void loadFloat( UniformVariable uv, float f ) {
+    	int uvId = this.uniformLookup.get( uv );
+    	GL20.glUniform1f( uvId, f );
+    }
 
     // load a 3d int vector into a uniform variable position
     public void loadVector3in( UniformVariable uv, Vector3in v ) {
@@ -103,9 +108,8 @@ public abstract class Shader extends Entity {
         int uvId = this.uniformLookup.get( uv );
         GL20.glUniform1i( uvId, i);
     }
-
-    // bind to the program
-    public void use() {
+    
+    protected void useProgram() {
         GL20.glUseProgram( this.programId );
     }
     
