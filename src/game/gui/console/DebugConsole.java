@@ -53,8 +53,8 @@ public class DebugConsole extends Entity {
 			if(g.underlying != Glyph.DEFAULT_CHAR)
 				sb.append( g.underlying );
 		DebugCommand.run( sb.toString() );
-		this.current = new ArrayList<Glyph>();
-		this.history.removeFirst();
+		this.current = this.history.removeFirst();
+		this.current.clear();
 		this.cursor = 0;
 		this.refreshTextComponent();
 	}
