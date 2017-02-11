@@ -13,6 +13,7 @@ import game.input.InputCapturer;
 import game.input.InputListenerComponent;
 import game.input.InputPriority;
 import game.input.Key;
+import util.Vector3fl;
 import util.Vector3in;
 
 public class DebugConsole extends Entity {
@@ -100,6 +101,7 @@ public class DebugConsole extends Entity {
 	protected void registerComponents() {
 		this.registerComponent( new GlobalSubscriberComponent() );
 		this.textCmpt = this.registerComponent( new TextRenderComponent() );
+		this.textCmpt.position = new Vector3fl( 20f, 20f );
 		this.inputCmpt = this.registerComponent( new InputListenerComponent( InputPriority.GUI_01 ) );
 	}
 	

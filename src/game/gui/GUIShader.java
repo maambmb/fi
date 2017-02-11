@@ -1,8 +1,13 @@
 package game.gui;
 
+import org.lwjgl.util.vector.Matrix4f;
+
+import game.Config;
 import game.gfx.AttributeVariable;
 import game.gfx.Shader;
 import game.gfx.UniformVariable;
+import util.MatrixUtils;
+import util.Vector3fl;
 
 public class GUIShader extends Shader {
 
@@ -12,6 +17,8 @@ public class GUIShader extends Shader {
 			this.depth = d;
 		}
 	}
+	
+	private static Matrix4f matrixBuffer = new Matrix4f();
 	
     public static GUIShader GLOBAL;
     public static void init() {
@@ -24,6 +31,7 @@ public class GUIShader extends Shader {
 
     @Override
     protected void setupUniformVariables() {
+		this.createUniformVariable( UniformVariable.PROJECTION_MATRIX );
 		this.createUniformVariable( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX );
 		this.createUniformVariable( UniformVariable.COLOR );
     }
@@ -32,6 +40,23 @@ public class GUIShader extends Shader {
     protected void setupAttributeVariables() {
     	this.createAttributeVariable( AttributeVariable.POSITION_2D );
     	this.createAttributeVariable( AttributeVariable.TEX_COORDS );
+    }
+    
+    @Override
+    public void use() {
+    	super.use();
+    	this.loadProjectionMatrix();
+    }
+    
+    private void loadProjectionMatrix() {
+    	Matrix4f.setIdentity( matrixBuffer );
+    	MatrixUtils.addTranslationToMatrix( matrixBuffer, new Vector3fl(-1f,+1f));
+    	MatrixUtils.addScaleToMatrix( matrixBuffer, new Vector3fl(2f,-2f));
+    	MatrixUtils.addScaleToMatrix(matrixBuffer, new Vector3fl(
+    		1f / Config.GAME_WIDTH,
+    		1f/ Config.GAME_HEIGHT
+    	));
+    	this.loadMatrix4f( UniformVariable.PROJECTION_MATRIX, matrixBuffer );
     }
     
 }

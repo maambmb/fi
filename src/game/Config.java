@@ -21,9 +21,11 @@ public class Config {
     public static float FIELD_OF_VIEW = 90;
     // fps cap (vsync)
     public static int FPS = 60;
+
     // x*y of the window
+    public static float ASPECT_RATIO = 16f/9f;
     public static int GAME_WIDTH  = 800;
-    public static int GAME_HEIGHT = 600;
+    public static int GAME_HEIGHT = (int)( GAME_WIDTH/ASPECT_RATIO );
     
     public static float DEFAULT_CHARACTER_WIDTH = 0.02f;
     

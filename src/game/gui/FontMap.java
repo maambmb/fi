@@ -3,6 +3,7 @@ package game.gui;
 import java.util.HashMap;
 import java.util.Map;
 
+import game.Config;
 import game.Game.DestroyMessage;
 import game.Listener;
 import game.gfx.AttributeVariable;
@@ -42,22 +43,17 @@ public enum FontMap {
 		}
 	}
 	
-	public float aspectRatio;
-
-	private Vector3fl dimensions;
+	public Vector3in dimensions;
 	private TextureRef atlas;
 	private Glyph[] glyphs;
-	private int stripCount;
 
 	private Map<Glyph,Model> glyphLookup;
 	
 	private FontMap( TextureRef atlas, Vector3in charDimensions, Glyph[] glyphs ) {
 		this.atlas = atlas;
-		this.dimensions = charDimensions.toVector3fl().divide( atlas.size );
+		this.dimensions = charDimensions;
 		this.glyphs = glyphs;
 		this.glyphLookup = new HashMap<Glyph,Model>();
-		this.stripCount = atlas.size / charDimensions.x;
-		this.aspectRatio = (float)charDimensions.x / charDimensions.y;
 		Listener.GLOBAL.addSubscriber( DestroyMessage.class, this::destroy );
 	}
 		
@@ -77,9 +73,11 @@ public enum FontMap {
 		Model model = new Model();
 		model.texture = this.atlas;
 
+		int stripCount = this.atlas.size / this.dimensions.x;
+		Vector3fl scaledDims = this.dimensions.toVector3fl().divide( this.atlas.size );
 		Vector3fl baseTex = new Vector3fl( 
-			( ix % this.stripCount ) * this.dimensions.x,
-			( ix / this.stripCount ) * this.dimensions.y
+			( ix % stripCount ) * scaledDims.x,
+			( ix / stripCount ) * scaledDims.y
 		);
 		
 		for( int j = 0; j < 4; j += 1 ) {
@@ -88,13 +86,13 @@ public enum FontMap {
 			boolean farVertical   = ( j & 0x02 ) > 0;
 			
 			model.addAttributeData2D( AttributeVariable.POSITION_2D, new Vector3fl(
-				( farHorizontal ? 1 : 0 ),
-				( farVertical ? 1 / aspectRatio : 0 ) 
+				( farHorizontal ? this.dimensions.x : 0 ),
+				( farVertical ?  this.dimensions.y : 0 ) 
 			) );
 			
 			model.addAttributeData2D( AttributeVariable.TEX_COORDS, new Vector3fl(
-				farHorizontal ? this.dimensions.x : 0f,
-				farVertical ? this.dimensions.y : 0f
+				farHorizontal ? (float) scaledDims.x : 0f,
+				farVertical ? (float) scaledDims.y : 0f
 			).add( baseTex ) );
 			
 		}

@@ -26,25 +26,6 @@ public final class Camera extends Entity {
         this.listener.addSubscriber( BlockShader.BlockShaderPreRenderMessage.class, this::blockShaderPreRender );
     }
 
-    private void loadProjectionMatrix( Shader s ) {
-
-        float aspectRatio    = Config.GAME_WIDTH / (float)Config.GAME_HEIGHT;
-        float yScale         = (float) (aspectRatio / Math.tan( Math.toRadians( Config.FIELD_OF_VIEW / 2f )));
-        float xScale         = yScale / aspectRatio;
-        float frustrumLength = Config.FAR_PLANE - Config.NEAR_PLANE;
-
-        Matrix4f.setIdentity(matrixBuffer);
-
-        matrixBuffer.m00 = xScale;
-        matrixBuffer.m11 = yScale;
-        matrixBuffer.m22 = - (Config.FAR_PLANE + Config.NEAR_PLANE) / frustrumLength;
-        matrixBuffer.m23 = -1;
-        matrixBuffer.m32 = -2 * Config.NEAR_PLANE * Config.FAR_PLANE / frustrumLength;
-        matrixBuffer.m33 = 0;
-
-        s.loadMatrix4f( UniformVariable.PROJECTION_MATRIX, matrixBuffer );
-    }
-
     private void loadViewMatrix( Shader s ) {
 
         Matrix4f.setIdentity(matrixBuffer);
@@ -64,11 +45,10 @@ public final class Camera extends Entity {
 
     private void preRender( Shader s ) {
         this.loadViewMatrix( s );
-        this.loadProjectionMatrix( s );
     } 
     
     private void blockShaderPreRender( BlockShader.BlockShaderPreRenderMessage msg ) {
     	this.preRender( BlockShader.GLOBAL );
     }
-
+    
 }

@@ -18,6 +18,10 @@ public class MatrixUtils {
         Matrix4f.scale( new Vector3f( scale, scale, scale ), m, m );
     }
 
+    public static void addScaleToMatrix( Matrix4f m, Vector3fl scale ) {
+        Matrix4f.scale( scale.toVector3f(), m, m );
+    }
+
     public static void addRotationToMatrix( Matrix4f m, Vector3fl rotation ) {
         Matrix4f.rotate( (float)Math.toRadians( rotation.z ), Z_ROTATOR, m, m );
         Matrix4f.rotate( (float)Math.toRadians( rotation.y ), Y_ROTATOR, m, m );

@@ -29,7 +29,7 @@ public class TextRenderComponent implements Component {
 	public TextRenderComponent( ) {
 		this.fontMap = FontMap.DEBUG;
 		this.depth = GUIDepth.DEPTH_0;
-		this.fontSize = 0.02f;
+		this.fontSize = 2f;
 		this.position = new Vector3fl();
 		this.glyphs = new ArrayList<Tuple.Binary<Glyph,Vector3in>>();
 	}
@@ -48,6 +48,7 @@ public class TextRenderComponent implements Component {
     	int xCur = 0;
     	int yCur = 0;
 
+    	Vector3in dims = this.fontMap.dimensions;
     	for( Tuple.Binary<Glyph, Vector3in> glyph : this.glyphs ) {
     		
     		if( glyph.arg1 == Glyph.NEWLINE ) { 
@@ -59,11 +60,11 @@ public class TextRenderComponent implements Component {
 			GUIShader.GLOBAL.loadInt( UniformVariable.COLOR, glyph.arg2.toPackedBytes() );
 
 			matrixBuffer.setIdentity();
+			Vector3fl offset = new Vector3fl( xCur * dims.x, yCur * dims.y );
 			MatrixUtils.addTranslationToMatrix( matrixBuffer, this.position );
 			MatrixUtils.addScaleToMatrix( matrixBuffer, this.fontSize );
-			MatrixUtils.addTranslationToMatrix( matrixBuffer, new Vector3fl( xCur, yCur / this.fontMap.aspectRatio ) );
+			MatrixUtils.addTranslationToMatrix( matrixBuffer, offset );
 			GUIShader.GLOBAL.loadMatrix4f( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX, matrixBuffer );
-			
 			this.fontMap.getModel( glyph.arg1 ).render();
 
 			xCur += 1;
