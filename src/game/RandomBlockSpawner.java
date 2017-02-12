@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+import game.block.Block;
 import game.block.BlockType;
+import game.block.LightSource;
 import game.block.World;
 //import game.listener.Listener;
 import util.Vector3in;
@@ -30,7 +32,7 @@ public final class RandomBlockSpawner extends Entity {
 
         	Vector3in v = new Vector3in(x,y,z);
         	posTracker.add(v);
-        	World.WORLD.setBlock( v, bt );
+        	World.WORLD.getBlock( v ).blockType = bt;
         }
         
         for( Vector3in v : posTracker ) {
@@ -45,9 +47,25 @@ public final class RandomBlockSpawner extends Entity {
         	if( bt.illumination.toMaxElement() > 0 && rng.nextInt(30) != 0 )
         		bt = BlockType.LUSH_SHRUBS_1;
 
-        	if( World.WORLD.getBlock( above ).blockType == BlockType.AIR )
+        	if( World.WORLD.getBlock( above ).blockType == BlockType.AIR ) {
         		World.WORLD.setBlock( above, bt);
+        	}
         }
+
+        for( int i = -17; i < 17; i += 1 )
+        for( int j = -17; j < 17; j += 1 ) {
+        	
+        	for( int k = 16; k >= -17; k -=1 ) {
+				Vector3in v = new Vector3in( i,k,j );
+        		Block b = World.WORLD.getBlock( v );
+        		if( b.blockType.opacity == BlockType.Opacity.OPAQUE )
+        			break;
+        		if( b.blockType.opacity == BlockType.Opacity.INVISIBLE )
+					World.WORLD.setBlock( v, BlockType.LIT_AIR );
+        	}
+        	
+        }
+
         World.WORLD.refresh();
     }
 

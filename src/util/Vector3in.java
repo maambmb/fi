@@ -51,7 +51,7 @@ public class Vector3in {
     }
 
     public Vector3in( int packed ) {
-    	this( packed & 0xFF, ( packed >> 8 ) & 0xFF, (packed >> 16 ) & 0xFF );
+    	this( ( packed >> 16 ) & 0xFF, ( packed >> 8 ) & 0xFF, packed  & 0xFF );
     }
     
     public Vector3in add( Vector3in v ) {
@@ -109,7 +109,7 @@ public class Vector3in {
     }
 
     public int toPackedBytes() {
-        return this.x + ( this.y << 8 ) + (this.z << 16 );
+        return ( this.x << 16 ) + ( this.y << 8 ) + this.z;
     }
     
     public Vector3fl toVector3fl() {

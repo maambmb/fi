@@ -12,6 +12,13 @@ public enum BlockType {
         new Vector3in(),
         null
     ),
+    LIT_AIR( 
+        false,
+        Opacity.INVISIBLE,
+        LightSource.GLOBAL,
+        Vector3in.WHITE,
+        null
+    ),
     WAVY_PURPLE( 
         true,
         Opacity.OPAQUE,

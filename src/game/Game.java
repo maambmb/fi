@@ -9,6 +9,7 @@ import org.lwjgl.opengl.PixelFormat;
 
 import game.block.BlockShader;
 import game.block.World;
+import game.env.Environment;
 import game.gfx.TextureRef;
 import game.gui.FontMap;
 import game.gui.GUIDepth;

@@ -16,6 +16,6 @@ void main(void) {
 
     // just pass the tex coords through *yawn*
     frag_tex_coords = vec2( av_tex_coords.xy );
-    frag_color = vec3( uv_color & 0xFF, ( uv_color >> 8 ) & 0xFF, ( uv_color >> 16 ) & 0xFF ) / 255f;
+    frag_color = vec3( ( uv_color >> 16 ) & 0xFF, ( uv_color >> 8 ) & 0xFF, uv_color  & 0xFF ) / 255f;
 }
 

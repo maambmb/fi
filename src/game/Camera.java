@@ -3,6 +3,7 @@ package game;
 import org.lwjgl.util.vector.Matrix4f;
 
 import game.block.BlockShader;
+import game.env.Environment;
 import game.gfx.GlobalSubscriberComponent;
 import game.gfx.Shader;
 import game.gfx.UniformVariable;

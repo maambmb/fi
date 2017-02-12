@@ -1,5 +1,7 @@
-package game;
+package game.env;
 
+import game.Entity;
+import game.Game.UpdateMessage;
 import game.block.BlockShader;
 import game.block.LightSource;
 import game.gfx.GlobalSubscriberComponent;
@@ -20,6 +22,9 @@ public final class Environment extends Entity {
     public Vector3in fogColor;
     public float maxDistance = 50f;
 
+    private int dayStateIx;
+    private long currStateDuration;
+
     public Vector3fl lightOrigin;
 
     private Environment() {
@@ -28,11 +33,13 @@ public final class Environment extends Entity {
         this.lighting     = new Vector3in[ LightSource.values().length ];
         this.baseLighting = new Vector3in( 0x202020 );
         this.fogColor     = new Vector3in( 0x101010 );
-
-        this.lightOrigin = new Vector3fl(1,1,1);
-
+        this.lightOrigin  = new Vector3fl(1,1,1);
+        this.dayStateIx   = 0;
+        
         for( int i = 0; i < this.lighting.length; i += 1 )
             this.lighting[i] = new Vector3in(0xFFFFFF);
+        
+        this.listener.addSubscriber( UpdateMessage.class, this::update );
     }
 
     @Override
@@ -40,8 +47,28 @@ public final class Environment extends Entity {
     	this.registerComponent( new GlobalSubscriberComponent() );
         this.listener.addSubscriber( BlockShader.BlockShaderPreRenderMessage.class, this::blockShaderPreRender );
     }
+    
+    private void update( UpdateMessage msg ) {
+
+    	this.currStateDuration += msg.deltaMs;
+    	int numDayStates = DayState.values().length;
+
+    	DayState ds = DayState.values()[ this.dayStateIx % numDayStates ];
+    	if( this.currStateDuration > ds.durationMs) {
+    		this.currStateDuration -= ds.durationMs;
+    		this.dayStateIx += 1;
+			ds = DayState.values()[ this.dayStateIx % numDayStates ];
+    	}
+    	
+    	float progress = (float)this.currStateDuration / ds.durationMs;
+    	Vector3fl startLight = ds.startLight.toVector3fl().multiply( 1f - progress );
+    	Vector3fl endLight = ds.endLight.toVector3fl().multiply( progress );
+    	Vector3in light = startLight.add( endLight ).toVector3in();
+    	this.lighting[ LightSource.GLOBAL.ordinal() ] = this.fogColor = light;
+    }
 
     private void preRender( Shader s ) {
+    	
         for( LightSource src : LightSource.values() )
             s.loadInt( src.uniformVariable, this.lighting[ src.ordinal() ].toPackedBytes() );
 

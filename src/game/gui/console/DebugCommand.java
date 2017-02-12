@@ -1,6 +1,6 @@
 package game.gui.console;
 
-import game.Environment;
+import game.env.Environment;
 import util.Lambda;
 import util.Vector3in;
 

@@ -15,7 +15,7 @@ void main(void) {
 	vec4 lit_color;
 	vec4 fog_color;
 	
-	fog_color = vec4( uv_fog & 0xFF, ( uv_fog >> 8 ) & 0xFF, ( uv_fog >> 16 ) & 0xFF, 255f ) / 255f;
+	fog_color = vec4( ( uv_fog >> 16 ) & 0xFF, ( uv_fog >> 8 ) & 0xFF, uv_fog & 0xFF, 255f ) / 255f;
 
     // sample the texture to get the color
     tex_color = texture( textureSampler, frag_tex_coords );
