@@ -6,6 +6,7 @@ import org.lwjgl.opengl.ContextAttribs;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.PixelFormat;
 
 import game.block.BlockShader;
@@ -42,15 +43,13 @@ public class Game {
     private long currTime;
 
     private void createCtx() {
-        ContextAttribs attribs = new ContextAttribs( Config.OPENGL_VERSION, Config.LWJGL_VERSION )
+        ContextAttribs attribs = new ContextAttribs( 3, 2 )
             .withForwardCompatible( true )
             .withProfileCore( true );
         try {
             Display.setDisplayMode( new DisplayMode( Config.GAME_WIDTH, Config.GAME_HEIGHT ) );
             Display.create( new PixelFormat(), attribs );
             Display.setVSyncEnabled( true );
-			Keyboard.enableRepeatEvents( true );
-			
         } catch( Exception e ) {
             throw new RuntimeException( "Unable to create display" );
         }

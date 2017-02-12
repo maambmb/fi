@@ -17,6 +17,6 @@ void main(void) {
     }
 
     // multiply the texture's color
-    out_Color = tex_color * vec4( frag_color.xyz, 1 );
+    out_Color = tex_color * vec4( frag_color.xyz, 1.0 );
 
 }
