@@ -5,11 +5,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.lwjgl.util.vector.Matrix4f;
+
 import game.Config;
 import game.block.BlockType.Opacity;
 import game.gfx.AttributeVariable;
 import game.gfx.Model;
 import game.gfx.TextureRef;
+import util.Matrix4fl;
 import util.Vector3fl;
 import util.Vector3in;
 
@@ -19,14 +22,18 @@ public class World {
     // is the main interface/access for getting/setting blocks
     // allows recomputation of lighting/models upon modification in a relatively efficient batched manner
 
+	private static float SQRT_2 = (float)Math.sqrt(2);
+	
+	private static Matrix4fl matrix = new Matrix4fl();
+
     public static World WORLD;
     public static void init() {
         WORLD = new World();
     }
-
+    
     // (sparse) hashmap of all active chunks
     private Map<Vector3in,Chunk> chunkMap;
-
+    
     // collection of chunks that have been modified and need to have their lighting and models recalced
     private Set<Vector3in> dirtyChunks;
 
@@ -155,7 +162,120 @@ public class World {
         }
 
     }
+    
+    private void buildCrossedBlock( Model model, Vector3in relCoords, Vector3in absCoords, Block b ) {
 
+
+    	for( int i = 0; i < 360; i += 90 ) {
+
+			matrix.clearMatrix();
+    		matrix.addYawToMatrix( i + 45 );
+
+    		for( Vector3fl vertex : Model.QUAD_VERTICES ) {
+    			Vector3fl vertexOffset = matrix.transform( vertex.add( new Vector3fl(0,0,-1)) ).multiply( 0.5f );
+    			vertexOffset = vertexOffset.add( 0.5f );
+    			Vector3fl normal = matrix.transform( new Vector3fl(0,0,1));
+
+				model.addAttributeData( AttributeVariable.POSITION, relCoords.toVector3fl().add( vertexOffset ) );
+
+				Vector3fl rangedVertex = vertex.multiply( - 0.5f ).add( 0.5f );
+				Vector3fl texCoords = b.blockType.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
+				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( model.texture.size ) );
+
+				model.addAttributeData( AttributeVariable.SHADOW, 0 );
+				
+				for( LightSource src : LightSource.values() )
+					model.addAttributeData( src.attributeVariable, b.getIllumination(src).toPackedBytes() );
+
+				// add the shadow amount (0-3) for the vertex
+				// add the normal by packing the vector into an int
+				model.addAttributeData( AttributeVariable.NORMAL, 0 );
+
+    		}
+    		
+			model.addQuad();
+
+    	}
+    	
+
+    }
+
+    private void buildOpaqueBlock( Model model, Vector3in relCoords, Vector3in absCoords, Block b ) {
+
+		// examine each face/quad of each block
+		for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
+			
+			matrix.clearMatrix();
+
+			if( normal.vector.z < 0 )
+				matrix.addYawToMatrix( 180 );
+			else if( normal.vector.x != 0 )
+				matrix.addYawToMatrix( 90 * normal.vector.x );
+			else if( normal.vector.y != 0 )
+				matrix.addPitchToMatrix( -90 * normal.vector.y );
+
+			// if the block touching the current face is opaque, then it is hidden and we should ignore
+			Vector3in offsetVec = absCoords.add( normal.vector );
+			Block offsetBlock = this.getBlock( offsetVec );
+			if( offsetBlock.blockType.opacity == BlockType.Opacity.OPAQUE )
+				continue;
+			
+			// each face is a quad comprising of 4 vertices
+			for( Vector3fl vertex : Model.QUAD_VERTICES ) {
+				
+				Vector3fl vertexOffset = matrix.transform( vertex ).multiply( 0.5f ).add( 0.5f );
+				model.addAttributeData( AttributeVariable.POSITION, relCoords.toVector3fl().add( vertexOffset ) );
+
+				Vector3fl rangedVertex = vertex.multiply( 0.5f ).add( 0.5f );
+				Vector3fl texCoords = b.blockType.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
+				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( model.texture.size ) );
+
+				Vector3in side1Vec = matrix.transform( new Vector3fl( vertex.x, 0, 0 ) ).toRoundedVector3in().add( absCoords );
+				Vector3in side2Vec = matrix.transform( new Vector3fl( 0, vertex.y, 0 ) ).toRoundedVector3in().add( absCoords );
+				Vector3in cornerVec = matrix.transform( new Vector3fl( vertex.x, vertex.y, 0 ) ).toRoundedVector3in().add( absCoords );
+				
+				Block side1Block = this.getBlock( side1Vec );
+				Block side1OffsetBlock = this.getBlock( side1Vec.add( normal.vector ) );
+
+				Block side2Block = this.getBlock( side2Vec );
+				Block side2OffsetBlock = this.getBlock( side2Vec.add( normal.vector ) );
+
+				Block cornerBlock = this.getBlock( cornerVec );
+				Block cornerOffsetBlock = this.getBlock( cornerVec.add( normal.vector ) );
+				
+				if( side1OffsetBlock.blockType.opacity == Opacity.OPAQUE && side2OffsetBlock.blockType.opacity == Opacity.OPAQUE )
+					model.addAttributeData( AttributeVariable.SHADOW, 3 );
+				else {
+					int total = side1OffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
+					total += side2OffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
+					total += cornerOffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
+					model.addAttributeData( AttributeVariable.SHADOW, total );
+				}
+				
+				
+				for( LightSource src : LightSource.values() ) {
+					Vector3in baseLight = offsetBlock.getIllumination(src);
+					if( side1OffsetBlock.blockType.opacity != Opacity.OPAQUE && side1Block.blockType.opacity == Opacity.OPAQUE)
+						baseLight = baseLight.max( side1OffsetBlock.getIllumination( src ));
+					if( side2OffsetBlock.blockType.opacity != Opacity.OPAQUE && side2Block.blockType.opacity == Opacity.OPAQUE)
+						baseLight = baseLight.max( side2OffsetBlock.getIllumination( src ));
+					if( cornerOffsetBlock.blockType.opacity != Opacity.OPAQUE && cornerBlock.blockType.opacity == Opacity.OPAQUE )
+						if( side1OffsetBlock.blockType.opacity != Opacity.OPAQUE || side2OffsetBlock.blockType.opacity != Opacity.OPAQUE )
+							baseLight = baseLight.max( cornerOffsetBlock.getIllumination( src ));
+					model.addAttributeData( src.attributeVariable, baseLight.toPackedBytes() );
+				} 
+
+				// add the shadow amount (0-3) for the vertex
+				// add the normal by packing the vector into an int
+				model.addAttributeData( AttributeVariable.NORMAL, normal.vector.toPackedBytes() );
+			}
+
+
+			// we've added four vertices, time to persist that as a quad
+			model.addQuad();
+		}
+
+    }
 
     private void refreshModels() {
 
@@ -172,86 +292,12 @@ public class World {
             // loop through each block of a dirty chunk
             Chunk chunk = this.chunkMap.get( mapCoords );
             chunk.iterateBlocks( (v,b) -> {
-
-            	Vector3in absCoords = v.add ( mapCoords.multiply( Config.CHUNK_DIM ) );
-                // examine each face/quad of each block
-                for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
-
-                    // if block is invisible - skip entirely
-                    if( b.blockType.opacity == BlockType.Opacity.INVISIBLE )
-                        continue;
-
-                    // if the block touching the current face is opaque, then it is hidden and we should ignore
-                    Vector3in offsetVec = absCoords.add( normal.vector );
-                    Block offsetBlock = this.getBlock( offsetVec );
-                    if( offsetBlock.blockType.opacity == BlockType.Opacity.OPAQUE )
-                        continue;
-                    
-                    // each face is a quad comprising of 4 vertices
-                    for( int i = 0; i < 4; i += 1 ) {
-                    	
-                    	boolean vertexIsFarSide1 = ( i & 0x01 ) > 0;
-                    	boolean vertexIsFarSide2 = ( i & 0x02 ) > 0;
-                    	
-
-                        // now using the bools above, calculate the vertex's position and add it to the model
-						model.addAttributeData( AttributeVariable.POSITION, v.add( normal.vector.max( 0 ) )
-								.add( normal.firstOrtho.vector.multiply( vertexIsFarSide1 ? 1 : 0 ) )
-								.add( normal.secondOrtho.vector.multiply( vertexIsFarSide2 ? 1 : 0 ) )
-								.toVector3fl() );
-
-                        // add the tex coords for the specified atlas. Convert to opengl coords (i.e. between 0f - 1f )
-                        // by dividing by the number of faces along one dimension of the texture atlas
-                        Vector3in texCoords = new Vector3in( vertexIsFarSide1 ? 1 : 0, vertexIsFarSide2 ? 1 : 0, 0 );
-                        Vector3fl texCoordsFl = model.texture.getGlCoords( texCoords.add( b.blockType.texCoords ).multiply( Config.BLOCK_ATLAS_TEX_DIM ) );
-                        model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoordsFl );
-						
-						Vector3in side1Vec = absCoords.add( normal.firstOrtho.vector.multiply( vertexIsFarSide1 ? 1 : -1 ) );
-						Block side1Block = this.getBlock( side1Vec );
-						Block side1OffsetBlock = this.getBlock( side1Vec.add( normal.vector ) );
-
-						Vector3in side2Vec = absCoords.add( normal.secondOrtho.vector.multiply( vertexIsFarSide2 ? 1 : -1 ) );
-						Block side2Block = this.getBlock( side2Vec );
-						Block side2OffsetBlock = this.getBlock( side2Vec.add( normal.vector ) );
-
-						Vector3in cornerVec = absCoords
-								.add( normal.firstOrtho.vector.multiply( vertexIsFarSide1 ? 1 : -1 ) )
-								.add( normal.secondOrtho.vector.multiply( vertexIsFarSide2 ? 1 : -1 ) );
-						Block cornerBlock = this.getBlock( cornerVec );
-						Block cornerOffsetBlock = this.getBlock( cornerVec.add( normal.vector ) );
-						
-                        if( side1OffsetBlock.blockType.opacity == Opacity.OPAQUE && side2OffsetBlock.blockType.opacity == Opacity.OPAQUE )
-							model.addAttributeData( AttributeVariable.SHADOW, 3 );
-                        else {
-                        	int total = side1OffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
-                        	total += side2OffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
-                        	total += cornerOffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
-							model.addAttributeData( AttributeVariable.SHADOW, total );
-                        }
-                        
-                        
-                        for( LightSource src : LightSource.values() ) {
-                        	Vector3in baseLight = offsetBlock.getIllumination(src);
-							if( side1OffsetBlock.blockType.opacity != Opacity.OPAQUE && side1Block.blockType.opacity == Opacity.OPAQUE)
-								baseLight = baseLight.max( side1OffsetBlock.getIllumination( src ));
-							if( side2OffsetBlock.blockType.opacity != Opacity.OPAQUE && side2Block.blockType.opacity == Opacity.OPAQUE)
-								baseLight = baseLight.max( side2OffsetBlock.getIllumination( src ));
-							if( cornerOffsetBlock.blockType.opacity != Opacity.OPAQUE && cornerBlock.blockType.opacity == Opacity.OPAQUE )
-								if( side1OffsetBlock.blockType.opacity != Opacity.OPAQUE || side2OffsetBlock.blockType.opacity != Opacity.OPAQUE )
-									baseLight = baseLight.max( cornerOffsetBlock.getIllumination( src ));
-                            model.addAttributeData( src.attributeVariable, baseLight.toPackedBytes() );
-                        } 
-
-                        // add the shadow amount (0-3) for the vertex
-                        // add the normal by packing the vector into an int
-                        model.addAttributeData( AttributeVariable.NORMAL, normal.vector.toPackedBytes() );
-                    }
-
-
-					// we've added four vertices, time to persist that as a quad
-					model.addQuad();
-
-                }
+            	if( b.blockType.opacity == BlockType.Opacity.INVISIBLE )
+            		return;
+            	if( b.blockType.opacity == BlockType.Opacity.OPAQUE )
+            		this.buildOpaqueBlock( model, v, v.add( mapCoords.multiply( Config.CHUNK_DIM ) ), b);
+            	else if( b.blockType.opacity == BlockType.Opacity.CROSSED )
+            		this.buildCrossedBlock( model, v, v.add( mapCoords.multiply( Config.CHUNK_DIM ) ), b);
             });
 
             // all the data has been collected by the model

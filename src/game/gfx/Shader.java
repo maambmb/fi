@@ -7,10 +7,10 @@ import java.util.Map;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
-import org.lwjgl.util.vector.Matrix4f;
 
 import game.Entity;
 import util.FileUtils;
+import util.Matrix4fl;
 import util.Vector3fl;
 import util.Vector3in;
 
@@ -96,8 +96,8 @@ public abstract class Shader extends Entity {
     }
 
     // load a 4d matrix into a uniform variable position
-    public void loadMatrix4f( UniformVariable uv, Matrix4f m ) {
-        m.store( this.matrixFloatBuffer );
+    public void loadMatrix4f( UniformVariable uv, Matrix4fl m ) {
+        m.raw.store( this.matrixFloatBuffer );
         this.matrixFloatBuffer.flip();
         int uvId = this.uniformLookup.get( uv );
         GL20.glUniformMatrix4( uvId,  false,  this.matrixFloatBuffer);
@@ -109,7 +109,7 @@ public abstract class Shader extends Entity {
         GL20.glUniform1i( uvId, i);
     }
     
-    protected void useProgram() {
+    public void use() {
         GL20.glUseProgram( this.programId );
     }
     

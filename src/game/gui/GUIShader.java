@@ -6,7 +6,7 @@ import game.Config;
 import game.gfx.AttributeVariable;
 import game.gfx.Shader;
 import game.gfx.UniformVariable;
-import util.MatrixUtils;
+import util.Matrix4fl;
 import util.Vector3fl;
 
 public class GUIShader extends Shader {
@@ -18,7 +18,7 @@ public class GUIShader extends Shader {
 		}
 	}
 	
-	private static Matrix4f matrixBuffer = new Matrix4f();
+	private static Matrix4fl matrix = new Matrix4fl();
 	
     public static GUIShader GLOBAL;
     public static void init() {
@@ -32,7 +32,7 @@ public class GUIShader extends Shader {
     @Override
     protected void setupUniformVariables() {
 		this.createUniformVariable( UniformVariable.PROJECTION_MATRIX );
-		this.createUniformVariable( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX );
+		this.createUniformVariable( UniformVariable.MODEL );
 		this.createUniformVariable( UniformVariable.COLOR );
     }
 
@@ -43,19 +43,19 @@ public class GUIShader extends Shader {
     }
     
     public void use() {
-    	this.useProgram();
+    	super.use();
     	this.loadProjectionMatrix();
     }
     
     private void loadProjectionMatrix() {
-    	Matrix4f.setIdentity( matrixBuffer );
-    	MatrixUtils.addTranslationToMatrix( matrixBuffer, new Vector3fl(-1f,+1f));
-    	MatrixUtils.addScaleToMatrix( matrixBuffer, new Vector3fl(2f,-2f));
-    	MatrixUtils.addScaleToMatrix(matrixBuffer, new Vector3fl(
+    	matrix.clearMatrix();
+    	matrix.addTranslationToMatrix( new Vector3fl(-1f,1f));
+    	matrix.addScaleToMatrix( new Vector3fl(2f,-2f));
+    	matrix.addScaleToMatrix(new Vector3fl(
     		1f / Config.GAME_WIDTH,
     		1f/ Config.GAME_HEIGHT
     	));
-    	this.loadMatrix4f( UniformVariable.PROJECTION_MATRIX, matrixBuffer );
+    	this.loadMatrix4f( UniformVariable.PROJECTION_MATRIX, matrix );
     }
     
 }

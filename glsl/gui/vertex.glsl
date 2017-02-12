@@ -3,7 +3,7 @@
 in vec2 av_position_2d;
 in vec2 av_tex_coords;
 
-uniform mat4 uv_model_translate_scale;
+uniform mat4 uv_model;
 uniform mat4 uv_projection;
 uniform int uv_color;
 
@@ -12,7 +12,7 @@ out vec3 frag_color;
 
 void main(void) {
 
-	gl_Position = uv_projection * uv_model_translate_scale * vec4( av_position_2d.xy, 0, 1.0 );
+	gl_Position = uv_projection * uv_model * vec4( av_position_2d.xy, 0, 1.0 );
 
     // just pass the tex coords through *yawn*
     frag_tex_coords = vec2( av_tex_coords.xy );

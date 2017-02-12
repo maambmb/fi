@@ -26,8 +26,8 @@ public final class Environment extends Entity {
     	super();
     	
         this.lighting     = new Vector3in[ LightSource.values().length ];
-        this.baseLighting = new Vector3in( 0xFFFFFF );
-        this.fogColor     = new Vector3in( 0x00FFFF );
+        this.baseLighting = new Vector3in( 0x202020 );
+        this.fogColor     = new Vector3in( 0x101010 );
 
         this.lightOrigin = new Vector3fl(1,1,1);
 

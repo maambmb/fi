@@ -3,7 +3,6 @@ package game.gui;
 import java.util.HashMap;
 import java.util.Map;
 
-import game.Config;
 import game.Game.DestroyMessage;
 import game.Listener;
 import game.gfx.AttributeVariable;
@@ -76,28 +75,20 @@ public enum FontMap {
 		int stripCount = this.atlas.size / this.dimensions.x;
 		Vector3fl scaledDims = this.dimensions.toVector3fl().divide( this.atlas.size );
 		Vector3fl baseTex = new Vector3fl( 
-			( ix % stripCount ) * scaledDims.x,
-			( ix / stripCount ) * scaledDims.y
+			( ix % stripCount) * scaledDims.x,
+			( ix / stripCount) *  scaledDims.y
 		);
 		
-		for( int j = 0; j < 4; j += 1 ) {
+		for( Vector3fl vertex : Model.QUAD_VERTICES ) {
+			
+			Vector3fl rescaled = vertex.multiply( 0.5f ).add( 0.5f );
 
-			boolean farHorizontal = ( j & 0x01 ) > 0;
-			boolean farVertical   = ( j & 0x02 ) > 0;
+			model.addAttributeData2D( AttributeVariable.POSITION_2D, rescaled.multiply( this.dimensions ) );
+			model.addAttributeData2D( AttributeVariable.TEX_COORDS, rescaled.multiply( scaledDims ).add(baseTex) );
 			
-			model.addAttributeData2D( AttributeVariable.POSITION_2D, new Vector3fl(
-				( farHorizontal ? this.dimensions.x : 0 ),
-				( farVertical ?  this.dimensions.y : 0 ) 
-			) );
-			
-			model.addAttributeData2D( AttributeVariable.TEX_COORDS, new Vector3fl(
-				farHorizontal ? (float) scaledDims.x : 0f,
-				farVertical ? (float) scaledDims.y : 0f
-			).add( baseTex ) );
-			
-		}
+		}	
 
-		model.addQuad();
+		model.addFlippedQuad();
 		model.buildModel();
 		return model;
 

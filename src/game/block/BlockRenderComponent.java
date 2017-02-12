@@ -8,13 +8,13 @@ import game.Position3DComponent;
 import game.block.BlockShader.BlockShaderRenderMessage;
 import game.gfx.Model;
 import game.gfx.UniformVariable;
-import util.MatrixUtils;
+import util.Matrix4fl;
 
 public class BlockRenderComponent implements Component {
 
 	public Model model;
 	private Position3DComponent posCmpt;
-	private static Matrix4f matrixBuffer = new Matrix4f();
+	private static Matrix4fl matrix = new Matrix4fl();
 	
     @Override
     public void setup( Entity e ) {
@@ -28,14 +28,10 @@ public class BlockRenderComponent implements Component {
     	if( this.model == null)
     		return;
 
-    	matrixBuffer.setIdentity();
-    	MatrixUtils.addRotationMatrixReversed( matrixBuffer, this.posCmpt.rotation );
-    	BlockShader.GLOBAL.loadMatrix4f( UniformVariable.MODEL_ROTATE_MATRIX , matrixBuffer );
-    	
-    	matrixBuffer.setIdentity();
-    	MatrixUtils.addTranslationToMatrix( matrixBuffer, this.posCmpt.position );
-    	MatrixUtils.addScaleToMatrix( matrixBuffer, this.posCmpt.scale );
-    	BlockShader.GLOBAL.loadMatrix4f( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX, matrixBuffer );
+    	matrix.clearMatrix();
+    	matrix.addTranslationToMatrix( this.posCmpt.position );
+    	matrix.addScaleToMatrix( this.posCmpt.scale );
+    	BlockShader.GLOBAL.loadMatrix4f( UniformVariable.MODEL, matrix );
 
     	this.model.render();
     }

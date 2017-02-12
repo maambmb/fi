@@ -12,20 +12,92 @@ public enum BlockType {
         new Vector3in(),
         null
     ),
-    GRAVEL( 
+    WAVY_PURPLE( 
         true,
         Opacity.OPAQUE,
         LightSource.CONSTANT,
         new Vector3in(),
-        new Vector3in(0,1,0)
+        new Vector3in(0,0,0)
     ),
-    GLOW_BLOCK( 
-        true,
-        Opacity.OPAQUE,
-        LightSource.CONSTANT,
-        new Vector3in( 0xFFFFFF ),
-        new Vector3in()
+    STRIPED_GREEN(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(1,0,0)
+    ),
+    DOTTED_BROWN(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(0,1,0)
+    ),
+    DASHED_SAND(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(0,2,0)
+    ),
+    WAVY_BROWN(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(1,2,0)
+    ),
+    DOTTED_CYAN(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(1,1,0)
+    ),
+    LUSH_SHRUBS_1(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(2,2,0)
+    ),
+    LUSH_SHRUBS_2(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(3,2,0)
+    ),
+    LUSH_SHRUBS_3(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(4,2,0)
+    ),
+    GREEN_GLOWSHROOM(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(0x9cff3b),
+    	new Vector3in(0,3,0)
+    ),
+    RED_GLOWSHROOM(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(0xf68585),
+    	new Vector3in(0,3,0)
+    ),
+    PURPLE_GLOWSHROOM(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(0xf685e7),
+    	new Vector3in(0,3,0)
     );
+    
+
 
     public enum Opacity {
         //fully opaque - does not allow light to propagate

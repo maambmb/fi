@@ -15,35 +15,6 @@ public class Vector3in {
 
         // the underlying normal unit vector
         public Vector3in vector; 
-        // the two (POSITIVE) orthogonal normals 
-        public CubeNormal firstOrtho;
-        public CubeNormal secondOrtho;
-
-        // initialize the firstOrtho and secondOrtho fields - can't be done in the constructor
-        // as the enum isn't fully defined at that point
-        public static void init() {
-            for( CubeNormal n : CubeNormal.values() ) {
-                if( n == FRONT ) {
-                    n.firstOrtho = TOP;
-                    n.secondOrtho = RIGHT;
-                } else if ( n == BACK ){
-                    n.firstOrtho = RIGHT;
-                    n.secondOrtho = TOP;
-                } else if( n == LEFT ) {
-                    n.firstOrtho = TOP;
-                    n.secondOrtho = FRONT;
-                } else if( n == RIGHT ) {
-                    n.firstOrtho = FRONT;
-                    n.secondOrtho = TOP;
-                } else if( n == TOP ) {
-                    n.firstOrtho = RIGHT;
-                    n.secondOrtho = FRONT;
-                } else {
-                	n.firstOrtho = FRONT;
-                	n.secondOrtho = RIGHT;
-                }
-            }
-        }
 
         private CubeNormal( Vector3in v ) {
             this.vector = v;

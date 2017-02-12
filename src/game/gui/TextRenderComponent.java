@@ -9,7 +9,7 @@ import game.Component;
 import game.Entity;
 import game.gfx.UniformVariable;
 import game.gui.GUIShader.GUIShaderRenderMessage;
-import util.MatrixUtils;
+import util.Matrix4fl;
 import util.Tuple;
 import util.Vector3fl;
 import util.Vector3in;
@@ -24,12 +24,12 @@ public class TextRenderComponent implements Component {
 	public Vector3fl position;
 	private List<Tuple.Binary<Glyph,Vector3in>> glyphs;
 
-	private static Matrix4f matrixBuffer = new Matrix4f();
+	private static Matrix4fl matrix = new Matrix4fl();
 	
 	public TextRenderComponent( ) {
 		this.fontMap = FontMap.DEBUG;
 		this.depth = GUIDepth.DEPTH_0;
-		this.fontSize = 1f;
+		this.fontSize = 2f;
 		this.position = new Vector3fl();
 		this.glyphs = new ArrayList<Tuple.Binary<Glyph,Vector3in>>();
 	}
@@ -57,14 +57,12 @@ public class TextRenderComponent implements Component {
     			continue;
     		}
     		
+			matrix.clearMatrix();
+			matrix.addTranslationToMatrix( this.position );
+			matrix.addScaleToMatrix( this.fontSize );
+			matrix.addTranslationToMatrix( new Vector3fl( xCur * dims.x, yCur * dims.y ) );
+			GUIShader.GLOBAL.loadMatrix4f( UniformVariable.MODEL, matrix );
 			GUIShader.GLOBAL.loadInt( UniformVariable.COLOR, glyph.arg2.toPackedBytes() );
-
-			matrixBuffer.setIdentity();
-			Vector3fl offset = new Vector3fl( xCur * dims.x, yCur * dims.y );
-			MatrixUtils.addTranslationToMatrix( matrixBuffer, this.position );
-			MatrixUtils.addScaleToMatrix( matrixBuffer, this.fontSize );
-			MatrixUtils.addTranslationToMatrix( matrixBuffer, offset );
-			GUIShader.GLOBAL.loadMatrix4f( UniformVariable.MODEL_TRANSLATE_SCALE_MATRIX, matrixBuffer );
 			this.fontMap.getModel( glyph.arg1 ).render();
 
 			xCur += 1;

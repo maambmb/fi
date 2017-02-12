@@ -18,7 +18,6 @@ import game.gui.console.DebugConsole;
 import game.input.InputCapturer;
 import game.input.Key;
 import util.Vector3fl;
-import util.Vector3in;
 
 public class Game {
 
@@ -78,7 +77,6 @@ public class Game {
         Listener.init();
 
         // initialize all enums that need it
-        Vector3in.CubeNormal.init();
         Key.init();
         TextureRef.init();
         Glyph.init();

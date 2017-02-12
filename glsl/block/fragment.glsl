@@ -25,6 +25,5 @@ void main(void) {
     }
     // multiply the texture's color with the lighting to get the final pixel color
     lit_color = tex_color * vec4(frag_lighting.xyz,1);
-    
     out_Color = lit_color * ( 1 - frag_fog ) + frag_fog * fog_color;
 }

@@ -7,12 +7,12 @@ import game.Component;
 import game.Entity;
 import game.Game;
 import game.Position3DComponent;
-import util.MatrixUtils;
+import util.Matrix4fl;
 import util.Vector3fl;
 
 public class NoClipComponent implements Component { 
 
-    private static Matrix4f matrixBuffer = new Matrix4f();
+    private static Matrix4fl matrix = new Matrix4fl();
 
     private Position3DComponent posCmpt;
     private InputListenerComponent inputCmpt;
@@ -59,10 +59,11 @@ public class NoClipComponent implements Component {
         // multiply the march and strafe vecs by their march and strafe amounts,
         // add the vectors together and normalize. Finally we can multiply by the speed.
         // If we naively added march + strafe, you would move faster diagonally (thx pythagorus)
-        Matrix4f.setIdentity( matrixBuffer );
-        MatrixUtils.addRotationToMatrix( matrixBuffer, this.posCmpt.rotation );
-        Vector3fl marchVec = new Vector3fl(0,0,-1).transform( matrixBuffer );
-        Vector3fl strafeVec = new Vector3fl(-1,0,0).transform(matrixBuffer);
+        matrix.clearMatrix();
+        matrix.addYawToMatrix( this.posCmpt.rotation.y );
+        matrix.addPitchToMatrix( this.posCmpt.rotation.x );
+        Vector3fl marchVec = matrix.transform( new Vector3fl(0,0,-1));
+        Vector3fl strafeVec = matrix.transform( new Vector3fl(-1,0,0));
         Vector3fl finalVec = strafeVec.multiply( strafe ).add( marchVec.multiply( march ) ).multiply( 0.1f );
 
         

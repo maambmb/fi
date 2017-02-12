@@ -26,7 +26,7 @@ public enum TextureRef {
 			try {
 				Texture tex = TextureLoader.getTexture( "PNG", new FileInputStream( tr.path ) );
 				if( tex.getTextureWidth() != tr.size || tex.getTextureHeight() != tr.size )
-					throw new RuntimeException( "Expected texture size mismatch");
+					throw new RuntimeException( String.format( "Expected texture size mismatch: %s", tr.path ) );
 				tr.id = tex.getTextureID();
 			} catch( IOException e ) {
 				throw new RuntimeException( "Unable to load texture");

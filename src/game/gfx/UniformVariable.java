@@ -2,8 +2,7 @@ package game.gfx;
 
 public enum UniformVariable {
 
-    MODEL_TRANSLATE_SCALE_MATRIX( "uv_model_translate_scale" ),
-    MODEL_ROTATE_MATRIX( "uv_model_rotate" ),
+    MODEL( "uv_model" ),
     VIEW_MATRIX( "uv_view" ),
     PROJECTION_MATRIX( "uv_projection" ),
     LIGHT_ORIGIN( "uv_light_origin" ),

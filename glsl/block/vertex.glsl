@@ -8,8 +8,7 @@ in int av_lighting_global;
 in int av_lighting_constant;
 
 uniform mat4 uv_view;
-uniform mat4 uv_model_translate_scale;
-uniform mat4 uv_model_rotate;
+uniform mat4 uv_model;
 uniform mat4 uv_projection;
 uniform vec3 uv_light_origin;
 
@@ -35,16 +34,19 @@ void main(void) {
 
     float lighting_angle_factor;
 
-    // calculate the normal vector by unpacking the bytes of av_normal
-    normal = vec3( av_normal & 0xFF, ( av_normal >> 8 ) & 0xFF, ( av_normal >> 16 ) & 0xFF );
-
     // get the final position by multiply the position by the model matrices -> view matrix -> proj matrix
-    raw_pos = uv_view * uv_model_translate_scale * uv_model_rotate * vec4(av_position,1.0);
+    raw_pos = uv_view * uv_model * vec4(av_position,1.0);
     gl_Position = uv_projection * raw_pos;
-
-    // calculate the amount we should attenuate global lighting based on angle of the face (use normal_vec )
-    lighting_angle_factor = 0.75f + dot( normalize( uv_light_origin ), normalize( normal ) ) / 4f;
-
+    
+    if( av_normal == 0 ) {
+    	lighting_angle_factor = 1.0;
+    }
+    else {
+    	normal = vec3( av_normal & 0xFF, ( av_normal >> 8 ) & 0xFF, ( av_normal >> 16 ) & 0xFF );
+		// calculate the amount we should attenuate global lighting based on angle of the face (use normal_vec )
+		lighting_angle_factor = 0.75f + dot( normalize( uv_light_origin ), normalize( normal ) ) / 4f;
+    }
+    
     // set final lighting to the base ambient amount
     lighting_base = vec3( uv_lighting_base & 0xFF, ( uv_lighting_base >> 8 ) & 0xFF, ( uv_lighting_base >> 16 ) & 0xFF ) / 255f;
     frag_lighting = lighting_base * lighting_angle_factor;
@@ -60,7 +62,7 @@ void main(void) {
     frag_lighting = max( frag_lighting, min( lighting_constant, lighting_constant_mod ) );
 
     // once all light sources have been join in, attenuate the final signal with the shadow
-    frag_lighting *= ( 1 - 0.3 * float(av_shadow) / 3.0 );
+    frag_lighting *= ( 1 - 0.25 * float(av_shadow) / 3.0 );
     frag_fog = length( raw_pos ) / uv_max_distance;
 
     // just pass the tex coords through *yawn*

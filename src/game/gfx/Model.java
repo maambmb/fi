@@ -20,6 +20,8 @@ import util.Vector3in;
 
 public class Model {
 
+
+	public static Vector3fl[] QUAD_VERTICES = new Vector3fl[] { new Vector3fl(-1,-1,1), new Vector3fl(1,-1,1), new Vector3fl(1,1,1), new Vector3fl(-1,1,1) };
     // convert a collection of boxed integers (cast down to objects - for reasons explained below )
     // into an int buffer
     private static IntBuffer intBufferFromCollection( Collection<Object> coll ) {
@@ -41,7 +43,7 @@ public class Model {
 
     // given four vertices of a quad (i:0,1,2,3), this is the order in which they should
     // be drawn - for use in the index VBO
-    private static final int[] ENUMERATION = new int[] { 3, 1, 0, 3, 0, 2};
+    private static final int[] ENUMERATION = new int[] { 0, 1, 2, 2, 3, 0 };
 
     public int vertexCount;
     private int indexCount;
@@ -121,8 +123,15 @@ public class Model {
     // record a new quad by adding 4 to the vertex count
     // and adding the 6 new indices to the index vbo buffer
     public void addQuad() {
-        for( int offset : ENUMERATION )
-            this.indices.add( this.indexCount + offset );
+    	for( int i =0; i < ENUMERATION.length; i += 1)
+            this.indices.add( this.indexCount + ENUMERATION[i] );
+        this.indexCount += 4;
+        this.vertexCount += 6;
+    }
+    
+    public void addFlippedQuad() {
+    	for( int i = ENUMERATION.length-1; i >= 0; i -= 1 )
+            this.indices.add( this.indexCount + ENUMERATION[i] );
         this.indexCount += 4;
         this.vertexCount += 6;
     }

@@ -18,10 +18,6 @@ public class Vector3fl {
         this.z = z;
     }
     
-    public Vector3fl( Vector3in v ) {
-    	this(v.x,v.y,v.z);
-    }
-    
     public Vector3fl( float x, float y) {
     	this( x, y, 0f );
     }
@@ -41,12 +37,24 @@ public class Vector3fl {
     	return new Vector3fl( this.x + v.x, this.y + v.y, this.z + v.z );
     }
     
+    public Vector3fl add( float f ) {
+    	return new Vector3fl( this.x + f, this.y + f, this.z + f );
+    }
+    
     public Vector3fl subtract( Vector3fl v ) {
     	return new Vector3fl( this.x - v.x, this.y - v.y, this.z - v.z );
     }
     
     public Vector3fl multiply( float mult ) {
     	return new Vector3fl( this.x * mult, this.y * mult, this.z * mult );
+    }
+    
+    public Vector3fl multiply( Vector3fl other ) {
+    	return new Vector3fl( this.x * other.x, this.y * other.y, this.z * other.z );
+    }
+
+    public Vector3fl multiply( Vector3in other ) {
+    	return new Vector3fl( this.x * other.x, this.y * other.y, this.z * other.z );
     }
     
     public Vector3fl divide( float dsor ) {
@@ -73,6 +81,10 @@ public class Vector3fl {
     	return new Vector3fl( Math.min( this.x, min ), Math.min( this.y, min ), Math.min( this.z, min ));
     }
 
+    public Vector3fl round() {
+    	return new Vector3fl( (float)Math.round( this.x ), (float)Math.round(this.y), (float)Math.round(this.z) );
+    }
+
     // return the maximum element
     public float toMaxElement() {
         return Math.max( Math.max( this.x, this.y ), this.z );
@@ -88,15 +100,17 @@ public class Vector3fl {
     }
     
     public Vector4f toVector4f() {
-    	return new Vector4f( this.x, this.y, this.z, 0 );
-    }
-    
-    public Vector3fl transform( Matrix4f m ) {
-    	Vector4f vec4 = this.toVector4f();
-        Matrix4f.transform( m, vec4, vec4 );
-        return new Vector3fl( vec4 );
+    	return new Vector4f( this.x, this.y, this.z, 1 );
     }
 
+    public Vector3in toVector3in() {
+    	return new Vector3in( (int)this.x, (int)this.y, (int)this.z );
+    }
+    
+    public Vector3in toRoundedVector3in() {
+    	return new Vector3in( Math.round( this.x ), Math.round(this.y), Math.round(this.z) );
+    }
+    
     @Override
     public int hashCode() {
         HashCoder.HASH_CODER.reset();
