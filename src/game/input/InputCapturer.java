@@ -24,6 +24,7 @@ public class InputCapturer extends Entity {
 	private Map<InputPriority,Set<InputListenerComponent>> inputListenerMap;
 	private boolean[] prevDown;
 	private boolean[] currDown;
+	
 	private long[] lastPressed;
 	private List<Key> pressedKeys;
 	private long currTime;
@@ -38,14 +39,16 @@ public class InputCapturer extends Entity {
 		this.currTime = m.totalMs;
 		this.pressedKeys.clear();
 
-		boolean shiftDown = Keyboard.isKeyDown( Key.KEY_LSHIFT.keyCode );
+		while( Keyboard.next() ) {
+			Key key = Key.getFromKeyCode( Keyboard.getEventKey() );
 
-		for( Key key : Key.values() ) {
+			if( key == null )
+				continue;
 
 			int ix = key.ordinal();
 			
 			this.prevDown[ ix ] = this.currDown[ ix ];
-			this.currDown[ ix ] = ( key.upperAlias && !shiftDown ) ? false : Keyboard.isKeyDown( key.keyCode );
+			this.currDown[ ix ] = Keyboard.getEventKeyState();
 			if( this.currDown[ ix ] ) {
 				if( ! this.prevDown[ ix ] ) {
 					this.pressedKeys.add( key );

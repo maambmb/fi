@@ -15,7 +15,7 @@ void main(void) {
 	vec4 lit_color;
 	vec4 fog_color;
 	
-	fog_color = vec4( ( uv_fog >> 16 ) & 0xFF, ( uv_fog >> 8 ) & 0xFF, uv_fog & 0xFF, 255f ) / 255f;
+	fog_color = vec4( ( uv_fog >> 16 ) & 0xFF, ( uv_fog >> 8 ) & 0xFF, uv_fog & 0xFF, 255.0 ) / 255.0;
 
     // sample the texture to get the color
     tex_color = texture( textureSampler, frag_tex_coords );
@@ -24,6 +24,6 @@ void main(void) {
     	discard;
     }
     // multiply the texture's color with the lighting to get the final pixel color
-    lit_color = tex_color * vec4(frag_lighting.xyz,1);
-    out_Color = lit_color * ( 1 - frag_fog ) + frag_fog * fog_color;
+    lit_color = tex_color * vec4(frag_lighting.xyz,1.0);
+    out_Color = lit_color * ( 1.0 - frag_fog ) + frag_fog * fog_color;
 }
