@@ -18,7 +18,7 @@ public final class RandomBlockSpawner extends Entity {
         super();
         this.rng = new Random();
         List<Vector3in> posTracker = new ArrayList<Vector3in>();
-        for( int i = 0; i < 600; i +=1 ) {
+        for( int i = 0; i < 6000; i +=1 ) {
         	int x = this.rng.nextInt( 16 );
         	int y = this.rng.nextInt( 200 );
         	int z = this.rng.nextInt( 16 );
@@ -51,7 +51,7 @@ public final class RandomBlockSpawner extends Entity {
         	}
         }
 
-        for( int i = 0; i < 0; i += 1 )
+        for( int i = 0; i < 16; i += 1 )
         for( int j = 0; j < 16; j += 1 ) {
         	
         	for( int k = 201; k >= 0; k -=1 ) {

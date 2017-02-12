@@ -60,7 +60,7 @@ public enum Key {
 	KEY_QUOTE( Keyboard.KEY_APOSTROPHE, Glyph.SQUOTE, Glyph.AT ),
 
 	KEY_HAT( Keyboard.KEY_CIRCUMFLEX, Glyph.HAT, Glyph.HAT ),
-	KEY_UNDERSCORE( Keyboard.KEY_UNDERLINE, Glyph.UNDERSCORE, Glyph.UNDERSCORE),
+	KEY_UNDERSCORE( Keyboard.KEY_UNDERLINE, Glyph.UNDERSCORE, Glyph.UNDERSCORE ),
 	KEY_AT( Keyboard.KEY_AT, Glyph.AT, Glyph.AT ),
 
 	KEY_LSHIFT( Keyboard.KEY_LSHIFT ),
@@ -79,6 +79,10 @@ public enum Key {
 		lookup = new HashMap<Integer,Key>();
 		for( Key k : Key.values())
 			lookup.put( k.keyCode, k );
+	}
+	
+	public static Key getFromKeyCode( int keyCode ) {
+		return lookup.get( keyCode );
 	}
 	
 	public int keyCode;
@@ -100,10 +104,5 @@ public enum Key {
 		this.upperGlyph = upperGlyph;
 	}
 
-	private Key( int keyCode, Glyph lowerGlyph, Glyph upperGlyph, boolean upperAlias ) {
-		this( keyCode, lowerGlyph );
-		this.upperGlyph = upperGlyph;
-		this.upperAlias = upperAlias;
-	}
 	
 }
