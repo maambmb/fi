@@ -1,7 +1,5 @@
 package game.gui;
 
-import org.lwjgl.util.vector.Matrix4f;
-
 import game.Config;
 import game.gfx.AttributeVariable;
 import game.gfx.Shader;

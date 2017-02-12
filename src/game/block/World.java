@@ -170,8 +170,6 @@ public class World {
     		for( Vector3fl vertex : Model.QUAD_VERTICES ) {
     			Vector3fl vertexOffset = matrix.transform( vertex.add( new Vector3fl(0,0,-1)) ).multiply( 0.5f );
     			vertexOffset = vertexOffset.add( 0.5f );
-    			Vector3fl normal = matrix.transform( new Vector3fl(0,0,1));
-
 				model.addAttributeData( AttributeVariable.POSITION, relCoords.toVector3fl().add( vertexOffset ) );
 
 				Vector3fl rangedVertex = vertex.multiply( - 0.5f ).add( 0.5f );

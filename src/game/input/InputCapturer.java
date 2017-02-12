@@ -37,12 +37,15 @@ public class InputCapturer extends Entity {
 		
 		this.currTime = m.totalMs;
 		this.pressedKeys.clear();
-		
+
+		boolean shiftDown = Keyboard.isKeyDown( Key.KEY_LSHIFT.keyCode );
+
 		for( Key key : Key.values() ) {
 
 			int ix = key.ordinal();
+			
 			this.prevDown[ ix ] = this.currDown[ ix ];
-			this.currDown[ ix ] = Keyboard.isKeyDown( key.keyCode );
+			this.currDown[ ix ] = ( key.upperAlias && !shiftDown ) ? false : Keyboard.isKeyDown( key.keyCode );
 			if( this.currDown[ ix ] ) {
 				if( ! this.prevDown[ ix ] ) {
 					this.pressedKeys.add( key );
@@ -53,7 +56,7 @@ public class InputCapturer extends Entity {
 			}
 			
 		}
-
+		
 	}
 	
 	public InputCapturer() {

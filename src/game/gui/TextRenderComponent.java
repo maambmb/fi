@@ -3,8 +3,6 @@ package game.gui;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.lwjgl.util.vector.Matrix4f;
-
 import game.Component;
 import game.Entity;
 import game.gfx.UniformVariable;

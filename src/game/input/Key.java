@@ -84,6 +84,7 @@ public enum Key {
 	public int keyCode;
 	public Glyph lowerGlyph;
 	public Glyph upperGlyph;
+	public boolean upperAlias;
 	
 	private Key( int keyCode ) {
 		this.keyCode = keyCode;
@@ -97,6 +98,12 @@ public enum Key {
 	private Key( int keyCode, Glyph lowerGlyph, Glyph upperGlyph ) {
 		this( keyCode, lowerGlyph );
 		this.upperGlyph = upperGlyph;
+	}
+
+	private Key( int keyCode, Glyph lowerGlyph, Glyph upperGlyph, boolean upperAlias ) {
+		this( keyCode, lowerGlyph );
+		this.upperGlyph = upperGlyph;
+		this.upperAlias = upperAlias;
 	}
 	
 }

@@ -1,7 +1,5 @@
 package game.block;
 
-import org.lwjgl.util.vector.Matrix4f;
-
 import game.Component;
 import game.Entity;
 import game.Position3DComponent;
