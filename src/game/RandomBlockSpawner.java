@@ -6,7 +6,6 @@ import java.util.Random;
 
 import game.block.Block;
 import game.block.BlockType;
-import game.block.LightSource;
 import game.block.World;
 //import game.listener.Listener;
 import util.Vector3in;
@@ -19,10 +18,10 @@ public final class RandomBlockSpawner extends Entity {
         super();
         this.rng = new Random();
         List<Vector3in> posTracker = new ArrayList<Vector3in>();
-        for( int i = 0; i < 3000; i +=1 ) {
-        	int x = this.rng.nextInt( 34 ) - 17;
-        	int y = this.rng.nextInt( 34 ) - 17;
-        	int z = this.rng.nextInt( 34 ) - 17;
+        for( int i = 0; i < 6000; i +=1 ) {
+        	int x = this.rng.nextInt( 16 );
+        	int y = this.rng.nextInt( 200 );
+        	int z = this.rng.nextInt( 16 );
 
         	BlockType bt = BlockType.AIR;
         	while( bt.opacity != BlockType.Opacity.OPAQUE ) {
@@ -44,7 +43,7 @@ public final class RandomBlockSpawner extends Entity {
 				bt = BlockType.values()[ nextIx ];
         	}
         	
-        	if( bt.illumination.toMaxElement() > 0 && rng.nextInt(30) != 0 )
+        	if( bt.illumination.toMaxElement() > 0 && rng.nextInt(20) != 0 )
         		bt = BlockType.LUSH_SHRUBS_1;
 
         	if( World.WORLD.getBlock( above ).blockType == BlockType.AIR ) {
@@ -52,10 +51,10 @@ public final class RandomBlockSpawner extends Entity {
         	}
         }
 
-        for( int i = -17; i < 17; i += 1 )
-        for( int j = -17; j < 17; j += 1 ) {
+        for( int i = 0; i < 16; i += 1 )
+        for( int j = 0; j < 16; j += 1 ) {
         	
-        	for( int k = 16; k >= -17; k -=1 ) {
+        	for( int k = 201; k >= 0; k -=1 ) {
 				Vector3in v = new Vector3in( i,k,j );
         		Block b = World.WORLD.getBlock( v );
         		if( b.blockType.opacity == BlockType.Opacity.OPAQUE )

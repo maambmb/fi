@@ -20,7 +20,7 @@ public final class Environment extends Entity {
     public Vector3in[] lighting;
     public Vector3in baseLighting;
     public Vector3in fogColor;
-    public float maxDistance = 50f;
+    public float maxDistance = 200f;
 
     private int dayStateIx;
     private long currStateDuration;

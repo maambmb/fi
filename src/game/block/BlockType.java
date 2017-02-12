@@ -89,6 +89,13 @@ public enum BlockType {
     	new Vector3in(0x9cff3b),
     	new Vector3in(0,3,0)
     ),
+    BLUE_GLOWSHROOM(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(0x00c6ff),
+    	new Vector3in(0,3,0)
+    ),
     RED_GLOWSHROOM(
     	false,
     	Opacity.CROSSED,

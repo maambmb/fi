@@ -5,8 +5,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.lwjgl.util.vector.Matrix4f;
-
 import game.Config;
 import game.block.BlockType.Opacity;
 import game.gfx.AttributeVariable;
@@ -22,8 +20,6 @@ public class World {
     // is the main interface/access for getting/setting blocks
     // allows recomputation of lighting/models upon modification in a relatively efficient batched manner
 
-	private static float SQRT_2 = (float)Math.sqrt(2);
-	
 	private static Matrix4fl matrix = new Matrix4fl();
 
     public static World WORLD;

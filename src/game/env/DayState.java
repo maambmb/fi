@@ -3,12 +3,12 @@ package game.env;
 import util.Vector3in;
 
 public enum DayState {
-	DAWN( 2000, new Vector3in( 0x011427 ), new Vector3in( 0xeac385 ) ),
-	SUNRISE( 2000, new Vector3in( 0xeac385 ), new Vector3in( 0xa5d7ea ) ),
+	DAWN( 6000, new Vector3in( 0x011427 ), new Vector3in( 0xac758a ) ),
+	SUNRISE( 2000, new Vector3in( 0xac758a ), new Vector3in( 0xa5d7ea ) ),
 	DAY( 6000, new Vector3in(0xa5d7ea ), new Vector3in( 0xa5d7ea ) ),
 	SUNSET( 2000, new Vector3in( 0xa5d7ea), new Vector3in( 0xac758a ) ),
-	DUSK( 2000, new Vector3in(0xac758a ), new Vector3in( 0x011427 ) ),
-	NIGHT( 5000, new Vector3in( 0x011427 ), new Vector3in( 0x011427 ) );
+	DUSK( 6000, new Vector3in(0xac758a ), new Vector3in( 0x011427 ) ),
+	NIGHT( 6000, new Vector3in( 0x011427 ), new Vector3in( 0x011427 ) );
 	
 	public long durationMs;
 	public Vector3in startLight;
