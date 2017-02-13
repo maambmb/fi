@@ -2,7 +2,7 @@ package util;
 
 // type defs and utility functions for anonymous tuples
 public class Tuple {
-
+	
     // 2-tuple
     public static class Binary<T1,T2> {
 
@@ -16,10 +16,7 @@ public class Tuple {
 
         @Override
         public int hashCode() {
-            HashCoder.HASH_CODER.reset();
-            HashCoder.HASH_CODER.addHash( this.arg1 );
-            HashCoder.HASH_CODER.addHash( this.arg2 );
-            return HashCoder.HASH_CODER.hash;
+        	return HashUtils.hash( this.arg1, this.arg2 );
         }
 
         @Override
@@ -47,11 +44,7 @@ public class Tuple {
 
         @Override
         public int hashCode() {
-            HashCoder.HASH_CODER.reset();
-            HashCoder.HASH_CODER.addHash( this.arg1 );
-            HashCoder.HASH_CODER.addHash( this.arg2 );
-            HashCoder.HASH_CODER.addHash( this.arg3 );
-            return HashCoder.HASH_CODER.hash;
+        	return HashUtils.hash( this.arg1, this.arg2, this.arg3 );
         }
 
         @Override

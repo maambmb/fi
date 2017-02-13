@@ -118,11 +118,7 @@ public class Vector3in {
     
     @Override
     public int hashCode() {
-        HashCoder.HASH_CODER.reset();
-        HashCoder.HASH_CODER.addHash( this.x );
-        HashCoder.HASH_CODER.addHash( this.y );
-        HashCoder.HASH_CODER.addHash( this.z );
-        return HashCoder.HASH_CODER.hash;
+        return HashUtils.hash( this.x, this.y, this.z );
     }
 
     @Override

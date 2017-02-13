@@ -5,7 +5,7 @@ import org.lwjgl.util.vector.Vector4f;
 
 // an immutable 3D integer vector class
 public class Vector3fl {
-
+	
     // the 3 elements of the vector
     public float x;
     public float y;
@@ -112,11 +112,7 @@ public class Vector3fl {
     
     @Override
     public int hashCode() {
-        HashCoder.HASH_CODER.reset();
-        HashCoder.HASH_CODER.addHash( this.x );
-        HashCoder.HASH_CODER.addHash( this.y );
-        HashCoder.HASH_CODER.addHash( this.z );
-        return HashCoder.HASH_CODER.hash;
+    	return HashUtils.hash(this.x,this.y,this.z);
     }
 
     @Override

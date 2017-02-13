@@ -38,13 +38,11 @@ public final class RandomBlockSpawner extends Entity {
         	Vector3in above = v.add( Vector3in.CubeNormal.TOP.vector );
 
         	BlockType bt = BlockType.AIR;
-        	while( bt.opacity != BlockType.Opacity.CROSSED ) {
-				int nextIx = this.rng.nextInt( BlockType.values().length );
-				bt = BlockType.values()[ nextIx ];
-        	}
-        	
-        	if( bt.illumination.toMaxElement() > 0 && rng.nextInt(20) != 0 )
-        		bt = BlockType.LUSH_SHRUBS_1;
+        	if( rng.nextInt(10) == 0 )
+	        	while( bt.opacity != BlockType.Opacity.CROSSED ) {
+					int nextIx = this.rng.nextInt( BlockType.values().length );
+					bt = BlockType.values()[ nextIx ];
+	        	}
 
         	if( World.WORLD.getBlock( above ).blockType == BlockType.AIR ) {
         		World.WORLD.setBlock( above, bt);
