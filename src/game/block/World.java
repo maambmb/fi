@@ -2,7 +2,6 @@ package game.block;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -29,11 +28,15 @@ public class World {
         WORLD = new World();
     }
     
+    // comparator that orders higher vectors before lower vectors (useful for occlusion calcs)
     private static int columnCompare( Vector3in l, Vector3in r ) {
     	return r.y - l.y;
     }
- 
-    private static Vector3in partition( Vector3in v ) {
+
+    // places the coordinates into chunk coordinate buckets
+    // similar to divide but handles negative cases correctly
+    // TODO: is there a more efficient way to do this?
+    private static Vector3in bucket( Vector3in v ) {
     	Vector3in mod = v.modulo( Config.CHUNK_DIM );
     	Vector3in div = v.divide( Config.CHUNK_DIM );
     	if( v.x < 0 && mod.x != 0 )
@@ -47,34 +50,44 @@ public class World {
 
     // (sparse) hashmap of all active chunks
     private Map<Vector3in,Chunk> chunkMap;
+    
+    // (sparse) hashmap of chunk columns
     private Map<Vector3in,TreeSet<Vector3in>> chunkColumns;
     
     public World() {
-        this.chunkMap        = new HashMap<Vector3in,Chunk>();
-        this.chunkColumns    = new HashMap<Vector3in,TreeSet<Vector3in>>();
+        this.chunkMap      = new HashMap<Vector3in,Chunk>();
+        this.chunkColumns = new HashMap<Vector3in,TreeSet<Vector3in>>();
     }
 
     private Chunk getChunk( Vector3in chunkCoords ) {
+
+    	// create a new chunk if it doesn't exist
         if( !this.chunkMap.containsKey( chunkCoords ) ) {
             this.chunkMap.put( chunkCoords, new Chunk() );
+
+            // take the column vector of the chunk (i.e. set the height cmpt to 0 )
         	Vector3in col = new Vector3in( chunkCoords.x, 0, chunkCoords.z );
+        	
+        	// if a column doesn't exist, create it
         	if( !this.chunkColumns.containsKey( col ) )
+        		// the set that holds the column vectors must be sorted by height (highest first)
         		this.chunkColumns.put( col, new TreeSet<Vector3in>( World::columnCompare ) );
-        	TreeSet<Vector3in> list = this.chunkColumns.get( col );
-        	list.add( chunkCoords );
+
+        	// add the chunk coords to the column
+        	this.chunkColumns.get( col ).add( chunkCoords );
         }
         return this.chunkMap.get( chunkCoords );
     }
     
     public BlockContext getBlockContext( Vector3in coords ) {
-    	Vector3in chunkCoords = partition( coords );
+    	Vector3in chunkCoords = bucket( coords );
     	Vector3in blockCoords = chunkCoords.multiply( - Config.CHUNK_DIM ).add( coords );
         Chunk chunk = this.getChunk( chunkCoords );
         return chunk.getBlockContext( blockCoords );
     }
 
     public void setBlock( Vector3in absCoords, Block bt ) {
-    	Vector3in chunkcoords = partition( absCoords );
+    	Vector3in chunkcoords = bucket( absCoords );
     	Vector3in blockCoords = chunkcoords.multiply( - Config.CHUNK_DIM ).add( absCoords );
         Chunk chunk = this.getChunk( chunkcoords );
         BlockContext ctx = chunk.getBlockContext( blockCoords );
@@ -253,30 +266,38 @@ public class World {
     
     private void buildCrossedBlock( Model model, Vector3in relCoords, Vector3in absCoords, BlockContext b ) {
 
-
+    	// need 4 90 degree rotated quads
     	for( int i = 0; i < 360; i += 90 ) {
 
 			matrix.clearMatrix();
+
+    		// we want to offset the quads by 45 degrees so they appear diagonal so +45 to the yaw rotation
     		matrix.addYawToMatrix( i + 45 );
 
     		for( Vector3fl vertex : Model.QUAD_VERTICES ) {
-    			Vector3fl vertexOffset = matrix.transform( vertex.add( new Vector3fl(0,0,-1)) ).multiply( 0.5f );
-    			vertexOffset = vertexOffset.add( 0.5f );
+    			
+    			// push the template back to the origin so yaw rotations are centered
+    			// scale and translate it so its re-ranged to [0,1]
+    			Vector3fl vertexOffset = matrix.transform( vertex.add( new Vector3fl(0,0,-1)) ).multiply( 0.5f ).add( 0.5f );
 				model.addAttributeData( AttributeVariable.POSITION, relCoords.toVector3fl().add( vertexOffset ) );
 
+				// rerange the vertex ( we don't care z as its for 2d tex coords )
 				Vector3fl rangedVertex = vertex.multiply( - 0.5f ).add( 0.5f );
 				Vector3fl texCoords = b.block.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
 				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( model.texture.size ) );
 
+				// I feel like crosses shouldn't have occlusion but what do I know
 				model.addAttributeData( AttributeVariable.SHADOW, 0 );
+
+				// I also feel like normals are unecessary. I don't want to color orthogonal arms different colors as
+				// it makes it feel more 2D paper cutout-y (IMO)
+				model.addAttributeData( AttributeVariable.NORMAL, 0 );
 				
+				// feel like smooth lighting could potentially be applicable here
+				// but its not crucial as crosses never touch ( 1 < 1.4 ) and so we never
+				// see any gross discontinuities
 				for( LightSource src : LightSource.values() )
 					model.addAttributeData( src.attributeVariable, b.getIllumination(src).toPackedBytes() );
-
-				// add the shadow amount (0-3) for the vertex
-				// add the normal by packing the vector into an int
-				model.addAttributeData( AttributeVariable.NORMAL, 0 );
-
     		}
     		
 			model.addQuad();
@@ -293,10 +314,15 @@ public class World {
 			
 			matrix.clearMatrix();
 
-			if( normal.vector.z < 0 )
+			// if we are doing the back face, flip the template 180 degreees via yaw not pitch
+			if( normal == Vector3in.CubeNormal.BACK )
 				matrix.addYawToMatrix( 180 );
+
+			// left and right faces can also be done by 90 degree yaw rotates
 			else if( normal.vector.x != 0 )
 				matrix.addYawToMatrix( 90 * normal.vector.x );
+			
+			// the only pitch rotation should be for top and bottom normal
 			else if( normal.vector.y != 0 )
 				matrix.addPitchToMatrix( -90 * normal.vector.y );
 
@@ -306,16 +332,18 @@ public class World {
 			if( offsetBlock.block.opacity == Block.Opacity.OPAQUE )
 				continue;
 			
-			// each face is a quad comprising of 4 vertices
 			for( Vector3fl vertex : Model.QUAD_VERTICES ) {
 				
+				// post rotation, the only thing left to do to the template is rerange it to [0,1]
 				Vector3fl vertexOffset = matrix.transform( vertex ).multiply( 0.5f ).add( 0.5f );
 				model.addAttributeData( AttributeVariable.POSITION, relCoords.toVector3fl().add( vertexOffset ) );
 
+				// do reranging on raw template for tex-coords
 				Vector3fl rangedVertex = vertex.multiply( 0.5f ).add( 0.5f );
 				Vector3fl texCoords = b.block.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
 				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( model.texture.size ) );
 
+				// calculate neighbor block vectors by pushing the template to origin ( z = 0 ) and discarding none,one,both of (x,y)
 				Vector3in side1Vec = matrix.transform( new Vector3fl( vertex.x, 0, 0 ) ).toRoundedVector3in().add( absCoords );
 				Vector3in side2Vec = matrix.transform( new Vector3fl( 0, vertex.y, 0 ) ).toRoundedVector3in().add( absCoords );
 				Vector3in cornerVec = matrix.transform( new Vector3fl( vertex.x, vertex.y, 0 ) ).toRoundedVector3in().add( absCoords );
@@ -351,8 +379,6 @@ public class World {
 					model.addAttributeData( src.attributeVariable, baseLight.toPackedBytes() );
 				} 
 
-				// add the shadow amount (0-3) for the vertex
-				// add the normal by packing the vector into an int
 				model.addAttributeData( AttributeVariable.NORMAL, normal.vector.toPackedBytes() );
 			}
 
