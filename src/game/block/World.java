@@ -2,11 +2,13 @@ package game.block;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 import game.Config;
-import game.block.BlockType.Opacity;
+import game.block.Block.Opacity;
 import game.gfx.AttributeVariable;
 import game.gfx.Model;
 import game.gfx.TextureRef;
@@ -27,81 +29,131 @@ public class World {
         WORLD = new World();
     }
     
-    // (sparse) hashmap of all active chunks
-    private Map<Vector3in,Chunk> chunkMap;
-    
-    // collection of chunks that have been modified and need to have their lighting and models recalced
-    private Set<Vector3in> dirtyChunks;
-
-    // collection of chunks that need to recompute their lighting
-    // not because the chunks are dirty, but because we expect their lighting to overflow onto nearby
-    // dirty chunks that themselves need recalcs ( should border all dirty chunks )
-    private Set<Vector3in> requisiteChunks;
-
-    public World() {
-        this.chunkMap        = new HashMap<Vector3in,Chunk>();
-        this.dirtyChunks     = new HashSet<Vector3in>();
-        this.requisiteChunks = new HashSet<Vector3in>();
+    private static int columnCompare( Vector3in l, Vector3in r ) {
+    	return r.y - l.y;
     }
-    
-    private static Vector3in getMapCoords( Vector3in absCoords ) {
-    	Vector3in div = absCoords.divide( Config.CHUNK_DIM );
-    	if( absCoords.x < 0 && absCoords.x % Config.CHUNK_DIM != 0 )
+ 
+    private static Vector3in partition( Vector3in v ) {
+    	Vector3in mod = v.modulo( Config.CHUNK_DIM );
+    	Vector3in div = v.divide( Config.CHUNK_DIM );
+    	if( v.x < 0 && mod.x != 0 )
     		div.x -= 1;
-    	if( absCoords.y < 0 && absCoords.y % Config.CHUNK_DIM != 0 )
+    	if( v.y < 0 && mod.y != 0 )
     		div.y -= 1;
-    	if( absCoords.z < 0 && absCoords.z % Config.CHUNK_DIM != 0 )
+    	if( v.z < 0 && mod.z != 0 )
     		div.z -= 1;
     	return div;
+    }   
+
+    // (sparse) hashmap of all active chunks
+    private Map<Vector3in,Chunk> chunkMap;
+    private Map<Vector3in,TreeSet<Vector3in>> chunkColumns;
+    
+    public World() {
+        this.chunkMap        = new HashMap<Vector3in,Chunk>();
+        this.chunkColumns    = new HashMap<Vector3in,TreeSet<Vector3in>>();
     }
 
     private Chunk getChunk( Vector3in mapCoords ) {
         if( !this.chunkMap.containsKey( mapCoords ) ) {
-        	Chunk c = new Chunk();
-        	c.positionCmpt.position = mapCoords.multiply(Config.CHUNK_DIM ).toVector3fl();
-            this.chunkMap.put( mapCoords, c );
+            this.chunkMap.put( mapCoords, new Chunk() );
+        	Vector3in col = new Vector3in( mapCoords.x, 0, mapCoords.z );
+        	if( !this.chunkColumns.containsKey( col ) )
+        		this.chunkColumns.put( col, new TreeSet<Vector3in>( World::columnCompare ) );
+        	TreeSet<Vector3in> list = this.chunkColumns.get( col );
+        	list.add( mapCoords );
         }
         return this.chunkMap.get( mapCoords );
     }
-
-    public Block getBlock( Vector3in absCoords ) {
-    	Vector3in mapCoords = getMapCoords( absCoords );
+    
+    private BlockContext getBlockContext( Vector3in absCoords ) {
+    	Vector3in mapCoords = partition( absCoords );
         Chunk chunk = this.getChunk( mapCoords );
-        return chunk.getBlock(absCoords.subtract( mapCoords.multiply( Config.CHUNK_DIM ) ));
+        return chunk.getBlockContext(mapCoords.multiply( - Config.CHUNK_DIM ).add( absCoords ));
+    }
+    
+    public Block getBlock( Vector3in absCoords ) {
+    	return this.getBlockContext( absCoords ).block;
     }
 
-    public void setBlock( Vector3in absCoords, BlockType bt ) {
+    public void setBlock( Vector3in absCoords, Block bt ) {
 
         // calculate the chunk coordinates by dividing through by chunk dims
-    	Vector3in mapCoords = getMapCoords( absCoords );
-
-        // by changing a chunk, we potentially have modified the light values of all 8
-        // neighbouring chunks. We must set all 9 chunks to dirty. We need the further
-        // 37 surrounding chunks (requisite) for the recalcs
-        for( int i = -2; i <= 2; i +=1 ) {
-            for( int j = -2; j <= 2; j +=1 ) {
-                for( int k = -2; k <= 2; k +=1 ) {
-
-                	Vector3in rawOffset = new Vector3in(i,j,k);
-                    Vector3in offsetMapCoords = mapCoords.add( rawOffset );
-
-                    if( rawOffset.toMaxElement() <= 1 && rawOffset.toMinElement() >= -1 ) {
-                        this.getChunk( offsetMapCoords );
-                        this.dirtyChunks.add( offsetMapCoords );
-                    }
-
-                    // the outer 37 chunks are requisite (but only if 
-                    // they exist - don't make them if we don't need them)
-                    if( this.chunkMap.containsKey( offsetMapCoords ) )
-                        this.requisiteChunks.add( offsetMapCoords );
-                }
-            }
-        }
-
-        // grab the actual chunk we want to modify, then grab the block and adjust the values
+    	Vector3in mapCoords = partition( absCoords );
         Chunk chunk = this.getChunk( mapCoords );
-        Block block = chunk.getBlock( absCoords.subtract( mapCoords.multiply( Config.CHUNK_DIM)));
-        block.blockType = bt;
+        BlockContext ctx = chunk.getBlockContext(mapCoords.multiply( - Config.CHUNK_DIM ).add( absCoords ));
+
+        if( ctx.block != bt )
+        	chunk.state |= ChunkState.DIRECT_BLOCK.flag;
+
+        ctx.block = bt;
+    }
+    
+    private void propagate() {
+
+    	for( TreeSet<Vector3in> set : this.chunkColumns.values() ) {
+    		for( Vector3in v : set ) {
+    			Vector3in prev = set.lower( v );
+    			Chunk chunk = this.getChunk( v );
+    			if( prev != null )  {
+    				
+    				Chunk prevChunk = this.getChunk( prev );
+    				if( ( prevChunk.state & ( ChunkState.DIRECT_BLOCK.flag | ChunkState.OCCLUSION.flag ) ) > 0 ) {
+
+    					for( int x = 0; x < Config.CHUNK_DIM; x += 1 )
+    					for( int z = 0; z < Config.CHUNK_DIM; z += 1 ) {
+    						
+    						Vector3in col = new Vector3in( x, 0, z );
+    						Occlusion prevOccl = prevChunk.getOcclusion( col );
+
+    						Occlusion occl = chunk.getOcclusion( col );
+    						Occlusion oldOccl = new Occlusion( occl );
+    						occl.set( prevOccl );
+
+    						if( ( prevChunk.state & ChunkState.OCCLUSION.flag  ) > 0 )
+    						for( int y = 0; y < Config.CHUNK_DIM; y += 1 ) {
+
+    							Block b = prevChunk.getBlockContext( new Vector3in( x,y,z ) ).block;
+    							occl.particleOcclusion |= b.opacity != Opacity.INVISIBLE;
+    							occl.lightOcclusion |= b.opacity == Opacity.OPAQUE;
+
+    							if( occl.particleOcclusion && occl.lightOcclusion )
+    								break;
+    						}
+    						
+    						if( oldParticleOccl != occl.particleOcclusion || oldLightOccl != occl.lightOcclusion )
+    							chunk.state |= ChunkState.OCCLUSION.flag;
+    						
+    					}
+    					
+    				} else if( ( prevChunk.state | ChunkState.OCCLUSION.flag ) > 0 ) {
+    					
+    				}
+
+    		}
+    	}
+
+    }
+    
+    
+    private void markSurroundingChunks() {
+    	
+    	for( Vector3in v : this.dirtyChunks ) {
+    		for( int x = -2; x <= 2; x += 1 )
+    		for( int y = -2; y <= 2; y += 1 )
+    		for( int z = -2; z <= 2; z += 1 ) {
+    			Vector3in rawOffset = new Vector3in(x,y,z);
+    			Vector3in chunkCoords = v.add( rawOffset ); 
+    			if( rawOffset.toMaxElement() <= 1 && rawOffset.toMinElement() >= -1 ) {
+    				this.getChunk( chunkCoords );
+    				this.dirtyBuffer.add( chunkCoords );
+    			}
+    			if( this.chunkMap.containsKey( chunkCoords ) )
+    				this.requisiteChunks.add( v );
+    		}
+    	}
+    	this.dirtyChunks.addAll( this.dirtyBuffer );
+    	this.dirtyBuffer.clear();
     }
 
     private void refreshLighting() {
@@ -110,8 +162,7 @@ public class World {
         // so we clear all illumination values and set them to the block type's
         // natural illumination
         for( Vector3in mapCoords : this.dirtyChunks )
-            this.chunkMap.get( mapCoords ).iterateBlocks( (v,b) -> b.resetIllumination() );
-
+            this.chunkMap.get( mapCoords ).reset();
 
         // buffer of blocks that we need to propagate light from
         Set<Vector3in> toPropagate  = new HashSet<Vector3in>();
@@ -134,11 +185,11 @@ public class World {
                 // for each of the 6 cube normals, propagate light outward
                 // but only if the other block isn't opaque - otherwise the light is blocked
                 for( Vector3in pos : toPropagate ) {
-                    Block b = this.getBlock( pos );
+                    BlockContext b = this.getBlockContext( pos );
                     for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
                     	Vector3in neighborVec = pos.add( normal.vector );
-                        Block other = this.getBlock( neighborVec );
-                        if( other.blockType.opacity != BlockType.Opacity.OPAQUE ) {
+                        BlockContext other = this.getBlockContext( neighborVec );
+                        if( other.block.opacity != Block.Opacity.OPAQUE ) {
                             other.propagate( b, Config.LIGHT_DROPOFF );
                             
                             // if we do propagate make sure we add the propagated block to the buffer
@@ -159,7 +210,7 @@ public class World {
 
     }
     
-    private void buildCrossedBlock( Model model, Vector3in relCoords, Vector3in absCoords, Block b ) {
+    private void buildCrossedBlock( Model model, Vector3in relCoords, Vector3in absCoords, BlockContext b ) {
 
 
     	for( int i = 0; i < 360; i += 90 ) {
@@ -173,7 +224,7 @@ public class World {
 				model.addAttributeData( AttributeVariable.POSITION, relCoords.toVector3fl().add( vertexOffset ) );
 
 				Vector3fl rangedVertex = vertex.multiply( - 0.5f ).add( 0.5f );
-				Vector3fl texCoords = b.blockType.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
+				Vector3fl texCoords = b.block.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
 				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( model.texture.size ) );
 
 				model.addAttributeData( AttributeVariable.SHADOW, 0 );
@@ -194,7 +245,7 @@ public class World {
 
     }
 
-    private void buildOpaqueBlock( Model model, Vector3in relCoords, Vector3in absCoords, Block b ) {
+    private void buildOpaqueBlock( Model model, Vector3in relCoords, Vector3in absCoords, BlockContext b ) {
 
 		// examine each face/quad of each block
 		for( Vector3in.CubeNormal normal : Vector3in.CubeNormal.values() ) {
@@ -210,8 +261,8 @@ public class World {
 
 			// if the block touching the current face is opaque, then it is hidden and we should ignore
 			Vector3in offsetVec = absCoords.add( normal.vector );
-			Block offsetBlock = this.getBlock( offsetVec );
-			if( offsetBlock.blockType.opacity == BlockType.Opacity.OPAQUE )
+			BlockContext offsetBlock = this.getBlockContext( offsetVec );
+			if( offsetBlock.block.opacity == Block.Opacity.OPAQUE )
 				continue;
 			
 			// each face is a quad comprising of 4 vertices
@@ -221,40 +272,40 @@ public class World {
 				model.addAttributeData( AttributeVariable.POSITION, relCoords.toVector3fl().add( vertexOffset ) );
 
 				Vector3fl rangedVertex = vertex.multiply( 0.5f ).add( 0.5f );
-				Vector3fl texCoords = b.blockType.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
+				Vector3fl texCoords = b.block.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
 				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( model.texture.size ) );
 
 				Vector3in side1Vec = matrix.transform( new Vector3fl( vertex.x, 0, 0 ) ).toRoundedVector3in().add( absCoords );
 				Vector3in side2Vec = matrix.transform( new Vector3fl( 0, vertex.y, 0 ) ).toRoundedVector3in().add( absCoords );
 				Vector3in cornerVec = matrix.transform( new Vector3fl( vertex.x, vertex.y, 0 ) ).toRoundedVector3in().add( absCoords );
 				
-				Block side1Block = this.getBlock( side1Vec );
-				Block side1OffsetBlock = this.getBlock( side1Vec.add( normal.vector ) );
+				BlockContext side1Block = this.getBlockContext( side1Vec );
+				BlockContext side1OffsetBlock = this.getBlockContext( side1Vec.add( normal.vector ) );
 
-				Block side2Block = this.getBlock( side2Vec );
-				Block side2OffsetBlock = this.getBlock( side2Vec.add( normal.vector ) );
+				BlockContext side2Block = this.getBlockContext( side2Vec );
+				BlockContext side2OffsetBlock = this.getBlockContext( side2Vec.add( normal.vector ) );
 
-				Block cornerBlock = this.getBlock( cornerVec );
-				Block cornerOffsetBlock = this.getBlock( cornerVec.add( normal.vector ) );
+				BlockContext cornerBlock = this.getBlockContext( cornerVec );
+				BlockContext cornerOffsetBlock = this.getBlockContext( cornerVec.add( normal.vector ) );
 				
-				if( side1OffsetBlock.blockType.opacity == Opacity.OPAQUE && side2OffsetBlock.blockType.opacity == Opacity.OPAQUE )
+				if( side1OffsetBlock.block.opacity == Opacity.OPAQUE && side2OffsetBlock.block.opacity == Opacity.OPAQUE )
 					model.addAttributeData( AttributeVariable.SHADOW, 3 );
 				else {
-					int total = side1OffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
-					total += side2OffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
-					total += cornerOffsetBlock.blockType.opacity == Opacity.OPAQUE ? 1 : 0;
+					int total = side1OffsetBlock.block.opacity == Opacity.OPAQUE ? 1 : 0;
+					total += side2OffsetBlock.block.opacity == Opacity.OPAQUE ? 1 : 0;
+					total += cornerOffsetBlock.block.opacity == Opacity.OPAQUE ? 1 : 0;
 					model.addAttributeData( AttributeVariable.SHADOW, total );
 				}
 				
 				
 				for( LightSource src : LightSource.values() ) {
 					Vector3in baseLight = offsetBlock.getIllumination(src);
-					if( side1OffsetBlock.blockType.opacity != Opacity.OPAQUE && side1Block.blockType.opacity == Opacity.OPAQUE)
+					if( side1OffsetBlock.block.opacity != Opacity.OPAQUE && side1Block.block.opacity == Opacity.OPAQUE)
 						baseLight = baseLight.max( side1OffsetBlock.getIllumination( src ));
-					if( side2OffsetBlock.blockType.opacity != Opacity.OPAQUE && side2Block.blockType.opacity == Opacity.OPAQUE)
+					if( side2OffsetBlock.block.opacity != Opacity.OPAQUE && side2Block.block.opacity == Opacity.OPAQUE)
 						baseLight = baseLight.max( side2OffsetBlock.getIllumination( src ));
-					if( cornerOffsetBlock.blockType.opacity != Opacity.OPAQUE && cornerBlock.blockType.opacity == Opacity.OPAQUE )
-						if( side1OffsetBlock.blockType.opacity != Opacity.OPAQUE || side2OffsetBlock.blockType.opacity != Opacity.OPAQUE )
+					if( cornerOffsetBlock.block.opacity != Opacity.OPAQUE && cornerBlock.block.opacity == Opacity.OPAQUE )
+						if( side1OffsetBlock.block.opacity != Opacity.OPAQUE || side2OffsetBlock.block.opacity != Opacity.OPAQUE )
 							baseLight = baseLight.max( cornerOffsetBlock.getIllumination( src ));
 					model.addAttributeData( src.attributeVariable, baseLight.toPackedBytes() );
 				} 
@@ -286,11 +337,11 @@ public class World {
             // loop through each block of a dirty chunk
             Chunk chunk = this.chunkMap.get( mapCoords );
             chunk.iterateBlocks( (v,b) -> {
-            	if( b.blockType.opacity == BlockType.Opacity.INVISIBLE )
+            	if( b.blockType.opacity == Block.Opacity.INVISIBLE )
             		return;
-            	if( b.blockType.opacity == BlockType.Opacity.OPAQUE )
+            	if( b.blockType.opacity == Block.Opacity.OPAQUE )
             		this.buildOpaqueBlock( model, v, v.add( mapCoords.multiply( Config.CHUNK_DIM ) ), b);
-            	else if( b.blockType.opacity == BlockType.Opacity.CROSSED )
+            	else if( b.blockType.opacity == Block.Opacity.CROSSED )
             		this.buildCrossedBlock( model, v, v.add( mapCoords.multiply( Config.CHUNK_DIM ) ), b);
             });
 

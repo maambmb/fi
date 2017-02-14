@@ -1,15 +1,11 @@
 package game.block;
 
 import game.Config;
-import game.Entity;
-import game.Position3DComponent;
-import game.gfx.GlobalSubscriberComponent;
-import util.Lambda;
 import util.Vector3in;
 
 // a container object that holds a fixed-size cube of terrain
 // terrain is rendered in "chunks" as opposed to single cubes
-public final class Chunk extends Entity {
+public final class Chunk {
 
     // number of blocks in a chunk face
     private static final int DIM_SQ = Config.CHUNK_DIM * Config.CHUNK_DIM;
@@ -23,57 +19,46 @@ public final class Chunk extends Entity {
         int x = v.x * Config.CHUNK_DIM;
         return y + x + v.z;
     }
-
-    // convert an ix back into a position vector
-    private static Vector3in unpack( int p ) {
-        int rem = p % DIM_SQ;
-        int y = p / DIM_SQ;
-        int x = rem / Config.CHUNK_DIM;
-        int z = rem % Config.CHUNK_DIM;
-        return new Vector3in( x, y, z );
+    
+    private static int pack2D( Vector3in v ) {
+    	return v.z * Config.CHUNK_DIM + v.x;
     }
 
     // the raw block data
-    private Block[] blockData;
-    public BlockRenderComponent renderCmpt;
-    public Position3DComponent positionCmpt;
-
+    private BlockContext[] blockData;
+    private Occlusion[] occlusionData;
+    public int state;
+    
     public Chunk() {
         super();
 
         // initialize an array to hold every single block
-        this.blockData = new Block[ DIM_CB ];
+        this.blockData = new BlockContext[ DIM_CB ];
+        this.occlusionData = new Occlusion[ DIM_SQ ];
+        this.state = 0;
 
         // initialize each block as an empty/air block
+        for( int i = 0; i < DIM_SQ; i += 1 )
+        	this.occlusionData[i] = new Occlusion();
         for( int i = 0; i < DIM_CB; i += 1 )
-            this.blockData[i] = new Block();
+            this.blockData[i] = new BlockContext();
     }
 
     // retrieve a block from the chunk
-    public Block getBlock( Vector3in v ) {
+    public BlockContext getBlockContext( Vector3in v ) {
         return this.blockData[ pack( v ) ];
     }
-
-    // given an iterator fn, run it on every single block
-    public void iterateBlocks( Lambda.ActionBinary<Vector3in,Block> fn ) {
-        for( int i = 0; i < DIM_CB; i += 1 ) {
-            fn.run( unpack(i), this.blockData[i] );
-        }
+    
+    public Occlusion getOcclusion( Vector3in v ) {
+    	return this.occlusionData[ pack2D( v ) ];
     }
-
+    
     public void reset() {
         for( int i = 0; i < DIM_CB; i += 1 ) {
-            Block b = this.blockData[ i ];
-            b.blockType = BlockType.AIR;
-            b.resetIllumination();
+            BlockContext b = this.blockData[ i ];
+            b.block = Block.AIR;
+            b.reset();
         }
-    }
-
-    @Override
-    public void registerComponents() {
-        this.positionCmpt = this.registerComponent( new Position3DComponent() );
-        this.renderCmpt = this.registerComponent( new BlockRenderComponent() );
-        this.registerComponent( new GlobalSubscriberComponent() );
     }
 
 }

@@ -73,6 +73,18 @@ public class Vector3in {
     public Vector3in divide( int dsor ) {
     	return new Vector3in( this.x / dsor, this.y / dsor, this.z / dsor );
     }
+
+    public Vector3in partition( int dsor ) {
+    	Vector3in mod = this.modulo( dsor );
+    	Vector3in div = this.divide( dsor );
+    	if( this.x < 0 && mod.x != 0 )
+    		div.x -= 1;
+    	if( this.y < 0 && mod.y != 0 )
+    		div.y -= 1;
+    	if( this.z < 0 && mod.z != 0 )
+    		div.z -= 1;
+    	return div;
+    }
     
     public Vector3in modulo( int mod ) {
     	return new Vector3in( this.x % mod, this.y % mod, this.z % mod );

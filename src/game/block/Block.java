@@ -2,54 +2,147 @@ package game.block;
 
 import util.Vector3in;
 
-// representing a block/cube of terrain
-public class Block {
+// the type of block fully identifies what block it is:
+public enum Block {
 
-    // the type of the block
-    public BlockType blockType;
+    AIR( 
+        false,
+        Opacity.INVISIBLE,
+        LightSource.CONSTANT,
+        new Vector3in(),
+        null
+    ),
+    LIT_AIR( 
+        false,
+        Opacity.INVISIBLE,
+        LightSource.GLOBAL,
+        Vector3in.WHITE,
+        null
+    ),
+    WAVY_PURPLE( 
+        true,
+        Opacity.OPAQUE,
+        LightSource.CONSTANT,
+        new Vector3in(),
+        new Vector3in(0,0,0)
+    ),
+    STRIPED_GREEN(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(1,0,0)
+    ),
+    DOTTED_BROWN(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(0,1,0)
+    ),
+    DASHED_SAND(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(0,2,0)
+    ),
+    WAVY_BROWN(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(1,2,0)
+    ),
+    DOTTED_CYAN(
+    	true,
+    	Opacity.OPAQUE,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(1,1,0)
+    ),
+    LUSH_SHRUBS_1(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(2,2,0)
+    ),
+    LUSH_SHRUBS_2(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(3,2,0)
+    ),
+    LUSH_SHRUBS_3(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(),
+    	new Vector3in(4,2,0)
+    ),
+    GREEN_GLOWSHROOM(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(0x9cff3b),
+    	new Vector3in(0,3,0)
+    ),
+    BLUE_GLOWSHROOM(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(0x00c6ff),
+    	new Vector3in(0,3,0)
+    ),
+    RED_GLOWSHROOM(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(0xf68585),
+    	new Vector3in(0,3,0)
+    ),
+    PURPLE_GLOWSHROOM(
+    	false,
+    	Opacity.CROSSED,
+    	LightSource.CONSTANT,
+    	new Vector3in(0xf685e7),
+    	new Vector3in(0,3,0)
+    );
+    
 
-    // the lighting within/of the block
-    public int[] illumination;
 
-    public Block() {
-        this.blockType = BlockType.AIR;
-        this.illumination = new int[ LightSource.values().length ];
+    public enum Opacity {
+        //fully opaque - does not allow light to propagate
+        OPAQUE, 
+
+        // partially transparent cube
+        TRANSPARENT, 
+
+        // partially transparent cross
+        // where a cross is formed by 2 quads making a cross intersection
+        // as opposed to 6 quads forming a cube
+        CROSSED, 
+
+        // a fully invisible block that shouldn't be rendered
+        INVISIBLE
     }
 
-    // reset the illumination by setting it to the natural illumination
-    // of the block type. This will remove any propagated light
-    public void resetIllumination() {
-        for( LightSource src : LightSource.values() )
-            this.setIllumination( src, new Vector3in() );
-        this.setIllumination( blockType.lightSource, blockType.illumination );
-    }
+    // can the block be walked on or do entities fall through
+    public boolean solid;
 
-    public Vector3in getIllumination( LightSource src ) {
-    	return new Vector3in( this.illumination[ src.ordinal() ] );
-    }
+    public LightSource lightSource;
+    public Opacity opacity;
+    public Vector3in texCoords;
+    public Vector3in illumination;
 
-    private void setIllumination( LightSource src, Vector3in v ) {
-        this.illumination[ src.ordinal() ] = v.toPackedBytes();
-    }
-
-    // propagate the lighting from a neighboring block onto this block
-    // mechanically we take the other block's attenuated light and max it against our own
-    // for all light sources
-    public void propagate( Block b, int drop ) {
-        for( LightSource src : LightSource.values() ) {
-        	Vector3in otherIllu = b.getIllumination( src ).add( - drop );
-        	Vector3in thisIllu = this.getIllumination( src );
-        	this.setIllumination( src, thisIllu.max( otherIllu ) );
-        }
-    }
-
-    // a utility method to check if the block is radiating any light at all
-    // useful in reducing the amount of wasted propagations during light calcs
-    public boolean isLit() {
-        for( int x : illumination)
-            if( x > 0)
-                return true;
-        return false;
+    private Block( boolean solid, Opacity opacity, LightSource src, Vector3in illu, Vector3in texCoords ) {
+        this.solid        = solid;
+        this.opacity      = opacity;
+        this.lightSource  = src;
+        this.illumination = illu;
+        this.texCoords    = texCoords;
     }
 
 }
