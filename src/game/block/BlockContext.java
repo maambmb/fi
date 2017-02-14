@@ -28,7 +28,7 @@ public class BlockContext {
     	return new Vector3in( this.illumination[ src.ordinal() ] );
     }
 
-    private void setIllumination( LightSource src, Vector3in v ) {
+    public void setIllumination( LightSource src, Vector3in v ) {
         this.illumination[ src.ordinal() ] = v.toPackedBytes();
     }
 

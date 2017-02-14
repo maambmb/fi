@@ -84,9 +84,6 @@ public class Game {
         Glyph.init();
         FontMap.init();
         
-        // create the world object (manager of chunks)
-        World.init();
-
         // create remaining global entities
         InputCapturer.init();
         BlockShader.init();
@@ -94,6 +91,8 @@ public class Game {
         Camera.init();
         DebugConsole.init();
         Environment.init();
+        World.init();
+
 
         // create the random block spawner (for test purposes)
         new RandomBlockSpawner();
@@ -135,9 +134,6 @@ public class Game {
             // broadcast the render message n times, one for each GUI Depth (primitive layering)
             for( GUIDepth d : GUIDepth.values() )
 				Listener.GLOBAL.listen( new GUIShader.GUIShaderRenderMessage( d ) );
-
-            // update chunks models that have been changed
-            World.WORLD.refresh();
             
             this.updateCtx();
             this.prevTime = this.currTime;

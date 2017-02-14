@@ -28,6 +28,7 @@ public final class BlockShader extends Shader {
     	this.createUniformVariable( UniformVariable.LIGHT_ORIGIN );
     	this.createUniformVariable( UniformVariable.LIGHTING_CONSTANT );
     	this.createUniformVariable( UniformVariable.LIGHTING_GLOBAL );
+    	this.createUniformVariable( UniformVariable.LIGHTING_NIGHT );
     	this.createUniformVariable( UniformVariable.MAX_DISTANCE );
     }
 
@@ -39,6 +40,7 @@ public final class BlockShader extends Shader {
     	this.createAttributeVariable( AttributeVariable.SHADOW );
     	this.createAttributeVariable( AttributeVariable.LIGHTING_CONSTANT );
     	this.createAttributeVariable( AttributeVariable.LIGHTING_GLOBAL );
+    	this.createAttributeVariable( AttributeVariable.LIGHTING_NIGHT );
     }
     
 

@@ -12,13 +12,6 @@ public enum Block {
         new Vector3in(),
         null
     ),
-    LIT_AIR( 
-        false,
-        Opacity.INVISIBLE,
-        LightSource.GLOBAL,
-        Vector3in.WHITE,
-        null
-    ),
     WAVY_PURPLE( 
         true,
         Opacity.OPAQUE,
@@ -85,7 +78,7 @@ public enum Block {
     GREEN_GLOWSHROOM(
     	false,
     	Opacity.CROSSED,
-    	LightSource.CONSTANT,
+    	LightSource.NIGHT,
     	new Vector3in(0x9cff3b),
     	new Vector3in(0,3,0)
     ),

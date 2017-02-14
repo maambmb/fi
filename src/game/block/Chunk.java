@@ -55,8 +55,7 @@ public final class Chunk {
     	return this.occlusionData[ pack2D( v ) ];
     }
     
-    public void reset() {
-    	this.state = 0;
+    public void resetIllumination() {
         for( int i = 0; i < DIM_CB; i += 1 ) {
             BlockContext b = this.blockData[ i ];
             b.reset();

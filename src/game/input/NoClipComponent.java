@@ -63,7 +63,7 @@ public class NoClipComponent implements Component {
         matrix.addPitchToMatrix( this.posCmpt.rotation.x );
         Vector3fl marchVec = matrix.transform( new Vector3fl(0,0,-1));
         Vector3fl strafeVec = matrix.transform( new Vector3fl(-1,0,0));
-        Vector3fl finalVec = strafeVec.multiply( strafe ).add( marchVec.multiply( march ) ).multiply( 0.6f );
+        Vector3fl finalVec = strafeVec.multiply( strafe ).add( marchVec.multiply( march ) ).multiply( 0.1f );
 
         
         this.posCmpt.position = this.posCmpt.position.add( finalVec );

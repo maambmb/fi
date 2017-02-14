@@ -1,30 +1,44 @@
 package game.block;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 import game.Config;
+import game.Entity;
+import game.Game.DestroyMessage;
+import game.Game.UpdateMessage;
 import game.block.Block.Opacity;
 import game.gfx.AttributeVariable;
+import game.gfx.GlobalSubscriberComponent;
 import game.gfx.Model;
 import game.gfx.TextureRef;
+import game.gfx.UniformVariable;
 import util.Matrix4fl;
 import util.Vector3fl;
 import util.Vector3in;
 
-public class World {
+public class World extends Entity {
 
     // holds the chunks that comprise of the visible (and beyond) game world
     // is the main interface/access for getting/setting blocks
     // allows recomputation of lighting/models upon modification in a relatively efficient batched manner
 
+	public static List<Vector3in> allDirections = new ArrayList<Vector3in>();
+	
 	private static Matrix4fl matrix = new Matrix4fl();
 
     public static World WORLD;
     public static void init() {
+    	for( int x = -1; x <= 1; x += 1 )
+    	for( int y = -1; y <= 1; y += 1 )
+    	for( int z = -1; z <= 1; z += 1 )
+    		allDirections.add( new Vector3in(x,y,z));
+
         WORLD = new World();
     }
     
@@ -55,8 +69,11 @@ public class World {
     private Map<Vector3in,TreeSet<Vector3in>> chunkColumns;
     
     public World() {
-        this.chunkMap      = new HashMap<Vector3in,Chunk>();
+        this.chunkMap     = new HashMap<Vector3in,Chunk>();
         this.chunkColumns = new HashMap<Vector3in,TreeSet<Vector3in>>();
+        this.listener.addSubscriber( UpdateMessage.class, this::update );
+        this.listener.addSubscriber( DestroyMessage.class, this::destroy );
+        this.listener.addSubscriber( BlockShader.BlockShaderRenderMessage.class, this::render );
     }
 
     private Chunk getChunk( Vector3in chunkCoords ) {
@@ -91,7 +108,6 @@ public class World {
     	Vector3in blockCoords = chunkcoords.multiply( - Config.CHUNK_DIM ).add( absCoords );
         Chunk chunk = this.getChunk( chunkcoords );
         BlockContext ctx = chunk.getBlockContext( blockCoords );
-        
         // if the block is changing to something new from its current value, flag the chunk as
         // having been directly modified via a block change
         if( ctx.block != bt )
@@ -122,7 +138,7 @@ public class World {
     				// if the higher chunk has either been modified via a block change, or has had its occlusion map
     				// modified (perhaps by an even higher chunk), then we need to recalculate this chunk's occlusion map
     				if( ( higherChunk.state & ChunkState.DIRECTLY_DIRTY ) > 0 ) {
-
+    					
     					// loop through each cell of the occlusion map...
     					for( int x = 0; x < Config.CHUNK_DIM; x += 1 )
     					for( int z = 0; z < Config.CHUNK_DIM; z += 1 ) {
@@ -168,30 +184,45 @@ public class World {
     	}
     }
     
-    private void markSurroundingChunks() {
+    private void ensureDirtyBlockNeighbors() {
 
-    	for( Vector3in v : this.chunkMap.keySet() ) {
+    	for( Vector3in v : new ArrayList<Vector3in>( this.chunkMap.keySet() ) ) {
     		Chunk chunk = this.chunkMap.get( v );
     		// if a chunk has been modified via a block or occlusion change
     		// then mark its surrounding neighbours as indirectly dirty
-    		if( ( chunk.state & ChunkState.DIRECTLY_DIRTY ) > 0 ) {
-    			for( Vector3in.CubeNormal n : Vector3in.CubeNormal.values() ) {
-    				// must create the chunk if it doesn't exist
-    				Chunk neighbor = this.getChunk( v.add( n.vector ) );
+    		if( ( chunk.state & ChunkState.DIRTY_BLOCK.flag ) > 0 )
+    			for( Vector3in dir : allDirections ) {
+    				Chunk neighbor = this.getChunk( v.add( dir ) );
     				neighbor.state |= ChunkState.DIRTY_NEIGHBOR.flag;
     			}
-    		}
     	}
+    	
+    }
+    
+    private void ensureDirtyOcclusionNeighbors() {
 
-    	for( Vector3in v : this.chunkMap.keySet() ) {
+    	for( Vector3in v : new ArrayList<Vector3in> ( this.chunkMap.keySet() ) ) {
+    		Chunk chunk = this.chunkMap.get( v );
+    		// if a chunk has been modified via a block or occlusion change
+    		// then mark its surrounding neighbours as indirectly dirty
+    		if( ( chunk.state & ChunkState.DIRTY_OCCLUSION.flag ) > 0 )
+    			for( Vector3in dir : allDirections ) {
+    				Chunk neighbor = this.getChunk( v.add( dir ) );
+    				neighbor.state |= ChunkState.DIRTY_NEIGHBOR.flag;
+    			}
+    	}
+    }
+
+    private void ensureRequisiteChunks() {
+
+    	for( Vector3in v : new ArrayList<Vector3in> ( this.chunkMap.keySet() ) ) {
     		Chunk chunk = this.chunkMap.get( v );
     		// if a chunk is indirectly dirty, mark its surrounding neighbors as requisite blocks
     		// as they will be needed in the lighting calcs despite their lighting vals not changing
     		if( ( chunk.state & ChunkState.DIRTY_NEIGHBOR.flag ) > 0 ) {
-    			for( Vector3in.CubeNormal n : Vector3in.CubeNormal.values() ) {
-    				Vector3in neighborVec = v.add( n.vector ); 
-    				if( this.chunkMap.containsKey( neighborVec ))
-    					this.chunkMap.get( neighborVec ).state |= ChunkState.REQUISITE.flag;
+    			for( Vector3in dir : allDirections ) {
+    				Chunk neighbor = this.getChunk( v.add( dir ) );
+					neighbor.state |= ChunkState.REQUISITE.flag;
     			}
     		}
     	}
@@ -204,7 +235,7 @@ public class World {
     	for( Vector3in v : this.chunkMap.keySet() ) {
     		Chunk chunk = this.chunkMap.get( v );
     		if( ( chunk.state & ChunkState.DIRTY ) > 0 )
-    			chunk.reset();
+    			chunk.resetIllumination();
     	}
 
         // buffer of blocks that we need to propagate light from
@@ -214,24 +245,43 @@ public class World {
         Set<Vector3in> propagated = new HashSet<Vector3in>();
 
         // break the propagation up into chunk-sized bites so the buffers never grow super large
+
     	for( Vector3in chunkCoords : this.chunkMap.keySet() ) {
     		Chunk chunk = this.chunkMap.get( chunkCoords );
     		
     		// don't recalculate light for non-dirty chunks
     		if( ( chunk.state & ChunkState.DIRTY ) == 0 )
     			continue;
-    		
-    		// loop through every block in the chunk
     		for( int x = 0; x < Config.CHUNK_DIM; x += 1 )
-    		for( int y = 0; y < Config.CHUNK_DIM; y += 1 )
     		for( int z = 0; z < Config.CHUNK_DIM; z += 1 ) {
+    			boolean occluded = chunk.getOcclusion( new Vector3in(x,0,z) ).lightOcclusion;
+    			for( int y = Config.CHUNK_DIM - 1; y >= 0; y -= 1) {
 
-    			// if the block is lit, add it to the propagation buffer...
-    			Vector3in rawPos = new Vector3in(x,y,z);
-    			if( chunk.getBlockContext( rawPos ).isLit() )
-    				toPropagate.add( rawPos.add( chunkCoords.multiply( Config.CHUNK_DIM ) ) );
+    				Vector3in rawPos = new Vector3in(x,y,z);
+    				Vector3in coords = rawPos.add( chunkCoords.multiply( Config.CHUNK_DIM ) );
+    				BlockContext ctx = chunk.getBlockContext( rawPos );
+
+    				occluded |= ctx.block.opacity == Opacity.OPAQUE;
+
+    				if( !occluded ) {
+
+    					boolean inContact = false;
+    					for( Vector3in.CubeNormal n : Vector3in.CubeNormal.values() ) {
+    						Block block = this.getBlockContext( coords.add( n.vector ) ).block;
+    						if( block.opacity != Opacity.INVISIBLE ) {
+    							inContact = true;
+    							break;
+    						}
+    					}
+
+    					if( inContact )
+    						ctx.setIllumination( LightSource.GLOBAL, Vector3in.WHITE );
+    				}
+    				
+					if( ctx.isLit())
+						toPropagate.add( coords );
+    			}
     		}
-
 
             // iterate the number of times light is allowed to jump
             for( int n = 0; n < Config.LIGHT_JUMPS; n += 1 ) {
@@ -392,13 +442,14 @@ public class World {
     private void refreshModels() {
 
         // rebuild only the models of dirty chunks
-    	for( Vector3in chunkCoords : this.chunkColumns.keySet() ) {
+    	for( Vector3in chunkCoords : this.chunkMap.keySet() ) {
     		Chunk chunk = this.chunkMap.get( chunkCoords );
 
     		// at this point the model is updating, so any state can be zapped away
     		// and any previously non dirty chunks can then be ignored
     		int state = chunk.state;
     		chunk.state = 0;
+
     		if( ( state & ChunkState.DIRTY ) == 0 )
 				continue;
     		
@@ -434,15 +485,37 @@ public class World {
         }
     }
 
-    // refresh the world - update lighting and models
-    // of all dirty chunks. After this method has run
-    // we can expect the terrain models to be in sync with
-    // the underlying data
-    public void refresh() {
+	@Override
+	protected void registerComponents() {
+		this.registerComponent( new GlobalSubscriberComponent() );
+	}
+	
+	private void destroy( DestroyMessage m ) {
+		for( Chunk c : this.chunkMap.values() )
+			if( c.model != null )
+				c.model.destroy();
+	}
+	
+	private void render( BlockShader.BlockShaderRenderMessage m ) {
+		for( Vector3in chunkCoords : this.chunkMap.keySet() ) {
+			Chunk chunk = this.chunkMap.get( chunkCoords );
+			if( chunk.model == null )
+				continue;
+			Vector3fl coords = chunkCoords.multiply( Config.CHUNK_DIM ).toVector3fl();
+			matrix.clearMatrix();
+			matrix.addTranslationToMatrix( coords );
+			BlockShader.GLOBAL.loadMatrix4f( UniformVariable.MODEL, matrix );
+			chunk.model.render();
+		}
+	}
+	
+	private void update( UpdateMessage msg ) {
+		this.ensureDirtyBlockNeighbors();
     	this.propagateOcclusion();
-    	this.markSurroundingChunks();
+    	this.ensureDirtyOcclusionNeighbors();
+    	this.ensureRequisiteChunks();
         this.refreshLighting();
         this.refreshModels();
-    }
+	}
 
 }

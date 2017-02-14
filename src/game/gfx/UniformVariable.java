@@ -10,6 +10,7 @@ public enum UniformVariable {
     LIGHTING_BASE( "uv_lighting_base" ),
     LIGHTING_GLOBAL( "uv_lighting_global" ),
     LIGHTING_CONSTANT( "uv_lighting_constant" ),
+    LIGHTING_NIGHT( "uv_lighting_night" ),
     COLOR( "uv_color"),
 	MAX_DISTANCE("uv_max_distance");
 

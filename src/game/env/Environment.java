@@ -22,7 +22,7 @@ public final class Environment extends Entity {
     public Vector3in fogColor;
     public float maxDistance = 200f;
 
-    private int dayStateIx;
+    private DayState dayState;
     private long currStateDuration;
 
     public Vector3fl lightOrigin;
@@ -34,7 +34,7 @@ public final class Environment extends Entity {
         this.baseLighting = new Vector3in( 0x202020 );
         this.fogColor     = new Vector3in( 0x101010 );
         this.lightOrigin  = new Vector3fl(1,1,1);
-        this.dayStateIx   = 0;
+        this.dayState     = DayState.DAWN;
         
         for( int i = 0; i < this.lighting.length; i += 1 )
             this.lighting[i] = new Vector3in(0xFFFFFF);
@@ -51,20 +51,16 @@ public final class Environment extends Entity {
     private void update( UpdateMessage msg ) {
 
     	this.currStateDuration += msg.deltaMs;
-    	int numDayStates = DayState.values().length;
 
-    	DayState ds = DayState.values()[ this.dayStateIx % numDayStates ];
-    	if( this.currStateDuration > ds.durationMs) {
-    		this.currStateDuration -= ds.durationMs;
-    		this.dayStateIx += 1;
-			ds = DayState.values()[ this.dayStateIx % numDayStates ];
+    	if( this.currStateDuration > this.dayState.durationMs) {
+    		this.currStateDuration -= this.dayState.durationMs;
+    		this.dayState = this.dayState.nextDayState();
     	}
-    	
-    	float progress = (float)this.currStateDuration / ds.durationMs;
-    	Vector3fl startLight = ds.startLight.toVector3fl().multiply( 1f - progress );
-    	Vector3fl endLight = ds.endLight.toVector3fl().multiply( progress );
-    	Vector3in light = startLight.add( endLight ).toVector3in();
-    	this.lighting[ LightSource.GLOBAL.ordinal() ] = this.fogColor = light;
+
+    	float progress = (float)this.currStateDuration / this.dayState.durationMs;
+
+    	this.lighting[ LightSource.GLOBAL.ordinal() ] = this.fogColor = this.dayState.getGlobalLight( progress );
+    	this.lighting[ LightSource.NIGHT.ordinal() ] = this.dayState.getNightLight( progress );
     }
 
     private void preRender( Shader s ) {

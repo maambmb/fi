@@ -30,8 +30,7 @@ public class Vector3in {
     public static Vector3in MAGENTA = new Vector3in(0xFF00FF);
     public static Vector3in YELLOW = new Vector3in(0x00FFFF);
     public static Vector3in CYAN = new Vector3in(0xFFFF00);
-
-
+    
     // the 3 elements of the vector
     public int x;
     public int y;

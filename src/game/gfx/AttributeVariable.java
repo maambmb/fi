@@ -8,7 +8,8 @@ public enum AttributeVariable {
     NORMAL( "av_normal", 1, Integer.class ),
     SHADOW( "av_shadow", 1, Integer.class ),
     LIGHTING_GLOBAL( "av_lighting_global", 1, Integer.class ),
-    LIGHTING_CONSTANT( "av_lighting_constant", 1, Integer.class );
+    LIGHTING_CONSTANT( "av_lighting_constant", 1, Integer.class ),
+    LIGHTING_NIGHT( "av_lighting_night", 1, Integer.class );
 
     public String name;
     public int stride;

@@ -10,7 +10,8 @@ public enum LightSource {
     // they share a common modulator/multiplier
 
     GLOBAL( AttributeVariable.LIGHTING_GLOBAL, UniformVariable.LIGHTING_GLOBAL ),
-    CONSTANT( AttributeVariable.LIGHTING_CONSTANT, UniformVariable.LIGHTING_CONSTANT );
+    CONSTANT( AttributeVariable.LIGHTING_CONSTANT, UniformVariable.LIGHTING_CONSTANT ),
+    NIGHT( AttributeVariable.LIGHTING_NIGHT, UniformVariable.LIGHTING_NIGHT );
 
     public AttributeVariable attributeVariable;
     public UniformVariable uniformVariable; 

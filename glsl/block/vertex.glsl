@@ -6,6 +6,7 @@ in int av_normal;
 in int av_shadow;
 in int av_lighting_global;
 in int av_lighting_constant;
+in int av_lighting_night;
 
 uniform mat4 uv_view;
 uniform mat4 uv_model;
@@ -15,6 +16,7 @@ uniform vec3 uv_light_origin;
 uniform int uv_lighting_base;
 uniform int uv_lighting_global;
 uniform int uv_lighting_constant;
+uniform int uv_lighting_night;
 uniform float uv_max_distance;
 
 out vec2 frag_tex_coords;
@@ -29,6 +31,8 @@ void main(void) {
     vec3 lighting_constant_mod;
     vec3 lighting_global;
     vec3 lighting_global_mod;
+    vec3 lighting_night;
+    vec3 lighting_night_mod;
     vec4 raw_pos;
     vec3 normal;
 
@@ -54,12 +58,16 @@ void main(void) {
     // unpack the global lighting vector and convert into a float vec [0f-1f]
     lighting_global     = vec3( ( av_lighting_global >> 16 ) & 0xFF, ( av_lighting_global >> 8 ) & 0xFF, av_lighting_global & 0xFF ) / 255.0;
     lighting_global_mod = vec3( ( uv_lighting_global >> 16 ) & 0xFF, ( uv_lighting_global >> 8 ) & 0xFF, uv_lighting_global & 0xFF ) / 255.0;
-    frag_lighting = max( frag_lighting, min( lighting_global, lighting_global_mod ) );
+    frag_lighting = max( frag_lighting, lighting_global * lighting_global_mod );
 
     // we now repeat the procedure with all other light sources (minus the angle attenuation)
     lighting_constant     = vec3( ( av_lighting_constant >> 16 ) & 0xFF, ( av_lighting_constant >> 8 ) & 0xFF, av_lighting_constant & 0xFF ) / 255.0;
     lighting_constant_mod = vec3( ( uv_lighting_constant >> 16 ) & 0xFF, ( uv_lighting_constant >> 8 ) & 0xFF, uv_lighting_constant & 0xFF ) / 255.0;
-    frag_lighting = max( frag_lighting, min( lighting_constant, lighting_constant_mod ) );
+    frag_lighting = max( frag_lighting, lighting_constant * lighting_constant_mod );
+
+    lighting_night     = vec3( ( av_lighting_night >> 16 ) & 0xFF, ( av_lighting_night >> 8 ) & 0xFF, av_lighting_night & 0xFF ) / 255.0;
+    lighting_night_mod = vec3( ( uv_lighting_night >> 16 ) & 0xFF, ( uv_lighting_night >> 8 ) & 0xFF, uv_lighting_night & 0xFF ) / 255.0;
+    frag_lighting = max( frag_lighting, lighting_night * lighting_night_mod );
 
     // once all light sources have been join in, attenuate the final signal with the shadow
     frag_lighting *= ( 1.0 - 0.25 * float(av_shadow) / 3.0 );
