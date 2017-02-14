@@ -1,6 +1,7 @@
 package game.block;
 
 import game.Config;
+import game.gfx.Model;
 import util.Vector3in;
 
 // a container object that holds a fixed-size cube of terrain
@@ -28,6 +29,7 @@ public final class Chunk {
     private BlockContext[] blockData;
     private Occlusion[] occlusionData;
     public int state;
+    public Model model;
     
     public Chunk() {
         super();
@@ -54,9 +56,9 @@ public final class Chunk {
     }
     
     public void reset() {
+    	this.state = 0;
         for( int i = 0; i < DIM_CB; i += 1 ) {
             BlockContext b = this.blockData[ i ];
-            b.block = Block.AIR;
             b.reset();
         }
     }
