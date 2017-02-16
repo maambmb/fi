@@ -252,6 +252,7 @@ public class World extends Entity {
     		// don't recalculate light for non-dirty chunks
     		if( ( chunk.state & ChunkState.DIRTY ) == 0 )
     			continue;
+    		
     		for( int x = 0; x < Config.CHUNK_DIM; x += 1 )
     		for( int z = 0; z < Config.CHUNK_DIM; z += 1 ) {
     			boolean occluded = chunk.getOcclusion( new Vector3in(x,0,z) ).lightOcclusion;
@@ -273,11 +274,12 @@ public class World extends Entity {
     							break;
     						}
     					}
-
-    					if( inContact )
+    					
+    					if( inContact || ctx.block.opacity != Opacity.INVISIBLE )
     						ctx.setIllumination( LightSource.GLOBAL, Vector3in.WHITE );
     				}
     				
+
 					if( ctx.isLit())
 						toPropagate.add( coords );
     			}
@@ -346,8 +348,9 @@ public class World extends Entity {
 				// feel like smooth lighting could potentially be applicable here
 				// but its not crucial as crosses never touch ( 1 < 1.4 ) and so we never
 				// see any gross discontinuities
-				for( LightSource src : LightSource.values() )
+				for( LightSource src : LightSource.values() ) {
 					model.addAttributeData( src.attributeVariable, b.getIllumination(src).toPackedBytes() );
+				}
     		}
     		
 			model.addQuad();
@@ -388,8 +391,9 @@ public class World extends Entity {
 				Vector3fl vertexOffset = matrix.transform( vertex ).multiply( 0.5f ).add( 0.5f );
 				model.addAttributeData( AttributeVariable.POSITION, relCoords.toVector3fl().add( vertexOffset ) );
 
-				// do reranging on raw template for tex-coords
-				Vector3fl rangedVertex = vertex.multiply( 0.5f ).add( 0.5f );
+				// do reranging on raw template for tex-coords (rerange to 0.0005 <-> 0.9995 ) 
+				// as a dirty dirty hack to avoid nasty texture atlas seams at minification..
+				Vector3fl rangedVertex = vertex.multiply( 0.4995f ).add( 0.5005f );
 				Vector3fl texCoords = b.block.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
 				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( model.texture.size ) );
 

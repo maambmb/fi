@@ -34,7 +34,7 @@ public final class Environment extends Entity {
         this.baseLighting = new Vector3in( 0x202020 );
         this.fogColor     = new Vector3in( 0x101010 );
         this.lightOrigin  = new Vector3fl(1,1,1);
-        this.dayState     = DayState.DAWN;
+        this.dayState     = DayState.MIDDAY;
         
         for( int i = 0; i < this.lighting.length; i += 1 )
             this.lighting[i] = new Vector3in(0xFFFFFF);

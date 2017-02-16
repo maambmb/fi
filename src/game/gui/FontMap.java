@@ -69,7 +69,7 @@ public enum FontMap {
 
 	private Model buildModel( int ix ) {
 
-		Model model = new Model();
+		Model model = new Model( Model.DrawStyle.TRIANGLE_STRIP );
 		model.texture = this.atlas;
 
 		int stripCount = this.atlas.size / this.dimensions.x;

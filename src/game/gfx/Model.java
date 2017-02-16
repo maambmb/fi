@@ -20,6 +20,19 @@ import util.Vector3in;
 
 public class Model {
 
+	public enum DrawStyle {
+		
+		TRIANGLES( GL11.GL_TRIANGLES, new int[] { 0, 1, 2, 2, 3, 0 } ),
+		TRIANGLE_STRIP( GL11.GL_TRIANGLE_STRIP, new int[] { 0, 3, 1, 2 } );
+		
+		public int drawStyle;
+		public int[] enumeration;
+
+		private DrawStyle( int drawStyle, int[] enumeration ) {
+			this.drawStyle = drawStyle;
+			this.enumeration = enumeration;
+		}
+	}
 
 	public static Vector3fl[] QUAD_VERTICES = new Vector3fl[] { new Vector3fl(-1,-1,1), new Vector3fl(1,-1,1), new Vector3fl(1,1,1), new Vector3fl(-1,1,1) };
     // convert a collection of boxed integers (cast down to objects - for reasons explained below )
@@ -41,12 +54,9 @@ public class Model {
         return buf;
     }
 
-    // given four vertices of a quad (i:0,1,2,3), this is the order in which they should
-    // be drawn - for use in the index VBO
-    private static final int[] ENUMERATION = new int[] { 0, 1, 2, 2, 3, 0 };
-
     public int vertexCount;
     private int indexCount;
+    private DrawStyle drawStyle;
 
     // the index VBO buffer
     private List<Object> indices;
@@ -64,12 +74,17 @@ public class Model {
     public TextureRef texture;
 
     public Model() {
+    	this( DrawStyle.TRIANGLES );
+    }
+    
+    public Model( DrawStyle drawStyle ) {
         this.indices     = new ArrayList<Object>();
         this.buffers     = new HashMap<AttributeVariable,List<Object>>();
         this.vboIds      = new ArrayList<Integer>();
         this.vertexCount = 0;
         this.indexCount  = 0;
         this.vaoId       = -1;
+        this.drawStyle   = drawStyle;
         for( AttributeVariable av : AttributeVariable.values() )
         	this.buffers.put( av, new ArrayList<Object>() );
     }
@@ -123,17 +138,17 @@ public class Model {
     // record a new quad by adding 4 to the vertex count
     // and adding the 6 new indices to the index vbo buffer
     public void addQuad() {
-    	for( int i =0; i < ENUMERATION.length; i += 1)
-            this.indices.add( this.indexCount + ENUMERATION[i] );
+    	for( int i =0; i < this.drawStyle.enumeration.length; i += 1)
+            this.indices.add( this.indexCount + this.drawStyle.enumeration[i] );
         this.indexCount += 4;
-        this.vertexCount += 6;
+        this.vertexCount += this.drawStyle.enumeration.length;
     }
     
     public void addFlippedQuad() {
-    	for( int i = ENUMERATION.length-1; i >= 0; i -= 1 )
-            this.indices.add( this.indexCount + ENUMERATION[i] );
+    	for( int i = this.drawStyle.enumeration.length-1; i >= 0; i -= 1 )
+            this.indices.add( this.indexCount + this.drawStyle.enumeration[i] );
         this.indexCount += 4;
-        this.vertexCount += 6;
+        this.vertexCount += this.drawStyle.enumeration.length;
     }
 
     private void bind() {
@@ -221,12 +236,13 @@ public class Model {
         GL11.glBindTexture( GL11.GL_TEXTURE_2D, this.texture.id );
         GL13.glActiveTexture( GL13.GL_TEXTURE0 );
         GL11.glTexParameteri( GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST );
+        GL11.glTexParameteri( GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST );
 
         // bind to the model's VAO
         this.bind();
 
         // draw the model!
-        GL11.glDrawElements( GL11.GL_TRIANGLES, this.vertexCount, GL11.GL_UNSIGNED_INT, 0 );
+        GL11.glDrawElements( this.drawStyle.drawStyle, this.vertexCount, GL11.GL_UNSIGNED_INT, 0 );
     }
 
 }

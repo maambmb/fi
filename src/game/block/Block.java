@@ -9,70 +9,70 @@ public enum Block {
         false,
         Opacity.INVISIBLE,
         LightSource.CONSTANT,
-        new Vector3in(),
+        Vector3in.ZERO,
         null
     ),
     WAVY_PURPLE( 
         true,
         Opacity.OPAQUE,
         LightSource.CONSTANT,
-        new Vector3in(),
+        Vector3in.ZERO,
         new Vector3in(0,0,0)
     ),
     STRIPED_GREEN(
     	true,
     	Opacity.OPAQUE,
     	LightSource.CONSTANT,
-    	new Vector3in(),
+    	Vector3in.ZERO,
     	new Vector3in(1,0,0)
     ),
     DOTTED_BROWN(
     	true,
     	Opacity.OPAQUE,
     	LightSource.CONSTANT,
-    	new Vector3in(),
+    	Vector3in.ZERO,
     	new Vector3in(0,1,0)
     ),
     DASHED_SAND(
     	true,
     	Opacity.OPAQUE,
     	LightSource.CONSTANT,
-    	new Vector3in(),
+    	Vector3in.ZERO,
     	new Vector3in(0,2,0)
     ),
     WAVY_BROWN(
     	true,
     	Opacity.OPAQUE,
     	LightSource.CONSTANT,
-    	new Vector3in(),
+    	Vector3in.ZERO,
     	new Vector3in(1,2,0)
     ),
     DOTTED_CYAN(
     	true,
     	Opacity.OPAQUE,
     	LightSource.CONSTANT,
-    	new Vector3in(),
+    	Vector3in.ZERO,
     	new Vector3in(1,1,0)
     ),
     LUSH_SHRUBS_1(
     	false,
     	Opacity.CROSSED,
     	LightSource.CONSTANT,
-    	new Vector3in(),
+    	Vector3in.ZERO,
     	new Vector3in(2,2,0)
     ),
     LUSH_SHRUBS_2(
     	false,
     	Opacity.CROSSED,
     	LightSource.CONSTANT,
-    	new Vector3in(),
+    	Vector3in.ZERO,
     	new Vector3in(3,2,0)
     ),
     LUSH_SHRUBS_3(
     	false,
     	Opacity.CROSSED,
     	LightSource.CONSTANT,
-    	new Vector3in(),
+    	Vector3in.ZERO,
     	new Vector3in(4,2,0)
     ),
     GREEN_GLOWSHROOM(
