@@ -3,61 +3,33 @@ package game.gui;
 import java.util.HashMap;
 import java.util.Map;
 
+import game.gfx.TextureRef;
+import util.Vector3fl;
+
 public enum Glyph {
 
-	LOWER_A('a'),
-	UPPER_A('A'),
-	LOWER_B('b'),
-	UPPER_B('B'),
-	LOWER_C('c'),
-	UPPER_C('C'),
-	LOWER_D('d'),
-	UPPER_D('D'),
-	LOWER_E('e'),
-	UPPER_E('E'),
-	LOWER_F('f'),
-	UPPER_F('F'),
-	LOWER_G('g'),
-	UPPER_G('G'),
-	LOWER_H('h'),
-	UPPER_H('H'),
-	LOWER_I('i'),
-	UPPER_I('I'),
-	LOWER_J('j'),
-	UPPER_J('J'),
-	LOWER_K('k'),
-	UPPER_K('K'),
-	LOWER_L('l'),
-	UPPER_L('L'),
-	LOWER_M('m'),
-	UPPER_M('M'),
-	LOWER_N('n'),
-	UPPER_N('N'),
-	LOWER_O('o'),
-	UPPER_O('O'),
-	LOWER_P('p'),
-	UPPER_P('P'),
-	LOWER_Q('q'),
-	UPPER_Q('Q'),
-	LOWER_R('r'),
-	UPPER_R('R'),
-	LOWER_S('s'),
-	UPPER_S('S'),
-	LOWER_T('t'),
-	UPPER_T('T'),
-	LOWER_U('u'),
-	UPPER_U('U'),
-	LOWER_V('v'),
-	UPPER_V('V'),
-	LOWER_W('w'),
-	UPPER_W('W'),
-	LOWER_X('x'),
-	UPPER_X('X'),
-	LOWER_Y('y'),
-	UPPER_Y('Y'),
-	LOWER_Z('z'),
-	UPPER_Z('Z'),
+
 	
+	
+
+	
+	SPACE(' '),
+	EXCLAMATION('!'),
+	DQUOTE('"'),
+	HASH('#'),
+	DOLLAR('$'),
+	PERCENT('%'),
+	AMPERSAND('&'),
+	SQUOTE('\''),
+	LPARENS('('),
+	RPARENS(')'),
+	ASTERIX('*'),
+	PLUS('+'),
+	COMMA(','),
+	DASH('-'),
+	PERIOD('.'),
+	SLASH( '/' ),
+
 	NUM_0('0'),
 	NUM_1('1'),
 	NUM_2('2'),
@@ -68,56 +40,102 @@ public enum Glyph {
 	NUM_7('7'),
 	NUM_8('8'),
 	NUM_9('9'),
-	
-	LSQUARE( '['),
-	RSQUARE( ']' ),
-	LBRACE( '{' ),
-	RBRACE('}'),
-	SEMICOLON(';'),
+
 	COLON(':'),
-	COMMA(','),
-	PERIOD('.'),
+	SEMICOLON(';'),
 	LANGLE('<'),
-	RANGLE('>'),
-	DASH('-'),
-	UNDERSCORE('_'),
 	EQUALS('='),
-	PLUS('+'),
-	SPACE(' '),
-	SLASH( '/' ),
+	RANGLE('>'),
 	QUESTION('?'),
-	GRAVE('`'),
-	EXCLAMATION('!'),
-	DQUOTE('"'),
-	SQUOTE('\''),
-	HASH('#'),
-	DOLLAR('$'),
-	PERCENT('%'),
-	AMPERSAND('&'),
-	LPARENS('('),
-	RPARENS(')'),
-	ASTERIX('*'),
 	AT('@'),
-	HAT('^'),
+
+	UPPER_A('A'),
+	UPPER_B('B'),
+	UPPER_C('C'),
+	UPPER_D('D'),
+	UPPER_E('E'),
+	UPPER_F('F'),
+	UPPER_G('G'),
+	UPPER_H('H'),
+	UPPER_I('I'),
+	UPPER_J('J'),
+	UPPER_K('K'),
+	UPPER_L('L'),
+	UPPER_M('M'),
+	UPPER_N('N'),
+	UPPER_O('O'),
+	UPPER_P('P'),
+	UPPER_Q('Q'),
+	UPPER_R('R'),
+	UPPER_S('S'),
+	UPPER_T('T'),
+	UPPER_U('U'),
+	UPPER_V('V'),
+	UPPER_W('W'),
+	UPPER_X('X'),
+	UPPER_Y('Y'),
+	UPPER_Z('Z'),
+
+	LSQUARE( '['),
 	BSLASH('\\'),
+	RSQUARE( ']' ),
+	HAT('^'),
+	UNDERSCORE('_'),
+	GRAVE('`'),
+
+	LOWER_A('a'),
+	LOWER_B('b'),
+	LOWER_C('c'),
+	LOWER_D('d'),
+	LOWER_E('e'),
+	LOWER_F('f'),
+	LOWER_G('g'),
+	LOWER_H('h'),
+	LOWER_I('i'),
+	LOWER_J('j'),
+	LOWER_K('k'),
+	LOWER_L('l'),
+	LOWER_M('m'),
+	LOWER_N('n'),
+	LOWER_O('o'),
+	LOWER_P('p'),
+	LOWER_Q('q'),
+	LOWER_R('r'),
+	LOWER_S('s'),
+	LOWER_T('t'),
+	LOWER_U('u'),
+	LOWER_V('v'),
+	LOWER_W('w'),
+	LOWER_X('x'),
+	LOWER_Y('y'),
+	LOWER_Z('z'),
+
+	LBRACE( '{' ),
 	PIPE('|'),
+	RBRACE('}'),
 	TILDE('~'),
 
 	SCANLINES(),
-	BLOCK(),
-	
-	// invisible glyphs
-	NEWLINE();
-	
+	BLOCK();
+
 	public static char DEFAULT_CHAR;
 	private static Map<Character,Glyph> lookup;
-	public char underlying;
 
-	public static void init() {
+	public char underlying;
+	public Vector3fl rawTexCoords;
+
+	public static void setup() {
 		lookup =  new HashMap<Character,Glyph>();
-		for( Glyph g : Glyph.values() )
+		for( Glyph g : Glyph.values() ) {
+
+			int ix = g.ordinal();
 			if( g.underlying != DEFAULT_CHAR)
 				lookup.put( g.underlying , g );
+
+			int stripCount = TextureRef.GUI.size / TextureRef.GUI.elementSize.x;
+			g.rawTexCoords = new Vector3fl( ( ix % stripCount ), ( ix / stripCount ) ).multiply( TextureRef.GUI.elementSize );
+			
+		}
 	}
 	
 	public static Glyph lookup( char c ) {

@@ -1,10 +1,10 @@
 package game.env;
 
 import game.Entity;
+import game.GlobalSubscriberComponent;
 import game.Game.UpdateMessage;
 import game.block.BlockShader;
 import game.block.LightSource;
-import game.gfx.GlobalSubscriberComponent;
 import game.gfx.Shader;
 import game.gfx.UniformVariable;
 import util.Vector3fl;
@@ -13,7 +13,7 @@ import util.Vector3in;
 public final class Environment extends Entity {
 
     public static Environment GLOBAL;
-    public static void init() {
+    public static void setup() {
         GLOBAL = new Environment();
     }
 

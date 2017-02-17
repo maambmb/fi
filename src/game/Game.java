@@ -11,8 +11,6 @@ import game.block.BlockShader;
 import game.block.World;
 import game.env.Environment;
 import game.gfx.TextureRef;
-import game.gui.FontMap;
-import game.gui.GUIDepth;
 import game.gui.GUIShader;
 import game.gui.Glyph;
 import game.gui.console.DebugConsole;
@@ -76,26 +74,26 @@ public class Game {
         this.prevTime = System.currentTimeMillis();
 
         // create the global msg listener
-        Listener.init();
+        Listener.setup();
+
+        BlockShader.setup();
+        GUIShader.setup();
 
         // initialize all enums that need it
-        Key.init();
-        TextureRef.init();
-        Glyph.init();
-        FontMap.init();
+        Key.setup();
+        TextureRef.setup();
+        Glyph.setup();
         
         // create remaining global entities
-        InputCapturer.init();
-        BlockShader.init();
-        GUIShader.init();
-        Camera.init();
-        DebugConsole.init();
-        Environment.init();
-        World.init();
+        InputCapturer.setup();
+        Camera.setup();
+        DebugConsole.setup();
+        Environment.setup();
+        World.setup();
 
 
         // create the random block spawner (for test purposes)
-        new RandomBlockSpawner();
+        RandomBlockSpawner b = new RandomBlockSpawner();
 
         // loop until we detect a close (done in updateCtx)
         while( !this.gameOver ) {
@@ -118,7 +116,7 @@ public class Game {
 			Vector3fl fogColor = Environment.GLOBAL.fogColor.toVector3fl().divide( 0xFF );
 			GL11.glEnable( GL11.GL_DEPTH_TEST );
 			GL11.glClear( GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT );
-			GL11.glEnable( GL11.GL_CULL_FACE );
+			//GL11.glEnable( GL11.GL_CULL_FACE );
 			GL11.glClearColor( fogColor.x, fogColor.y, fogColor.z, 1 );
 
 			// then draw blocks using the block shader
@@ -131,9 +129,8 @@ public class Game {
 
 			// draw the gui using the gui shaders
             GUIShader.GLOBAL.use();
-            // broadcast the render message n times, one for each GUI Depth (primitive layering)
-            for( GUIDepth d : GUIDepth.values() )
-				Listener.GLOBAL.listen( new GUIShader.GUIShaderRenderMessage( d ) );
+			Listener.GLOBAL.listen( new GUIShader.GUIShaderRenderMessage() );
+			GUIShader.GLOBAL.render();
             
             this.updateCtx();
             this.prevTime = this.currTime;

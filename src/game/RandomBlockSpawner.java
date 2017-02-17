@@ -4,7 +4,6 @@ import java.util.Random;
 
 import game.block.Block;
 import game.block.World;
-import game.block.Block.Opacity;
 import util.Vector3in;
 
 public final class RandomBlockSpawner extends Entity {
@@ -14,13 +13,17 @@ public final class RandomBlockSpawner extends Entity {
     public RandomBlockSpawner() {
         super();
         this.rng = new Random();
+        this.spawnSome();
         
-        for( int i = 0; i < 64000; i += 1 ) {
-        	int x = this.rng.nextInt(64);
-        	int z = this.rng.nextInt(64);
-        	int y = this.rng.nextInt(64);
+    }
+    
+    public void spawnSome() {
+        for( int i = 0; i < 500; i += 1 ) {
+        	int x = this.rng.nextInt(20);
+        	int z = this.rng.nextInt(20);
+        	int y = this.rng.nextInt(20);
 
-        	Block b = Block.LUSH_SHRUBS_1;
+        	Block b = Block.DASHED_SAND;
 			World.WORLD.setBlock( new Vector3in(x,y,z), b );
         }
     }

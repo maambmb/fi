@@ -1,7 +1,9 @@
 package game.block;
 
 import game.Config;
+import game.gfx.BufferType;
 import game.gfx.Model;
+import game.gfx.TextureRef;
 import util.Vector3in;
 
 // a container object that holds a fixed-size cube of terrain
@@ -38,6 +40,7 @@ public final class Chunk {
         this.blockData = new BlockContext[ DIM_CB ];
         this.occlusionData = new Occlusion[ DIM_SQ ];
         this.state = 0;
+        this.model = new Model( TextureRef.BLOCK, BlockShader.GLOBAL.getUsedAttributeVariables(), BufferType.STREAM );
 
         // initialize each block as an empty/air block
         for( int i = 0; i < DIM_SQ; i += 1 )

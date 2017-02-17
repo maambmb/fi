@@ -1,7 +1,10 @@
 package game.gfx;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.lwjgl.BufferUtils;
@@ -9,6 +12,8 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
 import game.Entity;
+import game.Game.DestroyMessage;
+import game.GlobalSubscriberComponent;
 import util.FileUtils;
 import util.Matrix4fl;
 import util.Vector3fl;
@@ -22,6 +27,7 @@ public abstract class Shader extends Entity {
     private final FloatBuffer matrixFloatBuffer;
 
     private Map<UniformVariable,Integer> uniformLookup;
+    private List<AttributeVariable> attrVars;
 
     public Shader( String vertex, String fragment ) {
         super();
@@ -32,6 +38,7 @@ public abstract class Shader extends Entity {
 
         // create a map for uniform variables and their opengl ID
         this.uniformLookup = new HashMap<UniformVariable,Integer>();
+        this.attrVars = new ArrayList<AttributeVariable>();
 
         // create vertex and fragment shaders
         this.vertexId   = GL20.glCreateShader( GL20.GL_VERTEX_SHADER );
@@ -63,6 +70,8 @@ public abstract class Shader extends Entity {
         GL20.glValidateProgram( this.programId );
 
         setupUniformVariables();
+        
+        this.listener.addSubscriber( DestroyMessage.class, this::destroy );
     }
 
     // allocate a new uniform variable for the shader program
@@ -76,6 +85,15 @@ public abstract class Shader extends Entity {
     // specified by the av enum
     protected void createAttributeVariable( AttributeVariable av ) {
         GL20.glBindAttribLocation( this.programId, av.ordinal(), av.name );
+        this.attrVars.add( av );
+    }
+    
+    public Collection<AttributeVariable> getUsedAttributeVariables() {
+    	return this.attrVars;
+    }
+    
+    public Collection<UniformVariable> getUsedUniformVariables() {
+    	return this.uniformLookup.keySet();
     }
 
     // load a 3d float vector into a uniform variable position
@@ -112,18 +130,14 @@ public abstract class Shader extends Entity {
     public void use() {
         GL20.glUseProgram( this.programId );
     }
-    
-    protected void enableAttributeVariable( AttributeVariable av ) {
-		GL20.glEnableVertexAttribArray( av.ordinal() );
-    }
-
-    protected void disableAttributeVariable( AttributeVariable av ) {
-		GL20.glDisableVertexAttribArray( av.ordinal() );
-    }
 
     @Override
     public void registerComponents() {
     	this.registerComponent(new GlobalSubscriberComponent());
+    }
+    
+    private void destroy( DestroyMessage msg ) {
+    	this.destroy();
     }
     
     @Override

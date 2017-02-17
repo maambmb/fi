@@ -10,11 +10,12 @@ import java.util.TreeSet;
 
 import game.Config;
 import game.Entity;
+import game.GlobalSubscriberComponent;
 import game.Game.DestroyMessage;
 import game.Game.UpdateMessage;
 import game.block.Block.Opacity;
 import game.gfx.AttributeVariable;
-import game.gfx.GlobalSubscriberComponent;
+import game.gfx.BufferType;
 import game.gfx.Model;
 import game.gfx.TextureRef;
 import game.gfx.UniformVariable;
@@ -33,7 +34,7 @@ public class World extends Entity {
 	private static Matrix4fl matrix = new Matrix4fl();
 
     public static World WORLD;
-    public static void init() {
+    public static void setup() {
     	for( int x = -1; x <= 1; x += 1 )
     	for( int y = -1; y <= 1; y += 1 )
     	for( int z = -1; z <= 1; z += 1 )
@@ -335,8 +336,8 @@ public class World extends Entity {
 
 				// rerange the vertex ( we don't care z as its for 2d tex coords )
 				Vector3fl rangedVertex = vertex.multiply( - 0.5f ).add( 0.5f );
-				Vector3fl texCoords = b.block.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
-				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( model.texture.size ) );
+				Vector3fl texCoords = b.block.texCoords.toVector3fl().add( rangedVertex ).multiply( TextureRef.BLOCK.elementSize );
+				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( TextureRef.BLOCK.size ) );
 
 				// I feel like crosses shouldn't have occlusion but what do I know
 				model.addAttributeData( AttributeVariable.SHADOW, 0 );
@@ -394,8 +395,8 @@ public class World extends Entity {
 				// do reranging on raw template for tex-coords (rerange to 0.0005 <-> 0.9995 ) 
 				// as a dirty dirty hack to avoid nasty texture atlas seams at minification..
 				Vector3fl rangedVertex = vertex.multiply( 0.4995f ).add( 0.5005f );
-				Vector3fl texCoords = b.block.texCoords.toVector3fl().add( rangedVertex ).multiply( Config.BLOCK_ATLAS_TEX_DIM );
-				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( model.texture.size ) );
+				Vector3fl texCoords = b.block.texCoords.toVector3fl().add( rangedVertex ).multiply( TextureRef.BLOCK.elementSize );
+				model.addAttributeData2D( AttributeVariable.TEX_COORDS, texCoords.divide( TextureRef.BLOCK.size ) );
 
 				// calculate neighbor block vectors by pushing the template to origin ( z = 0 ) and discarding none,one,both of (x,y)
 				Vector3in side1Vec = matrix.transform( new Vector3fl( vertex.x, 0, 0 ) ).toRoundedVector3in().add( absCoords );
@@ -457,15 +458,6 @@ public class World extends Entity {
     		if( ( state & ChunkState.DIRTY ) == 0 )
 				continue;
     		
-    		// if the chunk already has a model, destroy it in preparation for the new one
-    		if( chunk.model != null )
-    			chunk.model.destroy();
-
-    		// create the new empty model
-    		chunk.model = new Model();
-            // grab the texture the model will be using and point the model at said texture atlas
-            chunk.model.texture = TextureRef.BLOCK;
-
             // loop through each block of a dirty chunk
     		for( int x = 0; x < Config.CHUNK_DIM; x += 1 )
     		for( int y = 0; y < Config.CHUNK_DIM; y += 1 )
@@ -494,10 +486,16 @@ public class World extends Entity {
 		this.registerComponent( new GlobalSubscriberComponent() );
 	}
 	
-	private void destroy( DestroyMessage m ) {
+	@Override
+	public void destroy() {
+		super.destroy();
 		for( Chunk c : this.chunkMap.values() )
 			if( c.model != null )
 				c.model.destroy();
+	}
+	
+	private void destroy( DestroyMessage m ) {
+		this.destroy();
 	}
 	
 	private void render( BlockShader.BlockShaderRenderMessage m ) {

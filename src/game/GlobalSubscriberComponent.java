@@ -1,8 +1,4 @@
-package game.gfx;
-
-import game.Component;
-import game.Entity;
-import game.Listener;
+package game;
 
 public class GlobalSubscriberComponent implements Component {
 

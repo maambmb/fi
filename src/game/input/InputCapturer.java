@@ -11,13 +11,13 @@ import org.lwjgl.input.Keyboard;
 
 import game.Config;
 import game.Entity;
+import game.GlobalSubscriberComponent;
 import game.Game.UpdateMessage;
-import game.gfx.GlobalSubscriberComponent;
 
 public class InputCapturer extends Entity {
 
 	public static InputCapturer GLOBAL;
-	public static void init() {
+	public static void setup() {
 		GLOBAL = new InputCapturer();
 	}
 	
@@ -46,17 +46,25 @@ public class InputCapturer extends Entity {
 				continue;
 
 			int ix = key.ordinal();
-			
-			this.prevDown[ ix ] = this.currDown[ ix ];
 			this.currDown[ ix ] = Keyboard.getEventKeyState();
+			
+		}
+
+		for( Key key : Key.values()) {
+			
+			int ix = key.ordinal();
+
 			if( this.currDown[ ix ] ) {
 				if( ! this.prevDown[ ix ] ) {
 					this.pressedKeys.add( key );
 					this.lastPressed[ ix ] = this.currTime;
 				}
-				else if( this.lastPressed[ ix ] + Config.KEY_LOCK_MS < this.currTime )
+				else if( this.lastPressed[ ix ] + Config.KEY_LOCK_MS < this.currTime ) {
 					this.pressedKeys.add( key );
+				}
 			}
+
+			this.prevDown[ ix ] = this.currDown[ ix ];
 			
 		}
 		

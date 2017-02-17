@@ -10,7 +10,7 @@ public final class BlockShader extends Shader {
     public static class BlockShaderRenderMessage { }
 
     public static BlockShader GLOBAL;
-    public static void init() {
+    public static void setup() {
         GLOBAL = new BlockShader();
     }
     

@@ -2,7 +2,6 @@ package game;
 
 import game.block.BlockShader;
 import game.env.Environment;
-import game.gfx.GlobalSubscriberComponent;
 import game.gfx.Shader;
 import game.gfx.UniformVariable;
 import game.input.InputListenerComponent;
@@ -15,7 +14,7 @@ public final class Camera extends Entity {
     public static Camera GLOBAL;
     private static Matrix4fl matrix = new Matrix4fl();
 
-    public static void init() {
+    public static void setup() {
         GLOBAL = new Camera();
     }
 

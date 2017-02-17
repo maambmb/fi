@@ -69,6 +69,10 @@ public class Vector3in {
     	return new Vector3in( this.x * mult, this.y * mult, this.z * mult );
     }
     
+    public Vector3in multiply( Vector3in v ) {
+    	return new Vector3in( this.x * v.x, this.y * v.y, this.z * v.z );
+    }
+    
     public Vector3in divide( int dsor ) {
     	return new Vector3in( this.x / dsor, this.y / dsor, this.z / dsor );
     }

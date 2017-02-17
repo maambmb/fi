@@ -6,7 +6,7 @@ import java.util.List;
 
 import game.Entity;
 import game.Game.UpdateMessage;
-import game.gfx.GlobalSubscriberComponent;
+import game.GlobalSubscriberComponent;
 import game.gui.Glyph;
 import game.gui.TextRenderComponent;
 import game.input.InputCapturer;
@@ -19,7 +19,7 @@ import util.Vector3in;
 public class DebugConsole extends Entity {
 
 	public static DebugConsole GLOBAL;
-	public static void init() {
+	public static void setup() {
 		GLOBAL = new DebugConsole(400,10);
 	}
 	
@@ -85,16 +85,17 @@ public class DebugConsole extends Entity {
 	}
 	
 	private void refreshTextComponent() {
+
 		this.textCmpt.reset();
 		for( List<Glyph> glyphs : this.history ) {
 			for( Glyph g : glyphs )
-				this.textCmpt.addGlyph( g, Vector3in.GREEN );
+				this.textCmpt.add( new TextRenderComponent.TextCharacter( g, Vector3in.GREEN ) );
 			this.textCmpt.newline();
 		}
-		for( Glyph g : this.current ) {
-			this.textCmpt.addGlyph( g, Vector3in.GREEN );
-		}
-		this.textCmpt.addGlyph( Glyph.BLOCK, Vector3in.GREEN );
+
+		for( Glyph g : this.current )
+			this.textCmpt.add( new TextRenderComponent.TextCharacter( g, Vector3in.GREEN ) );
+		this.textCmpt.add( new TextRenderComponent.TextCharacter( Glyph.BLOCK, Vector3in.GREEN ) );
 	}
 	
 	@Override

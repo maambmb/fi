@@ -5,31 +5,46 @@ import java.util.List;
 
 import game.Component;
 import game.Entity;
-import game.gfx.UniformVariable;
+import game.gfx.AttributeVariable;
+import game.gfx.BatchElement;
+import game.gfx.Model;
+import game.gfx.TextureRef;
 import game.gui.GUIShader.GUIShaderRenderMessage;
-import util.Matrix4fl;
 import util.Tuple;
 import util.Vector3fl;
 import util.Vector3in;
 
-public class TextRenderComponent implements Component {
+public class TextRenderComponent implements Component, BatchElement {
 
+	public static class TextCharacter {
+		public boolean newline;
+		public Glyph glyph;
+		public Vector3in color;
+		public TextCharacter() {
+			this.newline = true;
+		}
+		
+		public TextCharacter( Glyph g ) {
+			this( g, Vector3in.WHITE );
+		}
+		
+		public TextCharacter( Glyph g , Vector3in color ) {
+			this.glyph = g;
+			this.color = color;
+		}
+	}
 	
-	public FontMap fontMap;
 	public float fontSize;
-	public GUIDepth depth;
+	public int depth;
 	public boolean visible;
 	public Vector3fl position;
-	private List<Tuple.Binary<Glyph,Vector3in>> glyphs;
+	private List<TextCharacter> characters;
 
-	private static Matrix4fl matrix = new Matrix4fl();
-	
 	public TextRenderComponent( ) {
-		this.fontMap = FontMap.DEBUG;
-		this.depth = GUIDepth.DEPTH_0;
+		this.depth = 0;
 		this.fontSize = 2f;
 		this.position = new Vector3fl();
-		this.glyphs = new ArrayList<Tuple.Binary<Glyph,Vector3in>>();
+		this.characters = new ArrayList<TextCharacter>();
 	}
 	
     @Override
@@ -39,49 +54,25 @@ public class TextRenderComponent implements Component {
     }
     
     private void render( GUIShaderRenderMessage msg ) {
-
-    	if( msg.depth != this.depth || !this.visible )
-    		return;
-    	
-    	int xCur = 0;
-    	int yCur = 0;
-
-    	Vector3in dims = this.fontMap.dimensions;
-    	for( Tuple.Binary<Glyph, Vector3in> glyph : this.glyphs ) {
-    		
-    		if( glyph.arg1 == Glyph.NEWLINE ) { 
-    			yCur += 1;
-    			xCur = 0;
-    			continue;
-    		}
-    		
-			matrix.clearMatrix();
-			matrix.addTranslationToMatrix( this.position );
-			matrix.addScaleToMatrix( this.fontSize );
-			matrix.addTranslationToMatrix( new Vector3fl( xCur * dims.x, yCur * dims.y ) );
-			GUIShader.GLOBAL.loadMatrix4f( UniformVariable.MODEL, matrix );
-			GUIShader.GLOBAL.loadInt( UniformVariable.COLOR, glyph.arg2.toPackedBytes() );
-			this.fontMap.getModel( glyph.arg1 ).render();
-
-			xCur += 1;
-    	}
+    	if(this.visible)
+			GUIShader.GLOBAL.batch.addToBatch( this );
     }
     
     public void reset() {
-    	this.glyphs.clear();
+    	this.characters.clear();
     }
     
-    public void addGlyph( Glyph g, Vector3in color ) {
-    	this.glyphs.add( Tuple.create( g, color ) );
+    public void add( TextCharacter tc ) {
+    	this.characters.add( tc );
     }
     
     public void newline() {
-    	this.glyphs.add( Tuple.create( Glyph.NEWLINE, Vector3in.WHITE ) );
+    	this.characters.add( new TextCharacter() );
     }
     
     public void addString( String s, Vector3in color ) {
     	for( char c : s.toCharArray() )
-    		this.addGlyph( Glyph.lookup( c ), color );
+    		this.add( new TextCharacter( Glyph.lookup( c ), color ) );
     }
 
     @Override
@@ -90,8 +81,39 @@ public class TextRenderComponent implements Component {
 
 	@Override
 	public void init() {
-		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public int getDepth() {
+		return this.depth;
+	}
+
+	@Override
+	public void renderToBatch(Model batch) {
+
+    	int xCur = 0;
+    	int yCur = 0;
+
+    	for( TextCharacter tc : this.characters ) {
+    		
+    		if( tc.newline) {
+    			xCur = 0;
+    			yCur += 1;
+    			continue;
+    		}
+
+    		Vector3fl offset = new Vector3fl( xCur, yCur );
+			for( Vector3fl v : Model.QUAD_VERTICES ) {
+				Vector3fl reranged = v.multiply( 0.5f ).add( 0.5f );
+				batch.addAttributeData2D( AttributeVariable.POSITION_2D, offset.add( reranged ).multiply( TextureRef.GUI.elementSize ).multiply( this.fontSize ).add( this.position ) );
+				batch.addAttributeData2D( AttributeVariable.TEX_COORDS, reranged.multiply( TextureRef.GUI.elementSize ).add( tc.glyph.rawTexCoords ).divide( TextureRef.GUI.size ) );
+				batch.addAttributeData( AttributeVariable.COLOR, tc.color.toPackedBytes() );
+			}
+			batch.addQuad();
+
+			xCur += 1;
+    	}
 	}
 
 }

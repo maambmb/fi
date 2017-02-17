@@ -15,7 +15,7 @@ public class Listener {
     // subs are provided a unique id when they subscribe
 
     public static Listener GLOBAL;
-    public static void init() {
+    public static void setup() {
         GLOBAL = new Listener();
     }
 

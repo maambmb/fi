@@ -4,8 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import game.Game.DestroyMessage;
+import util.Poolable;
 
-public abstract class Entity {
+public abstract class Entity implements Poolable {
 
     // message listener for components specific to just this entity
     public Listener listener;
@@ -17,21 +18,19 @@ public abstract class Entity {
     protected Entity() {
         this.listener = new Listener();
         this.componentList = new ArrayList<Component>();
-        this.setup();
+        this.build();
         
         this.listener.addSubscriber(DestroyMessage.class, (x) -> this.destroy() );
     }
 
-    private void setup() {
-
+    private void build() {
         this.registerComponents();
 
         for( Component c : this.componentList )
             c.setup( this );
         for( Component c : this.componentList )
             this.listener.listen( c );
-        for( Component c : this.componentList)
-        	c.init();
+        this.init();
     }
 
     protected <T extends Component> T registerComponent( T c ) {
@@ -42,7 +41,12 @@ public abstract class Entity {
     public <T> void listen( T msg ) {
         this.listener.listen( msg );
     }
-
+    
+    public void init() {
+        for( Component c : this.componentList )
+            c.init();
+    }
+    
     public void destroy() {
         for( Component c : this.componentList )
             c.destroy();

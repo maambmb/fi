@@ -20,23 +20,15 @@ import util.Vector3in;
 
 public class Model {
 
-	public enum DrawStyle {
-		
-		TRIANGLES( GL11.GL_TRIANGLES, new int[] { 0, 1, 2, 2, 3, 0 } ),
-		TRIANGLE_STRIP( GL11.GL_TRIANGLE_STRIP, new int[] { 0, 3, 1, 2 } );
-		
-		public int drawStyle;
-		public int[] enumeration;
+	private static int[] QUAD_ENUMERATION 	= new int[] { 0, 1, 2, 2, 3, 0 };
 
-		private DrawStyle( int drawStyle, int[] enumeration ) {
-			this.drawStyle = drawStyle;
-			this.enumeration = enumeration;
-		}
-	}
+	public static Vector3fl[] QUAD_VERTICES = new Vector3fl[] { 
+		new Vector3fl(-1,-1,1), 
+		new Vector3fl(1,-1,1), 
+		new Vector3fl(1,1,1), 
+		new Vector3fl(-1,1,1) 
+	};
 
-	public static Vector3fl[] QUAD_VERTICES = new Vector3fl[] { new Vector3fl(-1,-1,1), new Vector3fl(1,-1,1), new Vector3fl(1,1,1), new Vector3fl(-1,1,1) };
-    // convert a collection of boxed integers (cast down to objects - for reasons explained below )
-    // into an int buffer
     private static IntBuffer intBufferFromCollection( Collection<Object> coll ) {
         IntBuffer buf = BufferUtils.createIntBuffer( coll.size() );
         for( Object f : coll )
@@ -45,7 +37,6 @@ public class Model {
         return buf;
     }
 
-    // convert a collection of boxed floats (also cast down to objects) into a float buffer
     private static FloatBuffer floatBufferFromCollection( Collection<Object> coll ) {
         FloatBuffer buf = BufferUtils.createFloatBuffer( coll.size() );
         for( Object f : coll )
@@ -56,37 +47,45 @@ public class Model {
 
     public int vertexCount;
     private int indexCount;
-    private DrawStyle drawStyle;
+    private boolean built;
+    private int indexVbo;
+    private BufferType bufferType;
 
-    // the index VBO buffer
     private List<Object> indices;
 
-    // attribute variable buffers. We cast down to list of objects
-    // because we want to store lists of both ints and floats in the same buffer map
-    // for convenience
     private Map<AttributeVariable,List<Object>> buffers;
-
-    // opengl id tracking
-    private List<Integer> vboIds;
+    private Map<AttributeVariable,Integer> vboMap;
     private int vaoId;
 
-    // the texture atlas' opengl id
-    public TextureRef texture;
+    private TextureRef texture;
 
-    public Model() {
-    	this( DrawStyle.TRIANGLES );
-    }
-    
-    public Model( DrawStyle drawStyle ) {
+    public Model( TextureRef tex, Collection<AttributeVariable> usedAvs, BufferType bufferType ) {
+    	
         this.indices     = new ArrayList<Object>();
         this.buffers     = new HashMap<AttributeVariable,List<Object>>();
-        this.vboIds      = new ArrayList<Integer>();
-        this.vertexCount = 0;
-        this.indexCount  = 0;
-        this.vaoId       = -1;
-        this.drawStyle   = drawStyle;
-        for( AttributeVariable av : AttributeVariable.values() )
+        this.vboMap      = new HashMap<AttributeVariable,Integer>();
+        this.bufferType  = bufferType;
+        this.texture     = tex;
+
+        this.vaoId = GL30.glGenVertexArrays();
+		this.indexVbo = GL15.glGenBuffers();
+        GL30.glBindVertexArray( this.vaoId );
+
+        for( AttributeVariable av : usedAvs ) {
+
+        	int vboId = GL15.glGenBuffers();
+            GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
+
+            if( av.dataType == Integer.class )
+                GL30.glVertexAttribIPointer( av.ordinal(), av.stride, GL11.GL_INT, 0, 0  );
+            else if ( av.dataType == Float.class )
+                GL20.glVertexAttribPointer( av.ordinal(), av.stride, GL11.GL_FLOAT, false, 0, 0);
+            
+			GL20.glEnableVertexAttribArray( av.ordinal() );
+
+			this.vboMap.put( av, vboId );
         	this.buffers.put( av, new ArrayList<Object>() );
+        }
     }
 
     // adding attribute data happens below. Type safety is pretty
@@ -138,81 +137,44 @@ public class Model {
     // record a new quad by adding 4 to the vertex count
     // and adding the 6 new indices to the index vbo buffer
     public void addQuad() {
-    	for( int i =0; i < this.drawStyle.enumeration.length; i += 1)
-            this.indices.add( this.indexCount + this.drawStyle.enumeration[i] );
+    	for( int i =0; i < QUAD_ENUMERATION.length; i += 1)
+            this.indices.add( this.indexCount + QUAD_ENUMERATION[i] );
         this.indexCount += 4;
-        this.vertexCount += this.drawStyle.enumeration.length;
     }
     
     public void addFlippedQuad() {
-    	for( int i = this.drawStyle.enumeration.length-1; i >= 0; i -= 1 )
-            this.indices.add( this.indexCount + this.drawStyle.enumeration[i] );
+    	for( int i = QUAD_ENUMERATION.length-1; i >= 0; i -= 1 )
+            this.indices.add( this.indexCount + QUAD_ENUMERATION[i] );
         this.indexCount += 4;
-        this.vertexCount += this.drawStyle.enumeration.length;
-    }
-
-    private void bind() {
-        GL30.glBindVertexArray( this.vaoId );
     }
 
     public void buildModel() {
 
-    	if( this.indexCount == 0 )
-    		return;
-    	
-        this.vaoId = GL30.glGenVertexArrays();
-
-        // bind to the model
-        this.bind();
-        
-        // create the vbo for the index data, load it into a buffer and push it
-        int vboId = GL15.glGenBuffers();
-        GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, vboId);
+    	this.built = true;
+        GL30.glBindVertexArray( this.vaoId );
+		GL15.glBindBuffer(GL15.GL_ELEMENT_ARRAY_BUFFER, this.indexVbo );
         IntBuffer ixBuf = intBufferFromCollection( this.indices );
-        GL15.glBufferData( GL15.GL_ELEMENT_ARRAY_BUFFER, ixBuf, GL15.GL_STATIC_DRAW );
-
-        // keep track of the index VBO ids for cleanup later
-        this.vboIds.add( vboId );
-
-        // we can empty the index buffer now as the index data lives in VRAM
+        GL15.glBufferData( GL15.GL_ELEMENT_ARRAY_BUFFER, ixBuf, this.bufferType.bufferType );
+        
+        this.indexCount = 0;
+        this.vertexCount = this.indices.size();
         this.indices.clear();
 
-		for( AttributeVariable av : AttributeVariable.values()) {
+		for( AttributeVariable av : this.buffers.keySet() ) {
 
             Collection<Object> buffer = this.buffers.get( av );
-            
-            // if the buffer is empty (and hasn't been used then ignore)
-            if( buffer.size() == 0 )
-            	continue;
-            
-            // if the buffer has been used incorrectly then throw because something aint right...
-            if( buffer.size() != this.indexCount * av.stride )
-            	throw new RuntimeException( String.format( "Incorrect number of elements found in %s buffer: %s vs %s", av, buffer.size(), this.indexCount * av.stride ) );
-
-            // okay we're using this attrib var, enable it for the VAO
-			GL20.glEnableVertexAttribArray( av.ordinal() );
-
-            // setup a new VBO
-            vboId = GL15.glGenBuffers();
+            int vboId = this.vboMap.get( av );
             GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vboId);
-            
-            // if the av is an integer, (and we hope the data put into the buffer is also that or else RIP)
-            // create an intbuffer and push the data
+
             if( av.dataType == Integer.class ) {
                 IntBuffer buf = intBufferFromCollection( buffer );
-                GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
-                GL30.glVertexAttribIPointer( av.ordinal(), av.stride, GL11.GL_INT, 0, 0  );
+                GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, this.bufferType.bufferType );
             // else do the same but with a float buffer
             } else if ( av.dataType == Float.class ) {
                 FloatBuffer buf = floatBufferFromCollection( buffer );
-                GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, GL15.GL_STATIC_DRAW );
-                GL20.glVertexAttribPointer( av.ordinal(), av.stride, GL11.GL_FLOAT, false, 0, 0);
+                GL15.glBufferData( GL15.GL_ARRAY_BUFFER, buf, this.bufferType.bufferType );
             }
 
-            // keep track of the VBO ids for cleanup later
-            this.vboIds.add( vboId );
-
-            // we can empty the buffer as the data lives in VRAM now
             buffer.clear();
         }
     }
@@ -220,29 +182,26 @@ public class Model {
     // jump through and delete all VBOs
     // before deleting the VAO itself
     public void destroy() {
-
-        for( int vboId : this.vboIds)
+    	
+		GL15.glDeleteBuffers(this.indexVbo);
+        for( int vboId : this.vboMap.values() )
             GL15.glDeleteBuffers(vboId);
         GL30.glDeleteVertexArrays(this.vaoId);
 
     }
 
     public void render() {
-
-    	if( this.vaoId < 0 )
+    	if( !this.built )
     		return;
-    	
         // bind and activate the model's texture atlas
         GL11.glBindTexture( GL11.GL_TEXTURE_2D, this.texture.id );
         GL13.glActiveTexture( GL13.GL_TEXTURE0 );
         GL11.glTexParameteri( GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST );
         GL11.glTexParameteri( GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST );
 
-        // bind to the model's VAO
-        this.bind();
+        GL30.glBindVertexArray( this.vaoId );
 
-        // draw the model!
-        GL11.glDrawElements( this.drawStyle.drawStyle, this.vertexCount, GL11.GL_UNSIGNED_INT, 0 );
+        GL11.glDrawElements( GL11.GL_TRIANGLES, this.vertexCount, GL11.GL_UNSIGNED_INT, 0 );
     }
 
 }

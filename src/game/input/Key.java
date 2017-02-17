@@ -75,7 +75,7 @@ public enum Key {
 
 	private static Map<Integer,Key> lookup;
 
-	public static void init() {
+	public static void setup() {
 		lookup = new HashMap<Integer,Key>();
 		for( Key k : Key.values())
 			lookup.put( k.keyCode, k );

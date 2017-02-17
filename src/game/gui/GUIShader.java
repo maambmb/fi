@@ -2,47 +2,47 @@ package game.gui;
 
 import game.Config;
 import game.gfx.AttributeVariable;
+import game.gfx.BatchedModel;
+import game.gfx.BufferType;
 import game.gfx.Shader;
+import game.gfx.TextureRef;
 import game.gfx.UniformVariable;
 import util.Matrix4fl;
 import util.Vector3fl;
 
 public class GUIShader extends Shader {
 
-	public static class GUIShaderRenderMessage {
-		public GUIDepth depth;
-		public GUIShaderRenderMessage( GUIDepth d ) {
-			this.depth = d;
-		}
-	}
+	public static class GUIShaderRenderMessage {}
 	
 	private static Matrix4fl matrix = new Matrix4fl();
 	
     public static GUIShader GLOBAL;
-    public static void init() {
+    public static void setup() {
         GLOBAL = new GUIShader();
     }
-
+    
+    public BatchedModel batch;
+    
     private GUIShader() {
         super( "glsl/gui/vertex.glsl", "glsl/gui/fragment.glsl" );
+        this.batch = new BatchedModel( TextureRef.GUI, this.getUsedAttributeVariables(), BufferType.STREAM );
     }
 
     @Override
     protected void setupUniformVariables() {
 		this.createUniformVariable( UniformVariable.PROJECTION_MATRIX );
-		this.createUniformVariable( UniformVariable.MODEL );
-		this.createUniformVariable( UniformVariable.COLOR );
     }
 
     @Override
     protected void setupAttributeVariables() {
     	this.createAttributeVariable( AttributeVariable.POSITION_2D );
     	this.createAttributeVariable( AttributeVariable.TEX_COORDS );
+    	this.createAttributeVariable( AttributeVariable.COLOR );
     }
     
-    public void use() {
-    	super.use();
+    public void render() {
     	this.loadProjectionMatrix();
+    	this.batch.render();
     }
     
     private void loadProjectionMatrix() {
@@ -55,5 +55,12 @@ public class GUIShader extends Shader {
     	));
     	this.loadMatrix4f( UniformVariable.PROJECTION_MATRIX, matrix );
     }
+    
+    @Override
+    public void destroy() {
+    	super.destroy();
+    	this.batch.destroy();
+    }
+    
     
 }
