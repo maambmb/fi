@@ -7,6 +7,7 @@ import org.lwjgl.util.vector.Vector4f;
 public class Vector3fl {
 	
 	public static Vector3fl ONE = new Vector3fl(1,1,1);
+	public static Vector3fl ZERO = new Vector3fl(0,0,0);
 	
     // the 3 elements of the vector
     public float x;

@@ -2,11 +2,6 @@ package game;
 
 public interface Component {
 
-    // subscribe to global or entity-local messages in this method
-    // also subscribe to requisite components as they are broadcast
-    // as messages after all components have been setup
-    void setup( Entity e );
-    
     void init();
 
     // clean up any resources this component may hold (I'm looking at you VRAM)

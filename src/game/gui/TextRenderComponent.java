@@ -9,7 +9,7 @@ import game.gfx.AttributeVariable;
 import game.gfx.BatchElement;
 import game.gfx.Model;
 import game.gfx.TextureRef;
-import game.gui.GUIShader.GUIShaderRenderMessage;
+import game.gui.GUIShader.GUIShaderPreRenderMessage;
 import util.Tuple;
 import util.Vector3fl;
 import util.Vector3in;
@@ -40,22 +40,17 @@ public class TextRenderComponent implements Component, BatchElement {
 	public Vector3fl position;
 	private List<TextCharacter> characters;
 
-	public TextRenderComponent( ) {
+	public TextRenderComponent( Entity e ) {
 		this.depth = 0;
 		this.fontSize = 2f;
 		this.position = new Vector3fl();
 		this.characters = new ArrayList<TextCharacter>();
+        e.listener.addSubscriber( GUIShader.GUIShaderPreRenderMessage.class, this::preRender );
 	}
 	
-    @Override
-    public void setup( Entity e ) {
-        // only render when the block shader program is active
-        e.listener.addSubscriber( GUIShader.GUIShaderRenderMessage.class, this::render );
-    }
-    
-    private void render( GUIShaderRenderMessage msg ) {
+    private void preRender( GUIShaderPreRenderMessage msg ) {
     	if(this.visible)
-			GUIShader.GLOBAL.batch.addToBatch( this );
+			GUIShader.GLOBAL.batcher.addToBatch( this );
     }
     
     public void reset() {

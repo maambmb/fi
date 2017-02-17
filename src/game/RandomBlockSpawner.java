@@ -2,8 +2,10 @@ package game;
 
 import java.util.Random;
 
+import game.Game.UpdateMessage;
 import game.block.Block;
 import game.block.World;
+import game.particle.Rain;
 import util.Vector3in;
 
 public final class RandomBlockSpawner extends Entity {
@@ -14,7 +16,8 @@ public final class RandomBlockSpawner extends Entity {
         super();
         this.rng = new Random();
         this.spawnSome();
-        
+        this.registerComponent( new GlobalSubscriberComponent( this ) );
+        this.build();
     }
     
     public void spawnSome() {
@@ -23,13 +26,9 @@ public final class RandomBlockSpawner extends Entity {
         	int z = this.rng.nextInt(20);
         	int y = this.rng.nextInt(20);
 
-        	Block b = Block.DASHED_SAND;
+        	Block b = Block.DOTTED_CYAN;
 			World.WORLD.setBlock( new Vector3in(x,y,z), b );
         }
-    }
-
-    @Override
-    protected void registerComponents() {
     }
 
 }

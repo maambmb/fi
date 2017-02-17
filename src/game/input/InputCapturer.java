@@ -29,11 +29,6 @@ public class InputCapturer extends Entity {
 	private List<Key> pressedKeys;
 	private long currTime;
 	
-	@Override
-	protected void registerComponents() {
-		this.registerComponent( new GlobalSubscriberComponent() );
-	}
-	
 	private void update( UpdateMessage m ){
 		
 		this.currTime = m.totalMs;
@@ -71,6 +66,7 @@ public class InputCapturer extends Entity {
 	}
 	
 	public InputCapturer() {
+
 		this.inputListenerMap = new HashMap<InputPriority,Set<InputListenerComponent>>();
 		for( InputPriority il : InputPriority.values())
 			this.inputListenerMap.put( il , new HashSet<InputListenerComponent>() );
@@ -78,7 +74,11 @@ public class InputCapturer extends Entity {
 		this.currDown = new boolean[ Key.values().length ];
 		this.lastPressed = new long[ Key.values().length ];
 		this.pressedKeys = new ArrayList<Key>();
+
 		this.listener.addSubscriber( UpdateMessage.class, this::update );
+		this.registerComponent( new GlobalSubscriberComponent( this ) );
+		
+		this.build();
 	}
 	
 	public void addListener( InputListenerComponent cmpt ) {

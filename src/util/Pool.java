@@ -26,7 +26,7 @@ public class Pool<T extends Poolable> {
 			if( this.currentSize == this.capacity )
 				return null;
 			this.currentSize += 1;
-			this.internalQueue.add( this.generator.run() );
+			return this.generator.run();
 		}
 		T out = this.internalQueue.remove();
 		out.init();

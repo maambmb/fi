@@ -10,12 +10,11 @@ import java.util.TreeSet;
 
 import game.Config;
 import game.Entity;
-import game.GlobalSubscriberComponent;
 import game.Game.DestroyMessage;
 import game.Game.UpdateMessage;
+import game.GlobalSubscriberComponent;
 import game.block.Block.Opacity;
 import game.gfx.AttributeVariable;
-import game.gfx.BufferType;
 import game.gfx.Model;
 import game.gfx.TextureRef;
 import game.gfx.UniformVariable;
@@ -75,6 +74,8 @@ public class World extends Entity {
         this.listener.addSubscriber( UpdateMessage.class, this::update );
         this.listener.addSubscriber( DestroyMessage.class, this::destroy );
         this.listener.addSubscriber( BlockShader.BlockShaderRenderMessage.class, this::render );
+		this.registerComponent( new GlobalSubscriberComponent( this ) );
+		this.build();
     }
 
     private Chunk getChunk( Vector3in chunkCoords ) {
@@ -480,18 +481,12 @@ public class World extends Entity {
 			// update the chunks model via the rendering component
         }
     }
-
-	@Override
-	protected void registerComponents() {
-		this.registerComponent( new GlobalSubscriberComponent() );
-	}
 	
 	@Override
 	public void destroy() {
 		super.destroy();
 		for( Chunk c : this.chunkMap.values() )
-			if( c.model != null )
-				c.model.destroy();
+			c.model.destroy();
 	}
 	
 	private void destroy( DestroyMessage m ) {

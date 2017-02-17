@@ -10,10 +10,12 @@ public class Config {
 
     public static final int OPENGL_VERSION = 3;
     public static final int LWJGL_VERSION = 3;
+    
+    public static final int PARTICLE_LIMIT = 900;
 
     public static final int FPS = 60;
     public static final int KEY_LOCK_MS = 600;
-
+    
     public static float FIELD_OF_VIEW = 90;
     public static float ASPECT_RATIO = 16f/9f;
     public static int GAME_WIDTH  = 1600;

@@ -16,16 +16,12 @@ public class NoClipComponent implements Component {
     private Position3DComponent posCmpt;
     private InputListenerComponent inputCmpt;
 
-    public NoClipComponent() {
-    }
-
-    @Override
-    public void setup( Entity e ) {
+    public NoClipComponent( Entity e ) {
         e.listener.addSubscriber( Position3DComponent.class, x -> this.posCmpt = x );
         e.listener.addSubscriber( Game.UpdateMessage.class, this::update );
         e.listener.addSubscriber( InputListenerComponent.class, x -> this.inputCmpt = x );
     }
-    
+
     public void init() {
     	
     }

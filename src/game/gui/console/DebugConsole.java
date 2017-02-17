@@ -43,6 +43,13 @@ public class DebugConsole extends Entity {
 			this.history.add( new ArrayList<Glyph>() );
 		
 		this.listener.addSubscriber( UpdateMessage.class, this::update );
+		this.registerComponent( new GlobalSubscriberComponent( this ) );
+		this.textCmpt = this.registerComponent( new TextRenderComponent( this ) );
+		this.textCmpt.position = new Vector3fl( 20f, 20f );
+		this.inputCmpt = this.registerComponent( new InputListenerComponent( InputPriority.GUI_01 ) );
+		
+		this.build();
+		
 		this.refreshTextComponent();
 	}
 
@@ -96,14 +103,6 @@ public class DebugConsole extends Entity {
 		for( Glyph g : this.current )
 			this.textCmpt.add( new TextRenderComponent.TextCharacter( g, Vector3in.GREEN ) );
 		this.textCmpt.add( new TextRenderComponent.TextCharacter( Glyph.BLOCK, Vector3in.GREEN ) );
-	}
-	
-	@Override
-	protected void registerComponents() {
-		this.registerComponent( new GlobalSubscriberComponent() );
-		this.textCmpt = this.registerComponent( new TextRenderComponent() );
-		this.textCmpt.position = new Vector3fl( 20f, 20f );
-		this.inputCmpt = this.registerComponent( new InputListenerComponent( InputPriority.GUI_01 ) );
 	}
 	
 	private void update( UpdateMessage m ) {

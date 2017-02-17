@@ -10,12 +10,14 @@ import org.lwjgl.opengl.PixelFormat;
 import game.block.BlockShader;
 import game.block.World;
 import game.env.Environment;
+import game.env.Weather;
 import game.gfx.TextureRef;
 import game.gui.GUIShader;
 import game.gui.Glyph;
 import game.gui.console.DebugConsole;
 import game.input.InputCapturer;
 import game.input.Key;
+import game.particle.ParticleShader;
 import util.Vector3fl;
 
 public class Game {
@@ -78,10 +80,12 @@ public class Game {
 
         BlockShader.setup();
         GUIShader.setup();
+        ParticleShader.setup();
 
         // initialize all enums that need it
         Key.setup();
         TextureRef.setup();
+        Weather.setup();
         Glyph.setup();
         
         // create remaining global entities
@@ -124,12 +128,17 @@ public class Game {
             Listener.GLOBAL.listen( new BlockShader.BlockShaderPreRenderMessage() );
             Listener.GLOBAL.listen( new BlockShader.BlockShaderRenderMessage() );
 
+			// draw the gui using the gui shaders
+            ParticleShader.GLOBAL.use();
+			Listener.GLOBAL.listen( new ParticleShader.ParticleShaderPreRenderMessage() );
+			ParticleShader.GLOBAL.render();
+
             // now we want to draw 2D UI elements, so disable to depth test
 			GL11.glDisable( GL11.GL_DEPTH_TEST );
 
 			// draw the gui using the gui shaders
             GUIShader.GLOBAL.use();
-			Listener.GLOBAL.listen( new GUIShader.GUIShaderRenderMessage() );
+			Listener.GLOBAL.listen( new GUIShader.GUIShaderPreRenderMessage() );
 			GUIShader.GLOBAL.render();
             
             this.updateCtx();

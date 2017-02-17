@@ -2,8 +2,9 @@ package game.gui;
 
 import game.Config;
 import game.gfx.AttributeVariable;
-import game.gfx.BatchedModel;
+import game.gfx.Batcher;
 import game.gfx.BufferType;
+import game.gfx.Model;
 import game.gfx.Shader;
 import game.gfx.TextureRef;
 import game.gfx.UniformVariable;
@@ -12,7 +13,7 @@ import util.Vector3fl;
 
 public class GUIShader extends Shader {
 
-	public static class GUIShaderRenderMessage {}
+	public static class GUIShaderPreRenderMessage {}
 	
 	private static Matrix4fl matrix = new Matrix4fl();
 	
@@ -21,11 +22,13 @@ public class GUIShader extends Shader {
         GLOBAL = new GUIShader();
     }
     
-    public BatchedModel batch;
+    public Batcher batcher;
+    private Model batchModel;
     
     private GUIShader() {
         super( "glsl/gui/vertex.glsl", "glsl/gui/fragment.glsl" );
-        this.batch = new BatchedModel( TextureRef.GUI, this.getUsedAttributeVariables(), BufferType.STREAM );
+        this.batchModel = new Model( TextureRef.GUI, this.getUsedAttributeVariables(), BufferType.STREAM );
+        this.batcher = new Batcher();
     }
 
     @Override
@@ -42,7 +45,7 @@ public class GUIShader extends Shader {
     
     public void render() {
     	this.loadProjectionMatrix();
-    	this.batch.render();
+    	this.batcher.render( this.batchModel );
     }
     
     private void loadProjectionMatrix() {
@@ -59,7 +62,7 @@ public class GUIShader extends Shader {
     @Override
     public void destroy() {
     	super.destroy();
-    	this.batch.destroy();
+    	this.batchModel.destroy();
     }
     
     

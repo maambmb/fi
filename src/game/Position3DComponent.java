@@ -15,9 +15,6 @@ public class Position3DComponent implements Component {
     	this.scale = 1f;
     }
 
-    public void setup( Entity e ) {
-    }
-
     @Override
     public void destroy() {
     }

@@ -7,6 +7,7 @@ import game.gfx.UniformVariable;
 import game.input.InputListenerComponent;
 import game.input.InputPriority;
 import game.input.NoClipComponent;
+import game.particle.ParticleShader;
 import util.Matrix4fl;
 
 public final class Camera extends Entity {
@@ -18,11 +19,21 @@ public final class Camera extends Entity {
         GLOBAL = new Camera();
     }
 
-    private Position3DComponent posCmpt;
+    public Position3DComponent posCmpt;
 
     private Camera() {
         super();
+
         this.listener.addSubscriber( BlockShader.BlockShaderPreRenderMessage.class, this::blockShaderPreRender );
+        this.listener.addSubscriber( ParticleShader.ParticleShaderPreRenderMessage.class, this::particleShaderPreRender );
+        this.posCmpt = this.registerComponent( new Position3DComponent() );
+        this.registerComponent( new NoClipComponent( this ) );
+        this.registerComponent( new GlobalSubscriberComponent( this ) );
+        InputListenerComponent inputCmpt = this.registerComponent( new InputListenerComponent( InputPriority.CONTROL ));
+        
+        this.build();
+
+        inputCmpt.startListening();
     }
 
     private void loadViewMatrix( Shader s ) {
@@ -33,23 +44,22 @@ public final class Camera extends Entity {
         matrix.addTranslationToMatrix( this.posCmpt.position.multiply(-1) );
         s.loadMatrix4f( UniformVariable.VIEW_MATRIX, matrix );
     }
-
-    @Override
-    public void registerComponents() {
-        this.posCmpt = this.registerComponent( new Position3DComponent() );
-        this.registerComponent( new NoClipComponent() );
-        this.registerComponent( new GlobalSubscriberComponent() );
-        InputListenerComponent inputCmpt = this.registerComponent( new InputListenerComponent( InputPriority.CONTROL ));
-        inputCmpt.startListening();
+    
+    private void loadViewUnrotatorMatrix( Shader s ) {
+    	matrix.clearMatrix();
+    	matrix.addYawToMatrix( this.posCmpt.rotation.y );
+        s.loadMatrix4f( UniformVariable.VIEW_UNROTATOR, matrix );
     }
 
-    private void preRender( Shader s ) {
-        this.loadViewMatrix( s );
-        this.loadProjectionMatrix( s );
-    } 
-    
     private void blockShaderPreRender( BlockShader.BlockShaderPreRenderMessage msg ) {
-    	this.preRender( BlockShader.GLOBAL );
+        this.loadViewMatrix( BlockShader.GLOBAL );
+        this.loadProjectionMatrix( BlockShader.GLOBAL );
+    }
+
+    private void particleShaderPreRender( ParticleShader.ParticleShaderPreRenderMessage msg ) {
+        this.loadViewMatrix( ParticleShader.GLOBAL );
+        this.loadProjectionMatrix( ParticleShader.GLOBAL );
+        this.loadViewUnrotatorMatrix( ParticleShader.GLOBAL );
     }
 
     private void loadProjectionMatrix( Shader s ) {

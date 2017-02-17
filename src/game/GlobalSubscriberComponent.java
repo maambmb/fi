@@ -4,11 +4,7 @@ public class GlobalSubscriberComponent implements Component {
 
 	private Listener listener;
 
-	public GlobalSubscriberComponent() {
-		
-	}
-	
-	public void setup( Entity e ) {
+	public GlobalSubscriberComponent( Entity e ) {
 		this.listener = e.listener;
 	}
 	

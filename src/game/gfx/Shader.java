@@ -72,6 +72,9 @@ public abstract class Shader extends Entity {
         setupUniformVariables();
         
         this.listener.addSubscriber( DestroyMessage.class, this::destroy );
+    	this.registerComponent(new GlobalSubscriberComponent( this ));
+    	
+    	this.build();
     }
 
     // allocate a new uniform variable for the shader program
@@ -131,11 +134,6 @@ public abstract class Shader extends Entity {
         GL20.glUseProgram( this.programId );
     }
 
-    @Override
-    public void registerComponents() {
-    	this.registerComponent(new GlobalSubscriberComponent());
-    }
-    
     private void destroy( DestroyMessage msg ) {
     	this.destroy();
     }

@@ -1,7 +1,6 @@
 package game.input;
 
 import game.Component;
-import game.Entity;
 
 public class InputListenerComponent implements Component {
 
@@ -21,10 +20,6 @@ public class InputListenerComponent implements Component {
 	
 	public void stopListening() {
 		InputCapturer.GLOBAL.removeListener( this );
-	}
-
-	@Override
-	public void setup(Entity e) {
 	}
 
 	@Override

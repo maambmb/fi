@@ -3,6 +3,7 @@ package game.gfx;
 public enum AttributeVariable {
 
     POSITION( "av_position", 3, Float.class ),
+    POSITION_WORLD( "av_position_world", 3, Float.class ),
     POSITION_2D( "av_position_2d", 2, Float.class ),
     TEX_COORDS( "av_tex_coords", 2, Float.class ),
     NORMAL( "av_normal", 1, Integer.class ),

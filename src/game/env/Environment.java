@@ -1,12 +1,15 @@
 package game.env;
 
+import java.util.Random;
+
 import game.Entity;
-import game.GlobalSubscriberComponent;
 import game.Game.UpdateMessage;
+import game.GlobalSubscriberComponent;
 import game.block.BlockShader;
 import game.block.LightSource;
 import game.gfx.Shader;
 import game.gfx.UniformVariable;
+import game.particle.Rain;
 import util.Vector3fl;
 import util.Vector3in;
 
@@ -20,13 +23,22 @@ public final class Environment extends Entity {
     public Vector3in[] lighting;
     public Vector3in baseLighting;
     public Vector3in fogColor;
-    public float maxDistance = 200f;
 
+    private Random rng;
+    
+    private DayState previousDayState;
     private DayState dayState;
+
+    private Weather previousWeather;
+    private Weather weather;
+    
+    private float rainAmount;
+    public float maxDistance;
+
     private long currStateDuration;
 
     public Vector3fl lightOrigin;
-
+    
     private Environment() {
     	super();
     	
@@ -34,33 +46,61 @@ public final class Environment extends Entity {
         this.baseLighting = new Vector3in( 0x202020 );
         this.fogColor     = new Vector3in( 0x101010 );
         this.lightOrigin  = new Vector3fl(1,1,1);
-        this.dayState     = DayState.MIDDAY;
+        
+        this.rng = new Random();
+
+        this.dayState = DayState.MIDDAY;
+        this.previousDayState = DayState.MIDDAY_START;
+        this.weather = Weather.HEAVY_RAIN;
+        this.previousWeather = Weather.CLEAR;
         
         for( int i = 0; i < this.lighting.length; i += 1 )
             this.lighting[i] = new Vector3in(0xFFFFFF);
         
         this.listener.addSubscriber( UpdateMessage.class, this::update );
+    	this.registerComponent( new GlobalSubscriberComponent( this ) );
+        this.listener.addSubscriber( BlockShader.BlockShaderPreRenderMessage.class, this::blockShaderPreRender );
+        this.build();
     }
 
-    @Override
-    protected void registerComponents() {
-    	this.registerComponent( new GlobalSubscriberComponent() );
-        this.listener.addSubscriber( BlockShader.BlockShaderPreRenderMessage.class, this::blockShaderPreRender );
-    }
-    
     private void update( UpdateMessage msg ) {
 
     	this.currStateDuration += msg.deltaMs;
 
     	if( this.currStateDuration > this.dayState.durationMs) {
     		this.currStateDuration -= this.dayState.durationMs;
+    		this.previousDayState = this.dayState;
+			this.previousWeather = this.weather;
     		this.dayState = this.dayState.nextDayState();
+    		if( this.dayState == DayState.MIDDAY )
+    			this.weather = Weather.getNextWeather();
+    		System.out.println( this.dayState );
+    		System.out.println( this.weather );
     	}
 
     	float progress = (float)this.currStateDuration / this.dayState.durationMs;
 
-    	this.lighting[ LightSource.GLOBAL.ordinal() ] = this.fogColor = this.dayState.getGlobalLight( progress );
-    	this.lighting[ LightSource.NIGHT.ordinal() ] = this.dayState.getNightLight( progress );
+    	Vector3fl previousLight = this.previousDayState.skyColor.toVector3fl().multiply( 1f - progress )
+				.multiply( this.previousWeather.skyMultiplier );
+
+    	Vector3fl currentLight = this.dayState.skyColor.toVector3fl().multiply( progress )
+    			.multiply( this.weather.skyMultiplier );
+    	
+    	Vector3in lighting = previousLight.add( currentLight ).toRoundedVector3in();
+    	int nightLightAmount = 255 - lighting.toMaxElement();
+    	
+    	this.rainAmount = ( 1 - progress) * this.previousWeather.rainAmount + progress * this.weather.rainAmount;
+    	this.maxDistance = ( 1 - progress ) * this.previousWeather.farDistance + progress * this.weather.farDistance;
+    	
+		if( this.rng.nextFloat() <= this.rainAmount ) {
+			Rain r = new Rain();
+			r.position.position.x = this.rng.nextInt(20);
+			r.position.position.z = this.rng.nextInt(20);
+			r.position.position.y = 20;
+		}
+    	
+    	this.lighting[ LightSource.GLOBAL.ordinal() ] = this.fogColor = lighting;
+    	this.lighting[ LightSource.NIGHT.ordinal() ] = new Vector3in( nightLightAmount, nightLightAmount, nightLightAmount );   
     }
 
     private void preRender( Shader s ) {

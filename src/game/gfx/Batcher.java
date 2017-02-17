@@ -1,10 +1,9 @@
 package game.gfx;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
-public class BatchedModel extends Model {
+public class Batcher {
 
 	private static int batchComparator( BatchElement l, BatchElement r ) {
 		return l.getDepth() - r.getDepth();
@@ -12,8 +11,7 @@ public class BatchedModel extends Model {
 
 	private List<BatchElement> batchElements; 
 
-	public BatchedModel(TextureRef tex, Collection<AttributeVariable> usedAvs, BufferType bufferType) {
-		super(tex, usedAvs, bufferType);
+	public Batcher() {
 		this.batchElements = new ArrayList<BatchElement>();
 	}
 	
@@ -21,14 +19,12 @@ public class BatchedModel extends Model {
 		this.batchElements.add( el );
 	}
 	
-	@Override
-	public void render() {
-		this.batchElements.sort( BatchedModel::batchComparator );
+	public void render( Model model ) {
+		this.batchElements.sort( Batcher::batchComparator );
 		for( BatchElement el : this.batchElements )
-			el.renderToBatch( this );
+			el.renderToBatch( model );
 		this.batchElements.clear();
-		this.buildModel();
-		super.render();
+		model.buildModel();
+		model.render();
 	}
-
 }
